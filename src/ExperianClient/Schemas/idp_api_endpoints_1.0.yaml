@@ -1,0 +1,1332 @@
+openapi: 3.0.0
+info:
+  title: Verifications - Intelligent Document Processing (IDP)
+  description: |
+    # Overview
+
+    The IDP APIs enable clients to upload applicant documents, initiate Intelligent Document Processing, and retrieve processing results. These APIs form the core of the IDP integration and are typically invoked after applicant details have been created.
+
+    # Access restrictions
+
+    Access to the API, data fields and sections is administrated by Experian.
+
+    # Format
+    The APIs default to JSON. Requests should specify [content type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) as `application/json`.
+  version: "1.0"
+
+servers:
+  - url: https://sandbox-uk-api.experian.com
+    description: Sandbox
+
+paths:
+  "/cis/verifications/idp/v1/api/application/{customerApplicationId}/{partyId}/documents":
+    post:
+      tags:
+        - Application
+      summary: Upload documents for a specific party.
+      description: |
+        This API enables clients to upload applicant documents, such as payslips, for a specific customer application and associated party. 
+        The uploaded documents are processed as part of the Intelligent Document Processing (IDP) workflow to automatically extract structured, 
+        income‑related information.
+      security:
+        - OAuth2: []
+      parameters:
+        - name: customerApplicationId
+          in: path
+          description: Unique identifier for the customer application.
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: partyId
+          in: path
+          description: Identifier of the party/applicant within the application.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      requestBody:
+        description: Details of the document(s) being uploaded.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentDetails"
+      responses:
+        "201":
+          description: Document uploaded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadApiResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-400
+                    errorType: BadRequest
+                    message: |
+                      The field 'TotalApplicantsInCustomerApplicationId' must be between 1 and 6.
+                      The field 'TotalFilesForThisApplicant' must be between 1 and 53.
+                      The field 'DocumentContent' is required and must not be null.
+                      The field 'DocumentType' is required and must not be empty.
+                      FileName is required and must not be empty.
+                      The payload contains invalid values for 'integrityValidationRules'.
+                      The payload contains invalid values for 'completenessValidationRules'.
+                success: false
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided. 
+            The response must include a WWW-Authenticate header field containing a challenge applicable to the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "403":
+          description: Forbidden. Insufficient permissions to access the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-403
+                    errorType: Forbidden
+                    message: Insufficient permissions.
+                success: false
+        "422":
+          description: Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-422
+                    errorType: Unprocessable Entity
+                    message: Validation failed for document upload.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal server error. This message is returned when the server encounters an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    put:
+      tags:
+        - Application
+      summary: Updates uploaded documents for a specific party.
+      description: |
+        This API enables clients to update previously uploaded applicant documents for a specific customer application and associated party. 
+        The updated documents are reprocessed as part of the Intelligent Document Processing (IDP) workflow to ensure accurate extraction 
+        of structured, income‑related information.
+      security:
+        - OAuth2: []
+      parameters:
+        - name: customerApplicationId
+          in: path
+          description: Unique identifier for the customer application.
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: partyId
+          in: path
+          description: Identifier of the party/applicant within the application.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      requestBody:
+        description: Updated details of the document(s).
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentDetails"
+      responses:
+        "200":
+          description: Document updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadApiResponse"
+        "400":
+          description: Bad Request. The request could not be understood by the server due to malformed syntax.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-400
+                    errorType: BadRequest
+                    message: |
+                      The field 'TotalApplicantsInCustomerApplicationId' must be between 1 and 6.
+                      The field 'TotalFilesForThisApplicant' must be between 1 and 53.
+                      The field 'DocumentContent' is required and must not be null.
+                      The field 'DocumentType' is required and must not be empty.
+                      FileName is required and must not be empty.
+                      The payload contains invalid values for 'integrityValidationRules'.
+                      The payload contains invalid values for 'completenessValidationRules'.
+                success: false
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided. 
+            The response must include a WWW-Authenticate header field containing a challenge applicable to the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "403":
+          description: Forbidden. Insufficient permissions to access the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-403
+                    errorType: Forbidden
+                    message: Insufficient permissions.
+                success: false
+        "422":
+          description: Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-422
+                    errorType: Unprocessable Entity
+                    message: Unprocessable content for document update.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal server error. This message is returned when the server encounters an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false    
+
+  "/cis/verifications/idp/v1/api/application/{customerApplicationId}/{partyId}":
+    get:
+      tags:
+        - Application
+      summary: Get uploaded documents for a specific party.
+      description: |
+        This API enables clients to retrieve previously uploaded applicant documents for a specific customer application 
+        and associated party. The response includes document metadata and processing status information from the 
+        Intelligent Document Processing (IDP) workflow.
+      security:
+        - OAuth2: []
+      parameters:
+        - name: customerApplicationId
+          in: path
+          description: Unique identifier for the customer application.
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: partyId
+          in: path
+          description: Identifier of the party/applicant within the application.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        "200":
+          description: Documents retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetDocumentsResponse"
+              example:
+                message: "string"
+                customerApplicationId: "string"
+                correlationId: "string"
+                partyId: 0
+                totalFilesForThisApplicant: 0
+                submittedFilesCountForThisApplicant: 0
+                remainingFilesCountForThisApplicant: 0
+                status: "string"
+                documents:
+                  - documentId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    documentType: "string"
+                    fileName: "string"
+                    createdDate: "2026-04-16T10:44:47.122Z"
+                    updatedDate: "2026-04-16T10:44:47.122Z"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-400
+                    errorType: BadRequest
+                    message: Invalid customerApplicationId or partyId format.
+                success: false
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided. 
+            The response must include a WWW-Authenticate header field containing a challenge applicable to the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "403":
+          description: Forbidden. Insufficient permissions to access the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-403
+                    errorType: Forbidden
+                    message: Insufficient permissions.
+                success: false
+        "404":
+          description: Not Found. No documents found for the specified customer application and party.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: No documents found for the specified application and party.
+                success: false
+        "422":
+          description: Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-422
+                    errorType: Unprocessable Entity
+                    message: Unable to process the request.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal server error. This message is returned when the server encounters an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+  /cis/verifications/idp/v1/api/webhooks:
+    post:
+      tags:
+        - Webhooks
+      summary: Creates a new webhook for the current partner.
+      description: |
+        This API enables clients to create a new webhook subscription for the Intelligent Document Processing (IDP) platform. 
+        Webhooks are HTTP callbacks that notify your system in real time about changes in the IDP Platform. When subscribed 
+        events occur, such as document processing completion or extraction failures, the platform sends an HTTP request to a 
+        client‑configured endpoint. This allows systems to respond to IDP events without continuously polling for status updates.
+      security:
+        - OAuth2: []
+      requestBody:
+        description: The webhook creation request.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-400
+                    errorType: BadRequest
+                    message: "You must provide a name for the webhook. You must provide a callback url for the webhook to invoke. You must provide at least one event type. Unknown event type(s) provided: . An event type must be one of: MalwareScanFailed, MalwareScanFailedForApplicantWhereCaseIdExists, CaseIdCreated, IntegrityCheckFailed, ValidationCheckFailed, ApplicantDataReady. Unknown event type(s) provided: . An event type must be one of: MalwareScanFailed, MalwareScanFailedForApplicantWhereCaseIdExists, CaseIdCreated, IntegrityCheckFailed, ValidationCheckFailed, ApplicantDataReady."
+                success: false
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "403":
+          description: Forbidden. Insufficient permissions to access the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-403
+                    errorType: Forbidden
+                    message: Insufficient permissions.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    get:
+      tags:
+        - Webhooks
+      summary: Gets all webhooks for the current partner.
+      description: |
+        This API enables clients to retrieve all webhooks configured for your organisation, including each webhookId, 
+        which can be used to retrieve, update, or delete individual webhooks.
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WebhookResponse"
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+  "/cis/verifications/idp/v1/api/webhooks/{webhookId}":
+    get:
+      tags:
+        - Webhooks
+      summary: Gets a specific webhook by webhookId.
+      description: |
+        This API enables clients to retrieve details of a specific webhook configuration, including the webhookName, 
+        webhookCallbackUrl, and the list of associated eventTypes.
+      security:
+        - OAuth2: []
+      parameters:
+        - name: webhookId
+          in: path
+          description: The webhook ID.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: "No webhook is currently configured. Details: WebhookId."
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    patch:
+      tags:
+        - Webhooks
+      summary: Updates an existing webhook.
+      description: |
+        This API enables clients to update an existing webhook configuration for a specific webhookId. While all fields 
+        are optional, the request must include at least one field (webhookName, webhookCallbackUrl, or eventTypes). 
+        To clear a field, send an empty string as the field value. This allows you to modify webhook subscriptions 
+        without recreating them.
+      security:
+        - OAuth2: []
+      parameters:
+        - name: webhookId
+          in: path
+          description: The webhook ID.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The webhook update request.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-400
+                    errorType: BadRequest
+                    message: "At least one field (webhookName, webhookCallbackUrl, or eventTypes) must be provided for update. You must provide a name for the webhook. You must provide a callback url for the webhook to invoke. The callback url must be formatted as an absolute URI. The callback url only supports a HTTPS scheme. Unknown event type(s) provided: . An event type must be one of: MalwareScanFailed, MalwareScanFailedForApplicantWhereCaseIdExists, CaseIdCreated, IntegrityCheckFailed, ValidationCheckFailed, ApplicantDataReady."
+                success: false
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: Webhook not found.
+                success: false
+        "422":
+          description: Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-422
+                    errorType: Unprocessable Entity
+                    message: Validation failed for webhook update.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    delete:
+      tags:
+        - Webhooks
+      summary: Deletes a webhook by webhookId.
+      description: |
+        This API enables clients to delete a specified webhook subscription using its webhookId. Once deleted, the 
+        webhook will no longer receive event notifications from the IDP platform. This action is permanent and cannot 
+        be undone.
+      security:
+        - OAuth2: []
+      parameters:
+        - name: webhookId
+          in: path
+          description: The webhook ID.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: "No webhook is currently configured. Details: WebhookId."
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+  /cis/verifications/idp/v1/api/webhooks/eventtypes:
+    get:
+      tags:
+        - Webhooks
+      summary: Gets all available notification event names.
+      description: Retrieves all available webhook event types that a webhook can subscribe to. Use these event types when configuring webhooks to receive specific IDP platform notifications.
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eventNames:
+                    type: array
+                    items:
+                      type: string
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+  /cis/verifications/idp/v1/api/webhooks/secrets:
+    post:
+      tags:
+        - Webhooks
+      summary: Creates a webhook secret for the partner.
+      description: |
+        This API enables clients to create a webhook secret for securing webhook communications. All subsequent webhook 
+        requests sent will include a HMACSHA256 hash that has been Base64 encoded in the X-HMAC-SHA256-Signature header. 
+        Comparing this hashed value against a SHA256 hash of the request body (using the secret as a key) enables you to 
+        verify the payload has not been tampered with, ensuring the authenticity and integrity of webhook notifications.
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookSecretResponse"
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "422":
+          description: Unprocessable Entity. The request was well-formed but was unable to be followed due to semantic errors.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-422
+                    errorType: Unprocessable Entity
+                    message: "Only one webhook secret is supported. Please refer to the API docs on how to either rotate the existing key value or delete it from the system."
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    get:
+      tags:
+        - Webhooks
+      summary: Gets the webhook secret for the partner.
+      description: |
+        This API enables clients to retrieve the current webhook secret configured for your organisation. This secret 
+        will be used to create a HMACSHA256 hash of every webhook request sent. The result will be Base64 encoded and 
+        sent under the X-HMAC-SHA256-Signature header in the request.
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookSecretResponse"
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: "There is no shared secret currently configured for the webhooks. Please refer to the API docs for how to create one"
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    patch:
+      tags:
+        - Webhooks
+      summary: Updates the webhook secret for the partner.
+      description: |
+        This API enables clients to rotate the webhook secret by generating a new secret key. The new secret will be 
+        used to create the X-HMAC-SHA256-Signature header on all webhook requests. This new secret will be implemented 
+        on all requests sent after the datetimeUpdated timestamp included in the response. Regular secret rotation is 
+        recommended as a security best practice.
+      security:
+        - OAuth2: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookSecretResponse"
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: "There is no shared secret currently configured for the webhooks. Please refer to the API docs for how to create one"
+                success: false
+        "429":
+          description: Too Many Requests. The user has sent too many requests in a given amount of time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-429
+                    errorType: TooManyRequests
+                    message: Rate limit exceeded. Please try again later.
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+    delete:
+      tags:
+        - Webhooks
+      summary: Deletes the webhook secret for the partner.
+      description: |
+        This API enables clients to delete the webhook secret from the system. Please note that this action cannot be 
+        undone. Webhooks will continue to be sent without a secret - they will just not include the X-HMAC-SHA256-Signature 
+        header for verification purposes. This reduces the security of webhook communications and should only be used when 
+        signature verification is not required.
+      security:
+        - OAuth2: []
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: |
+            Unauthorized. When authentication is possible but has failed or has not yet been provided.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorType: Unauthorized
+                    message: Access token is invalid.
+                success: false
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-404
+                    errorType: NotFound
+                    message: "There is no shared secret currently configured for the webhooks. Please refer to the API docs for how to create one"
+                success: false
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                errors:
+                  - errorCode: EXP-500
+                    errorType: InternalServerError
+                    message: Sorry something went wrong.
+                success: false
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-uk-api.experian.com/oauth2/v1/token
+          scopes: {}
+
+  schemas:
+    GetDocumentsResponse:
+      type: object
+      description: Response containing documents for a customer application and party.
+      properties:
+        message:
+          type: string
+          description: Response message.
+          nullable: true
+        customerApplicationId:
+          type: string
+          description: The customer application identifier.
+          nullable: true
+        correlationId:
+          type: string
+          description: Correlation identifier for tracking.
+          nullable: true
+        partyId:
+          type: integer
+          format: int32
+          description: The party identifier.
+        totalFilesForThisApplicant:
+          type: integer
+          format: int32
+          description: Total number of files expected for this applicant.
+        submittedFilesCountForThisApplicant:
+          type: integer
+          format: int32
+          description: Number of files already submitted for this applicant.
+        remainingFilesCountForThisApplicant:
+          type: integer
+          format: int32
+          description: Number of files remaining to be submitted for this applicant.
+        status:
+          type: string
+          description: Overall processing status.
+          nullable: true
+        documents:
+          type: array
+          description: List of documents.
+          items:
+            $ref: "#/components/schemas/DocumentInfo"
+          nullable: true
+      additionalProperties: false
+
+    DocumentInfo:
+      type: object
+      description: Information about an uploaded document.
+      properties:
+        documentId:
+          type: string
+          format: uuid
+          description: Unique identifier for the document.
+        documentType:
+          type: string
+          description: Type of document (e.g., Payslip).
+          nullable: true
+        fileName:
+          type: string
+          description: Name of the uploaded file.
+          nullable: true
+        createdDate:
+          type: string
+          format: date-time
+          description: Date and time when the document was created.
+        updatedDate:
+          type: string
+          format: date-time
+          description: Date and time when the document was last updated.
+          nullable: true
+      additionalProperties: false
+
+    DocumentDetails:
+      type: object
+      description: Represents the details of the document being uploaded.
+      properties:
+        totalApplicantsInCustomerApplicationId:
+          type: integer
+          format: int32
+        totalFilesForThisApplicant:
+          type: integer
+          format: int32
+        documentType:
+          type: string
+          description: "Type of document (e.g., Payslip)"
+          nullable: true
+        fileName:
+          type: string
+          nullable: true
+        documentContent:
+          type: string
+          format: byte
+          nullable: true
+        integrityValidationRules:
+          type: array
+          items:
+            type: string
+          nullable: true
+        completenessValidationRules:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+
+    UploadApiResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        message:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        customerApplicationId:
+          type: string
+          nullable: true
+        correlationId:
+          type: string
+          format: uuid
+          nullable: true
+        partyId:
+          type: integer
+          format: int32
+          nullable: true
+        totalApplicantsInCustomerApplicationId:
+          type: integer
+          format: int32
+          nullable: true
+        totalFilesForThisApplicant:
+          type: integer
+          format: int32
+          nullable: true
+        submittedFilesCountForThisApplicant:
+          type: integer
+          format: int32
+          nullable: true
+        remainingFilesCountForThisApplicant:
+          type: integer
+          format: int32
+          nullable: true
+        documents:
+          type: array
+          nullable: true
+          items:
+            type: object
+            additionalProperties: true
+
+    ErrorResponse:
+      title: ErrorResponse
+      type: object
+      properties:
+        errors:
+          type: array
+          description: Array of error response items.
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+              errorType:
+                type: string
+              message:
+                type: string
+        success:
+          type: boolean
+          default: false
+
+    WebhookRequest:
+      type: object
+      properties:
+        webhookName:
+          type: string
+          nullable: true
+        webhookCallbackUrl:
+          type: string
+          nullable: true
+        eventTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+      additionalProperties: false
+
+    WebhookResponse:
+      type: object
+      properties:
+        webhookId:
+          type: string
+          format: uuid
+        webhookName:
+          type: string
+          nullable: true
+        webhookCallbackUrl:
+          type: string
+          nullable: true
+        eventTypes:
+          type: array
+          items:
+            type: string
+          nullable: true
+        datetimeCreated:
+          type: string
+          format: date-time
+        datetimeUpdated:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+
+    WebhookSecretResponse:
+      type: object
+      properties:
+        sharedKey:
+          type: string
+          format: uuid
+        datetimeCreated:
+          type: string
+          format: date-time
+        datetimeUpdated:
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false

@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Experian</RootNamespace>
+    <PackageId>ExperianClient</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Tuomas Hietanen</Authors>
+    <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
+    <Description>Client for the most used Experian UK APIs (not every Experian service): Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED and IDP.</Description>
+    <PackageTags>experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>v1.0.0:
+- ADDED: generated clients for Delphi Select v2.5, KYC and PEP/sanctions, PowerCurve Customer Acquisition v1.21, Work Report, NED and IDP, each with its own types
+- ADDED: Api modules with Task/Result calls per product, including Delphi Select AuthPlus (in an application, second phase, stand-alone)
+- ADDED: OAuth password-flow token cache shared by all products; renews a minute before expiry, one fetch for concurrent callers, one retry on 401
+- ADDED: Endpoints.sandbox / production; ExperianClient over a caller-owned HttpMessageHandler
+- ADDED: Webhook.verify for IDP X-HMAC-SHA256-Signature deliveries
+- ADDED: bundled specs edited for SwaggerProvider 4.2.1: amounts as double, quoted numeric enums, Delphi view flags as strings, Work Report discriminator, PowerCurve examples and reference name clashes
+- ADDED: bundled specs corrected to the sandbox's answers: KYC missing fields and dates, NED list, IDP event types, Work Report postCode, PowerCurve two-digit-year dates
+- ADDED: lenient response reading: unquoted strings, quoted numbers, "" and "-" as None, case-insensitive names, double-encoded bodies
+- ADDED: JSON sent as application/json without charset (the gateway refuses charset=utf-8)
+- ADDED: Api.WorkReport.requestReportAsync returns the report PDF bytes
+- ADDED: string path parameters are escaped as one segment; empty, "." and ".." are InvalidRequest and not sent
+- ADDED: Credentials and AccessToken print without the password, client secret or token
+- ADDED: SearchType (Quotation = soft footprint, CreditApplication = hard, OtherSearch), Api.DelphiSelect.setSearchType and convertQuoteAsync
+- ADDED: CreditAccounts.ofOutput / amountOwed / outstanding / totalOwed: typed credit accounts and the applicant's debt list from Delphi Select, defaults at their current default balance</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Providers.fs" />
+    <Compile Include="Client.fs" />
+    <Compile Include="Delphi.fs" />
+    <Compile Include="Api.fs" />
+    <Compile Include="Webhook.fs" />
+    <CustomAdditionalCompileInputs Include="Schemas\*.yaml;Schemas\*.yml" />
+    <InternalsVisibleTo Include="ExperianClient.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SwaggerProvider" Version="4.2.1" />
+    <PackageReference Update="FSharp.Core" Version="10.1.401" />
+  </ItemGroup>
+
+</Project>

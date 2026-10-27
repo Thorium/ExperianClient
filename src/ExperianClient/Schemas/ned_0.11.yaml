@@ -1,0 +1,434 @@
+openapi: 3.0.0
+info:
+  title: National Employer Database (NED) API
+  description: |
+    # Overview
+     
+     The National Employer Database (NED) is a structured, searchable database of over 4.7 million UK employers created using Experian’s business information. It covers 99% of UK employees and includes associated metadata.<br><br>
+     
+     Integration of the NED APIs into new or existing ‘Employer Name’ data capture fields help you streamline your onboarding process by enabling your customers, to quickly search and select their employer’s name within seconds.  Similar in operation to a postcode look-up, choosing the employer’s name in a structured format, removing the risk of typing errors and reducing keystrokes.<br><br>
+     
+     When implementing our [Work Report solution](https://developer.experian.com/products/uk/verifications-api/work-report-api), optional use of the NED APIs supports Work Report matching processes by providing the customer selected structured employer name and resultant employer identifier.  
+
+    # Access restrictions
+      
+      Access to the API, data fields and sections is administrated by Experian. 
+      
+     # Format
+     The APIs default to JSON. Requests should specify [content type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type) as  `application/json`.
+  version: '0.6'
+
+    
+servers:
+  
+  - url: https://sandbox-uk-api.experian.com
+    description: Sandbox
+    
+paths:
+  /cis/verifications/ned/v1/employers:
+    get:
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: >-
+            The search text to find i.e. full or partial employer name.
+        - in: query
+          name: $top
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+          description: >-
+            The maximum number of results to return.
+        - in: header
+          name: Session-Id
+          required: false
+          schema:
+           type: string
+           format: guid
+          description: An id in guid format that links together multiple search and can be used to improve search results. 
+      tags:
+        - Employer Search
+      summary: Query Employers
+      description: >-
+        <div>
+        The ‘employers’ endpoint includes the following parameters: ‘name’, ‘highlight’ and ‘$top’. You can supply the ‘employer name’ in the ‘name’ parameter and the best matching employers from the NED are returned. The results are ordered based on the likelihood of a positive match. Up to 100 results are returned, however, the number of results returned can be restricted using the ‘$top’ parameter.<br> <br>
+        
+        As well as matching employer name(s), the endpoint also returns an ‘employerId’ for every employer returned in the response. This is a  required parameter for the optional ‘Query Employers (employerId) endpoint below. The ‘highlight’ parameter shows how much the returned ‘employer names’ (partly or fully) match the name supplied in the request. Optionally, the address of the employer's headquarters, is also returned if available.  
+      security:
+        - OAuth2: []
+      responses:
+        '200':
+          $ref: '#/components/responses/EmployersSuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /cis/verifications/ned/v1/employers/{employerId}:
+    get:
+      parameters:
+        - in: path
+          name: employerId
+          required: true
+          schema:
+            type: string
+            minLength: 9
+            maxLength: 9
+          description: >-
+            The employer id returned in the query employers API call.
+        - in: header
+          name: Session-Id
+          required: false
+          schema:
+           type: string
+           format: guid
+          description:  An id in guid format that links together multiple search and can be used to improve search results. 
+          
+      tags:
+        - Employer Search
+      summary: Query Employers {employerId}
+      description: >-
+        <div>
+        This optional endpoint uses the associated ‘employerId’ from the employer name selected by the customer when using the ‘Query Employers’ endpoint.  This is a single parameter input which allows you to retrieve specific information associated to the respective ‘employerId’ (employer).  <br><br>
+
+        The information returned includes:<br>
+
+          * Employer name, based on the Employer Id you supplied. <br>
+          * The ‘key’ type required to complete the Work Report (WR) verification for the customer for the specific employer selected by the customer (e.g. ‘nationalInsuranceNumber’). <br> 
+          * A ‘friendlyName’ name for the ‘key’ field above that is easy to understand by the customer (e.g. ‘National Insurance Number’). <br> 
+          * Consent ‘wording’ - the generic consent text in html format that can be used within an explicit consent customer journey.  Alternatively, bespoke consent text can be agreed with Experian. <br> 
+          * Consent ‘version’ – the current consent version control for the generic consent text. <br> 
+          * The first line (‘line1) of the employer’s head office address (where available). <br>
+          * The Postcode (‘postcode’) of the employer’s head office address (where available). <br>
+      security:
+        - OAuth2: []    
+      responses:
+        '200':
+          $ref: '#/components/responses/EmployerIdSuccessResponse'
+        '400':
+          $ref: '#/components/responses/EmployerBadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: /oauth2/v1/token
+          scopes: {}
+  schemas:
+    ErrorResponse:
+      title: ErrorResponse
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Errors'
+          description: Array of Error responses.
+        success:
+          type: boolean
+          default: false
+    Errors:
+      type: object
+      properties:
+        errorcode:
+          title: errorCode
+          type: string
+          description: >-
+            Indicates the status code.
+        errorType:
+          title: errorType
+          type: string
+          description: >-
+            Indicates the type of the error.
+        message:
+          title: message
+          type: string
+          description: >-
+           Indicates the reason for the failure.
+    address:
+      title: address
+      description: The address of the employer's head quarter.
+      type: object
+      properties:
+        line1:
+          title: line1
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: >-
+            The first line of the address of the employer's head quarter.
+        postcode:
+          title: postcode
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: >-
+            Postcode of the employer's head quarter.
+    workReport:
+      title: workReport
+      type: object
+      properties:
+        consent:
+          $ref: '#/components/schemas/consent'
+        available:
+          type: boolean
+          enum:
+            - true
+            - false
+          description: >-
+            REDUNDANT FIELD – DO NOT USE.  PLEASE SPEAK TO THE VERIFICATIONS PRODUCT & SALES TEAM FOR FURTHER INFORMATION IF REQUIRED.
+        dataOptions:
+         type: array
+         minItems: 1
+         maxItems: 6
+         items:
+          $ref: '#/components/schemas/dataOptions'
+        additionalKeys:
+           type: array
+           minItems: 0
+           maxItems: 2
+           items:
+             $ref: '#/components/schemas/additionalKeys'
+    dataOptions:
+        type: object
+        properties:
+          option:
+            title: option
+            type: string
+            enum:
+             - Basic Employment
+             - Basic Employment & Income
+             - 1 Month Payslip
+             - 3 Plus Months of Payslip Upto 12 Months
+             - All Available Payslips
+            description: >-
+              The data options available through Work Report for the employer.
+          code:
+            title: code
+            type: string
+            enum:
+             - BE
+             - BEI
+             - M1
+             - M3+
+             - BE+
+            description: >-
+              A code for the data options available through Work Report for the employer. When requesting M3 or M12 in a Work Report request, M3+ should be used.
+    additionalKeys:
+        type: object
+        description: >-
+          The key(s) that must be supplied in a Work Report request to access data for this employer.<br/>
+
+          If two are listed ideally supply both. If only one can be supplied, supply National Insurance Number.
+        properties:
+          key:
+            title: key
+            type: string
+            enum:
+             - NationalInsuranceNumber
+             - PayrollId
+            description: The key that must be supplied.
+          friendlyName:
+            title: friendlyName
+            type: string
+            minLength: 1
+            maxLength: 255
+            description: >-
+               A friendly name for the key that the applicant may be more likely to recognise. Most useful for Payroll ID.           
+    consent:
+      title: consent
+      type: object
+      properties:
+        version:
+          title: version
+          type: number
+          format: double
+          description: >-
+            The consent version id that is needed for the Work Report request if you are using the consent ‘wording’ below as part of your customer consent process.
+        wording:
+          title: wording
+          type: string
+          description: >-
+            The consent text that can be used and displayed to support explicit Work Report consent capture processes.  Client specific consent text can be used, but this must be agreed with Experian beforehand.
+    EmployersSuccessResponse:
+      title: Employers Success Response
+      properties:
+        name:
+          title: name
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: >-
+            The name of the employer.
+        employerId:
+          title: employerId
+          type: string
+          minLength: 9
+          maxLength: 9
+          description: >-
+            Experian generated id for the employer. This is required in subsequent requests.
+        address:
+          $ref: '#/components/schemas/address'
+        highlight:
+          title: highlight
+          type: string
+          minLength: 0
+          maxLength: 2000
+          description: >-
+            A list of number ranges identifying the characters in the employer name that directly match the search text.<br/>
+            For example; "0-2, 3-5" indicates that characters 1,2 and 4,5 directly match the search text. 
+    EmployerIdSuccessResponse:
+      title: Employer Success Response
+      properties:
+        name:
+          title: name
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: >-
+            Name of the employer.
+        employerId:
+          title: employerId
+          type: string
+          minLength: 9
+          maxLength: 9
+          description: >-
+            Experian generated id for the employer. This is required in subsequent requests.
+        workReport:
+          $ref: '#/components/schemas/workReport'
+        address:
+          $ref: '#/components/schemas/address'
+  responses:
+    InternalServerErrorResponse:
+        description: >-
+           Internal server error </br> This message is returned when the server encounters an unexpected error.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+            example:
+              errors:
+                - errorCode: EXP-500
+                  errorType: InternalServerError
+                  message: Sorry something went wrong.
+              success: false
+    NotFoundResponse:
+      description: >-
+        Not found <br/> The requested resource could not be found but may be
+        available again in the future. Subsequent requests by the client are
+        permissible.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+              - errorCode: EXP-404
+                errorType: NotFound
+                message: Employer not found
+            success: false
+    UnauthorizedResponse:
+      description: >-
+        Unauthorized</br> When authentication is possible but has failed or not yet been provided. The response must include a WWW-Authenticate header field containing a challenge applicable to the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+              - errorType: Unauthorized
+                message: Access token is invalid.
+            success: false
+    BadRequestResponse:
+      description: >-
+        Bad Request <br/> The request cannot be fulfilled due to bad syntax.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+              - errorCode: EXP-400
+                errorType: BadRequest
+                message: Invalid value 'abc' for $top query option found. The $top query option requires a non-negative integer value.
+            success: false
+            
+    EmployerBadRequestResponse:
+      description: >-
+        Bad Request <br/> The request cannot be fulfilled due to bad syntax.
+      content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+            example:
+              errors:
+                - errorCode: EXP-400
+                  errorType: BadRequest
+                  message: Invalid EmployerIdentifier.
+              success: false
+
+    EmployersSuccessResponse:
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/EmployersSuccessResponse'
+          examples:
+            Employersrecord:
+              summary: List of the employers
+              value:
+                - name: TESTERWORLD LTD
+                  employerId: TSTR84893
+                  address:
+                    line1: 20 Kensington High Street
+                    postcode: W8 5JH
+                  highlight: 0-2,3-5
+                - name: TESTERMANS LTD LTD
+                  employerId: TSTR98430
+                  highlight: 0-2,3-5
+    EmployerIdSuccessResponse:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EmployerIdSuccessResponse'
+          examples:
+            Employersrecord with refrence to employerId:
+              summary: Record of the employer
+              value:
+                name: Gislason - Erdman
+                employerId: GSLS00001
+                workReport:
+                  consent:
+                    version: '1.0'
+                    wording: >-
+                     Experian has been asked by TestClient Ltd to electronically verify your employment and salary information with your employer or payroll provider and share it with them. We need your consent to do this, and by consenting you are also agreeing for Experian to use your information for other purposes explained in the Experian Privacy Policy (https://affordabilitypassport.experian.co.uk/assets/docs/privacypolicy/workreport-experian-affordability-passport-privacy-policy.pdf). You can choose not to give consent, but we’ll be unable to provide this service and you’ll need to speak to TestClient Ltd about an alternative way to verify your information.
+                  available: true
+                  dataOptions:
+                    - option: Basic Employment
+                      code: BE
+                    - option: Basic Employment & Income
+                      code: BEI
+                  additionalKeys:
+                  - key: nationalInsuranceNumber
+                    friendlyName: National Insurance Number
+                address:
+                  line1: 20 Kensington High Street
+                  postcode: W8 5JH

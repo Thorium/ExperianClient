@@ -1,0 +1,3235 @@
+openapi: 3.0.1
+info:
+  title: Know Your Customer (Consumer) Demo
+  description: Dummy endpoint serving example responses from Crosscore Identity Services' Know Your Customer (Consumer)
+  contact:
+    name: Crosscore Identity Onboarding Support
+    email: idfnikeonboardingsupport@experian.com
+  version: '2.0'
+servers:
+  - url: https://sandbox-uk-api.experian.com/da/ccis-devportalapis/
+paths:
+  /v1/KYC:
+    post:
+      tags:
+        - KYC Consumer
+      summary: CrossCore Submit
+      description: CrossCore API Submit Request
+      parameters:
+        - name: AcceptLanguage
+          in: header
+          schema:
+            type: string
+      requestBody:
+        description: CrossCore Request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+            examples:
+              Error-BlankClientReferenceId:
+                description: 'Error Scenario: A request with a blank Client Reference ID returns an error.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: ''
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-01'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Error-FormatAndLength:
+                description: 'Error Scenario: Invalidities in postcode and county return individual errors, details in clientResponsePayload.decisionElements.warningsErrors.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-01'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE@
+                            postal: AB51 3XXasdgr
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Error-PostCode:
+                description: 'Error Scenario: Postcode with invalid characters returns an error.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-01'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX@$
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Error-RequestType:
+                description: 'Error Scenario: Invalid request type returns an error'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCC
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-01'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Input-CharacterFlattening:
+                description: Demonstrates the character flattening process requests undergo before data lookup. Mr NéIL CÄTHPOLé. See clientResponsePayload.decisionElements.warningsErrors for more information
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-01'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NéIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CÄTHPOLé
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Continue_Advanced_Tier:
+                description: 'Mr Neil Cathpole returns CONTINUE, identity verified.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-Devportal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-25'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUAR
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURI
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Continue_Essentials_Tier:
+                description: 'Mr Neil Cathpole returns CONTINUE, identity verified.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-Devportal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-22'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                          - id: MAINAPPADDRESS_2
+                            addressIdentifier: ADDRESS_2
+                            indicator: RESIDENTIAL
+                            addressType: PREVIOUS
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2018-01-01'
+                              yearFrom: '2018'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2019-01-01'
+                              yearTo: '2019'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Continue_Pro_Tier:
+                description: 'Mr Neil Cathpole returns CONTINUE, identity verified.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-16'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-NoDecision:
+                description: 'Certain error scenarios return NODECISION, when data retrieval has failed.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-16'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE@
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: '123456789'
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasContinue_PEPSanc_Refer:
+                description: 'Call to 3 services. KYC returns Continue, Contras returns continue, PEPs/Sanctions service returns refer'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-Devportal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2023-05-16T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: Warwick
+                      - option: ACCOUNT_OVERRIDE
+                        value: MOCK1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1967-03-30'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: PATTRICK
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEROGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-Address:
+                description: 'Mr Neil Cathpole with an overall address compare score below 95 returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-Devportal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1969-01-26'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUAR
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURI
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-AgeOfAccounts:
+                description: 'Mr James Grove with no Primary Data Source records older than 3 months returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: 9541727e9e604a64b5ffe9f868b010
+                    requestType: UKCCIS-KYCContraOnly-dev
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1978-04-07'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: JAMES
+                              middleNames: RUBEL
+                              surName: GROVE
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            buildingName: HORNCHURCH DELIVERY OFFICE
+                            buildingNumber: '54'
+                            street: WAARDEN ROAD
+                            postTown: CANVEY ISLAND
+                            county: ESSEX
+                            postal: SS8 9AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-DriversLicence:
+                description: 'Mr Keith Bundhoo with incorrect and/or invalid drivers licence details returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1967-02-23'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: KEITH
+                              middleNames: ''
+                              initials: ''
+                              surName: BUNDHOO
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: Sycamore Farm
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: WELFORD ROAD
+                            county: LEICESTER
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: '1234'
+                            documentType: DRIVER_LICENSE
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-Mortality:
+                description: 'Mr Benjamin Aliahmad with the existance of a Mortality record returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1991-02-24'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: BENJAMIN
+                              middleNames: ''
+                              initials: L
+                              surName: ALIAHMAD
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: LANTERN HOUSE
+                            buildingNumber: ''
+                            street: CONNAUGHT MEWS
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDON
+                            county: ''
+                            postal: SE18 6SU
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-Passport:
+                description: 'Mr Keith Bundhoo with an invalid passport number AND an expiry date not in the future returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1967-02-23'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: KEITH
+                              middleNames: ''
+                              initials: ''
+                              surName: BUNDHOO
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: Sycamore Farm
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: WELFORD ROAD
+                            county: LEICESTER
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-2
+                            documentNumber: '1234578'
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-Velocity:
+                description: 'Mr Oliver Gibb with application details matched to 1 or more previous applications in the configured Long Timeframe returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-Devportal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                      - option: ACCOUNT_OVERRIDE
+                        value: MOCK1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1966-07-14'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: OLIVER
+                              middleNames: ''
+                              initials: ''
+                              surName: GIBB
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: FLAT 11
+                            buildingName: ''
+                            buildingNumber: '3'
+                            street: LEWIS ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: NORTHALLERTON
+                            county: NORTH YORKSHIRE
+                            postal: DL6 3RX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCRefer_ContrasContinue:
+                description: 'Mrs Emma Mark with incorrect DoB returns REFER, Limited verification of Identity.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1987-09-02'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mrs
+                              firstName: EMMA
+                              middleNames: ''
+                              initials: ''
+                              surName: MARK
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '8'
+                            street: OAKROYD ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: BRADFORD
+                            county: WEST YORKSHIRE
+                            postal: BD6 1RF
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCRefer_ContrasRefer:
+                description: 'Mr Keith Bundhoo with an incorrect date of birth and invalid driver''s licence details returns REFER, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1967-03-10'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: KEITH
+                              middleNames: ''
+                              initials: ''
+                              surName: BUNDHOO
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: Sycamore Farm
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: WELFORD ROAD
+                            county: LEICESTER
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: '1234'
+                            documentType: DRIVER_LICENSE
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Stop:
+                description: 'Mr Janos Abyan returns STOP, Unable to verify Identity.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-QA
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1984-01-14'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: JANOS
+                              middleNames: ''
+                              initials: ''
+                              surName: ABYAN
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '5'
+                            street: HONEYBORNE ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: SUTTON COLDFIELD
+                            county: WEST MIDLANDS
+                            postal: B75 6BT
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Stop_KYCContinue_ContrasContinue_PEPSanc_Stop:
+                description: 'Call to 3 services. KYC returns Continue, Contras returns continue, PEPs/Sanctions service returns stop'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-Devportal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2023-05-16T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: Warwick
+                      - option: ACCOUNT_OVERRIDE
+                        value: MOCK1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: '1967-07-30'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: PAUL
+                              middleNames: ''
+                              initials: ''
+                              surName: PATTRICK
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEROGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Continue_KYCContinue_ContrasContinue-ExPIN:
+                description: 'Mr Ronald Diine returns CONTINUE when PIN Mismatch rules are not triggered, No Contra-indicator alerts.'
+                value:
+                  header:
+                    tenantId: 9541727e9e604a64b5ffe9f868b010
+                    requestType: UKCCIS-KYCContraOnly-Test
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2025-06-25T16:34:39Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control: []
+                    externalLookups:
+                      - source: Experian
+                        parameter: ExPIN
+                        contactId: MAINCONTACT_1
+                        addressId: MAINAPPADDRESS_1
+                        externalData:
+                          - fieldName: PIN
+                            fieldValue: '10241'
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            typeOfPerson: APPLICANT
+                            personIdentifier: P12345
+                            dateOfBirth: '1962-05-14'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: RONALD
+                              middleNames: ''
+                              initials: ''
+                              surName: DIINE
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            buildingName: ''
+                            buildingNumber: 26A
+                            street: PENINSULA TOWER
+                            postTown: KNIGHTSBRIDGE
+                            county: LONDON
+                            postal: SW7 1SG
+                            countryCode: GBR
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_KYCContinue_ContrasRefer-ExPIN:
+                description: 'Miss Amanda Hussein returns REFER when PIN Mismatch rule triggers, Contra-indicators alert(s) requiring referral.'
+                value:
+                  header:
+                    tenantId: 9541727e9e604a64b5ffe9f868b010
+                    requestType: UKCCIS-KYCContraOnly-Test
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2025-06-25T16:47:14Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control: []
+                    externalLookups:
+                      - source: Experian
+                        parameter: ExPIN
+                        contactId: MAINCONTACT_1
+                        addressId: MAINAPPADDRESS_1
+                        externalData:
+                          - fieldName: PIN
+                            fieldValue: '10265'
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            typeOfPerson: APPLICANT
+                            personIdentifier: ''
+                            dateOfBirth: '1985-12-09'
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MISS
+                              firstName: AMANDA
+                              middleNames: ''
+                              initials: ''
+                              surName: HUSSEIN
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            buildingName: ''
+                            buildingNumber: '12'
+                            street: GORSE HILL LANE
+                            postTown: VIRGINIA WATER
+                            county: SURREY
+                            postal: GU25 4AJ
+                            countryCode: GBR
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+          text/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+        '500':
+          description: Server Error
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+            text/json:
+              schema:
+                type: string
+  /v1/PEPSANCTIONS:
+    post:
+      tags:
+        - PEPs and Sanctions Standalone
+      summary: CrossCore Submit
+      description: CrossCore API Submit Request
+      parameters:
+        - name: AcceptLanguage
+          in: header
+          schema:
+            type: string
+      requestBody:
+        description: CrossCore Request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+            examples:
+              Outcome-Continue:
+                description: 'Mr Choudry Aamir returns no PEP/Sanction/Enforcement, overall decision: Continue'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-PSStandalone-DevPortal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: 
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: CHOUDRY
+                              middleNames: ''
+                              initials: ''
+                              surName: AAMIR
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '5'
+                            street: ''
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ''
+                            county: ''
+                            postal: B75 6BT
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: '123456789'
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-NoDecision:
+                description: 'Missing surname produces an invalid request, NO DECISION returned'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-PSStandalone-DevPortal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: 
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: JANOS
+                              middleNames: ''
+                              initials: ''
+                              surName: ''
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '5'
+                            street: ''
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ''
+                            county: ''
+                            postal: B75 6BT
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: '123456789'
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_Enforcement:
+                description: 'Enforcement record is found for Mr Riche Aaron. Rule LN_ENF_NN_NODOB_USA fired, overall REFER'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-PSStandalone-DevPortal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: 
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: RICHE
+                              middleNames: ''
+                              initials: ''
+                              surName: AARON
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: ''
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ''
+                            county: ''
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: 123456789c
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_PEP:
+                description: 'PEP found for Mr Fouj Aakash. Rule LN_PEP_NN_NODOB_INT fired, overall REFER'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-PSStandalone-DevPortal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: 
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: FOUJ
+                              middleNames: ''
+                              initials: ''
+                              surName: AAKASH
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: ''
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ''
+                            county: ''
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: 123456789c
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Refer_Sanction:
+                description: 'Sanction found for Mr Paul Hill. rule LN_SAN_EN_NODOB_OFACOTHER fired, overall REFER'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-PSStandalone-DevPortal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: 
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: PAUL
+                              middleNames: ''
+                              initials: ''
+                              surName: HILL
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: ''
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ''
+                            county: ''
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: 123456789c
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+              Outcome-Stop:
+                description: PEP found for Mr Arora Aakash. Different CrossCore configuration causes overall decision STOP
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: UKCCIS-PSStandalone-DevPortal
+                    clientReferenceId: TEST-123-124
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    control:
+                      - option: KYC_CLIENTTIERVERSION
+                        value: version1
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          personDetails:
+                            dateOfBirth: 
+                          typeOfPerson: APPLICANT
+                          personIdentifier: P12345
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MR
+                              firstName: ARORA
+                              middleNames: ''
+                              initials: ''
+                              surName: AAKASH
+                              namePrefix: ''
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '96'
+                            street: ''
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ''
+                            county: ''
+                            postal: LE2 7AB
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '365'
+                              unit: DAYS
+                        identityDocuments:
+                          - id: idDoc-1
+                            documentNumber: CATHP601100N999901
+                            documentType: DRIVER_LICENSE
+                          - id: idDoc-2
+                            documentNumber: 123456789c
+                            documentType: PASSPORT
+                            expiresDate: '1962-12-24'
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          knownCustomer: true
+          text/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+        '500':
+          description: Server Error
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+            text/json:
+              schema:
+                type: string
+components:
+  schemas:
+    Address:
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINADDRESS_1
+        addressType:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - PRIMARY
+            - SECONDARY
+            - REGISTERED_OFFICE
+            - TRADING
+            - CORRESPONDANCE
+            - LINKED
+            - RISK
+            - GARAGE
+            - INSPECTION_ADDRESS
+            - INCIDENT_LOCATION
+            - INSURED_ADDRESS
+            - BILLING
+            - DELIVERY
+            - COLLATERAL
+            - FINANCED
+            - SERVICE
+            - SUPPLY
+            - STORE_ADDRESS
+          type: string
+          description: A type for this Address - Only the first occurrence of an Address having AddressType of CURRENT will be considered. Failure to include an Address of such a type will likely cause an error as not Address information will be used at all
+          example: CURRENT
+        addressIdentifier:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: A1234
+        indicator:
+          enum:
+            - RESIDENTIAL
+            - COMMERCIAL
+            - NON_RESIDENTIAL
+            - OTHER
+            - UNKNOWN
+            - RURAL
+            - URBAN
+            - DELIVERY_SERVICE
+          type: string
+          description: Types of Address Indicator
+          example: RESIDENTIAL
+        poBoxNumber:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: PO BOX 1234
+        subBuilding:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 ./-]*$'
+          type: string
+          nullable: true
+          example: The Barn
+        buildingName:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 üéöáíäóßÜÉÖÁÍÄÓ&.!,‘’\-]*$'
+          type: string
+          nullable: true
+          example: Sycamore Farm
+        buildingNumber:
+          maxLength: 10
+          pattern: '^[-a-zA-Z0-9 ./-]*$'
+          type: string
+          nullable: true
+          example: '78'
+        street:
+          maxLength: 50
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: Acacia Avenue
+        street2:
+          maxLength: 50
+          pattern: '^[-a-zA-Z0-9 ''.,/#]*$'
+          type: string
+          nullable: true
+          example: Honeysuckle Lane
+        county:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9àáâäèéêëìíîïòóôöùúûüÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜ&\.!,-]+$'
+          type: string
+          nullable: true
+          example: Greater London
+        postTown:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 àáâäèéêëìíîïòóôöùúûüÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜ&\.!,-]*$'
+          type: string
+          nullable: true
+          example: London
+        postal:
+          maxLength: 10
+          pattern: '^[a-zA-Z0-9]+$'
+          type: string
+          nullable: true
+          example: SE1 8EZ
+        countryCode:
+          maxLength: 3
+          pattern: '^[a-zA-Z]*$'
+          type: string
+          nullable: true
+          example: GBR
+        locality:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 àáâäèéêëìíîïòóôöùúûüÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜ&\.!,-]*$'
+          type: string
+          nullable: true
+          example: South London
+        subLocality:
+          maxLength: 40
+          type: string
+          nullable: true
+        stateProvinceCode:
+          maxLength: 10
+          type: string
+          nullable: true
+        residentFrom:
+          $ref: '#/components/schemas/ResidentFrom'
+        residentTo:
+          $ref: '#/components/schemas/ResidentTo'
+        timeAtAddress:
+          $ref: '#/components/schemas/TimeAtAddress'
+      additionalProperties: false
+    Applicant:
+      required:
+        - consent
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINAPPLICANT_1
+        type:
+          enum:
+            - INDIVIDUAL
+            - JOINT
+            - COMMERCIAL
+            - POLICY_HOLDER
+            - MAIN_DRIVER
+            - ADD_DRIVER
+            - CLAIMANT
+          type: string
+          description: Types of Application
+          example: INDIVIDUAL
+        applicantType:
+          enum:
+            - APPLICANT
+            - CO_APPLICANT
+            - GUARANTOR
+            - MAIN_APPLICANT
+            - JOINT_APPLICANT
+            - ADDITIONAL_CARDHOLDER
+            - APPLYING_ORGANIZATION
+            - DIRECTOR
+            - COMPANY_SECRETARY
+            - POLICY_HOLDER
+            - ADDITIONAL_DRIVER
+            - CLAIMANT
+            - POLICY_HOLDER_ORGANIZATION
+            - CLAIMANT_ORGANIZATION
+            - CO_APPLICANT_ORGANIZATION
+            - GUARANTOR_ORGANIZATION
+            - OWNER_PERSON
+            - OWNER_ORGANIZATION
+            - REFERENCE
+            - SHAREHOLDER
+            - GUARANTOR_FULL
+          type: string
+          description: Types of Person
+          example: APPLICANT
+        consent:
+          type: boolean
+          example: true
+        consentId:
+          maxLength: 128
+          pattern: '^[-a-zA-Z0-9 _]*$'
+          type: string
+          nullable: true
+          example: uyciydfoudqwg912863017
+        consentTimeStamp:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2016-11-30T14:20:04Z'
+        contactId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINCONTACT_1
+        knownCustomer:
+          type: boolean
+          nullable: true
+          example: true
+      additionalProperties: false
+    Application:
+      type: object
+      properties:
+        applicants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Applicant'
+          nullable: true
+      additionalProperties: false
+    AuditLog:
+      type: object
+      properties:
+        eventType:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: JourneyStart
+        eventDate:
+          type: string
+          format: date-time
+          example: '2015-11-30T14:20:04Z'
+        eventDateTime:
+          type: string
+          format: date-time
+          example: '2015-11-30T14:20:04Z'
+        eventOutcome:
+          type: string
+          nullable: true
+      additionalProperties: false
+    ClientResponsePayload:
+      type: object
+      properties:
+        orchestrationDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrchestrationDecision'
+          nullable: true
+        decisionElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecisionElements'
+          nullable: true
+      additionalProperties: false
+    Contact:
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINCONTACT_1
+        person:
+          $ref: '#/components/schemas/Person'
+        addresses:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          nullable: true
+        identityDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentityDocument'
+          nullable: true
+        telephones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Telephone'
+          nullable: true
+      additionalProperties: false
+    ControlOption:
+      type: object
+      properties:
+        option:
+          type: string
+          description: Any string value is accepted.
+          nullable: true
+          example: KYC_CLIENTTIERVERSION
+        value:
+          maxLength: 20
+          type: string
+          nullable: true
+      additionalProperties: false
+    DataCount:
+      type: object
+      properties:
+        name:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: NoOfMatches
+        value:
+          type: number
+          format: double
+          example: 3
+      additionalProperties: false
+    Decision:
+      type: object
+      properties:
+        element:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: Element Name
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ACCEPT
+        reason:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: No Risk Detected
+      additionalProperties: false
+    DecisionElements:
+      type: object
+      properties:
+        decisionReason:
+          type: string
+          nullable: true
+          example: basic-rules-matrix
+        serviceName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: UK-AgeVerify
+        applicantId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: APPLICANT_1
+        decision:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          format: double
+          example: 999
+        appReference:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: REF123456
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+          nullable: true
+        warningsErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarningOrError'
+          nullable: true
+        otherData:
+          nullable: true
+        decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
+          nullable: true
+        dataCounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataCount'
+          nullable: true
+        auditLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+          nullable: true
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+          nullable: true
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Score'
+          nullable: true
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+          nullable: true
+      additionalProperties: false
+    ExternalDataElement1:
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldName_1
+        fieldValue:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldValue_1
+        externalDataName:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Detect
+        externalDataElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalDataElement2'
+          nullable: true
+      additionalProperties: false
+    ExternalDataElement2:
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldName_1
+        fieldValue:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldValue_1
+        externalDataName:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Detect
+      additionalProperties: false
+    ExternalLookup:
+      type: object
+      properties:
+        source:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: Experian
+        parameter:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Entire Application
+        externalData:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalDataElement1'
+          nullable: true
+        contactId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: reference to the payload contact.id details that belong to the ExternalLookup.
+        addressId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ADDRESS_1
+      additionalProperties: false
+    IdentityDocument:
+      required:
+        - documentNumber
+      type: object
+      properties:
+        id:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: DOCUMENT_1
+        documentNumber:
+          maxLength: 20
+          minLength: 0
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          example: '94440946'
+        documentType:
+          enum:
+            - PASSPORT
+            - DRIVER_LICENSE
+            - SSN
+            - TAX_NUMBER
+            - NATIONAL_INSURANCE
+            - IDCARD
+            - TRAVEL_VISA
+            - SIN
+            - MEDICARE
+            - VOTER_ID
+            - NATIONAL_ID
+            - PAN
+            - COMPANY_TAN
+            - ECI
+            - AADHAAR
+            - PERSONAL_NUMBER
+            - BMD_CERT
+            - MILITARY_ID
+            - NHS_CARD
+            - RESIDENCE_PERMIT
+            - HGV_LICENSE
+            - FIREARMS_CERTIFICATE
+            - MEDICAL_CARD
+            - OTHER
+            - CONCESSION_CARD
+            - CREDIT_CARD
+            - COUNCIL_RATES
+            - BANK_STATEMENT
+            - BENEFITS_LETTER
+            - UTILITY_BILL
+            - LETTER_SOLICITOR
+            - CENTRELINK
+            - CHEQUE
+            - GST
+            - MCA
+            - VEHICLE_REGISTRATION
+            - NIK
+            - KTP
+            - EVIDENCE
+            - RATION_CARD
+            - UNIVERSAL_ID
+          type: string
+          description: Types of Document
+          example: PASSPORT
+        expiresDate:
+          type: string
+          format: date
+          nullable: true
+          example: '2022-01-02T00:00:00.0000000'
+      additionalProperties: false
+    Match:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Name and Address Match
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MATCH
+      additionalProperties: false
+    Name:
+      required:
+        - firstName
+        - surName
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINPERSONNAME_1
+        type:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - MAIDEN
+            - ALIAS
+            - OTHER
+            - FATHER
+            - HUSBAND
+            - NAME
+            - NAME_NATIVE
+          type: string
+          description: Only the first occurrence of a name of type CURRENT will be considered. Failure to include a Name of this type will result in an error as no Name information will be used at all
+          example: CURRENT
+        title:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          nullable: true
+          example: MR
+        firstName:
+          maxLength: 40
+          minLength: 1
+          pattern: '^[-a-zA-Z0-9 üéöáíäóßÜÉÖÁÍÄÓ‘’\-,'']*$'
+          type: string
+          example: FRANK
+        middleNames:
+          maxLength: 100
+          pattern: '^[-a-zA-Z0-9 üéöáíäóßÜÉÖÁÍÄÓ‘’\-,'']*$'
+          type: string
+          nullable: true
+          example: SIMON
+        surName:
+          maxLength: 40
+          minLength: 1
+          pattern: '^[-a-zA-Z0-9 üéöáíäóßÜÉÖÁÍÄÓ‘’\-,'']*$'
+          type: string
+          nullable: true
+          example: SMITH
+        namePrefix:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: PROFESSOR
+        nameSuffix:
+          maxLength: 20
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          nullable: true
+          example: JR
+        initials:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 \'',]*$'
+          type: string
+          nullable: true
+          example: F S
+        nameCode:
+          enum:
+            - P
+            - E
+            - T
+            - O
+          type: string
+          description: Types of Person Name Codes for Aliases
+          example: E
+      additionalProperties: false
+    Options:
+      type: object
+      properties:
+        version:
+          maxLength: 90
+          type: string
+          nullable: true
+      additionalProperties: false
+    OrchestrationDecision:
+      type: object
+      properties:
+        sequenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- Strategy sequenceId --'
+        decisionSource:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- serviceName of the strategy decision point --'
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: '-- Outcome from strategy for service --'
+        decisionReasons:
+          maxItems: 90
+          type: array
+          items:
+            type: string
+          nullable: true
+        score:
+          type: number
+          format: double
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- text defined in strategy --'
+        nextAction:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- defined in strategy --'
+        appReference:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: REF1234567
+        decisionTime:
+          type: string
+          format: date-time
+          example: '2016-09-09T04:06:53Z'
+      additionalProperties: false
+    OverallResponse:
+      type: object
+      properties:
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          format: double
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: NO FRAUD
+        decisionReasons:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[DECISION_1,DECISION_2]'
+        recommendedNextActions:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Action_1,Action_2]'
+        spareObjects:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Spare_1,Spare_2]'
+      additionalProperties: false
+    Person:
+      type: object
+      properties:
+        typeOfPerson:
+          enum:
+            - APPLICANT
+            - CO_APPLICANT
+            - EMPLOYER
+            - WITNESS
+            - GUARANTOR
+            - RELATIVE
+            - PRINCIPAL
+            - ACCOUNTANT
+            - SALES_AGENT
+            - POLICY_HOLDER
+            - MAIN_DRIVER
+            - ADD_DRIVER
+            - CLAIMANT
+            - REFERENCE
+            - BROKER
+            - BUILDER
+            - CONVEYANCER
+            - CO_OWNER
+            - INTRODUCER
+            - NEXT_OF_KIN
+            - REFEREE
+            - SOLICITOR
+            - SUPPLIER
+            - VALUER
+            - VENDOR
+            - VENDOR_AGENT
+            - VENDOR_SOLICITOR
+            - OTHER
+            - INITIATING_AGENT
+            - PROCESSING_AGENT
+            - CONTACT
+          type: string
+          description: Types of Person
+        personIdentifier:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: P12345
+        personDetails:
+          $ref: '#/components/schemas/PersonDetails'
+        names:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Name'
+          nullable: true
+      additionalProperties: false
+    PersonDetails:
+      type: object
+      properties:
+        dateOfBirth:
+          type: string
+          description: 'A valid date of birth, that must not be a future date'
+          format: date
+          nullable: true
+          example: '1978-01-10T00:00:00.0000000'
+      additionalProperties: false
+    Record:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          nullable: true
+        externalLookups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalLookup'
+          nullable: true
+      additionalProperties: false
+    RequestHeader:
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '--Your Request Type provided by Delivery--'
+        clientReferenceId:
+          maxLength: 90
+          pattern: '^[-a-zA-Z0-9 _]+$'
+          type: string
+          nullable: true
+          example: '-- Your unique Client reference --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          description: Needs to be present but not populated; it will be replaced by the system
+          nullable: true
+          example: 
+        messageTime:
+          type: string
+          description: Must be populated with a valid DateTime
+          format: date-time
+          example: '2018-11-30T14:20:04Z'
+        tenantId:
+          type: string
+          nullable: true
+          example: '-- Your Tenant ID provided by delivery --'
+        txnId:
+          type: string
+          nullable: true
+        time:
+          type: string
+          nullable: true
+        options:
+          $ref: '#/components/schemas/Options'
+      additionalProperties: false
+    RequestMessage:
+      required:
+        - header
+        - payload
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/RequestHeader'
+        payload:
+          $ref: '#/components/schemas/RequestPayload'
+      additionalProperties: false
+    RequestPayload:
+      type: object
+      properties:
+        control:
+          type: array
+          items:
+            $ref: '#/components/schemas/ControlOption'
+          nullable: true
+        source:
+          enum:
+            - WEB
+            - FAX
+            - KIOSK
+            - MOBILE
+            - PHONE
+            - UNKNOWN
+            - POSTAL
+            - BRANCH
+            - DIRECT
+            - STORE
+            - STORE_INSTANT_CREDIT
+          type: string
+          example: WEB
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          nullable: true
+        application:
+          $ref: '#/components/schemas/Application'
+      additionalProperties: false
+    ResidentFrom:
+      type: object
+      properties:
+        fullDateFrom:
+          type: string
+          example: '2018-01-01T00:00:00.0000000'
+        yearFrom:
+          maxLength: 4
+          type: string
+          nullable: true
+          example: '2018'
+        monthFrom:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+        dayFrom:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+      additionalProperties: false
+    ResidentTo:
+      type: object
+      properties:
+        fullDateTo:
+          type: string
+          example: '2020-01-01T00:00:00'
+        yearTo:
+          maxLength: 4
+          type: string
+          nullable: true
+          example: '2020'
+        monthTo:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+        dayTo:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+      additionalProperties: false
+    ResponseHeader:
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- requestType supplied in request --'
+        clientReferenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- clientReferenceId supplied in request --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: '-- Experian generated unique reference --'
+        messageTime:
+          type: string
+          format: date-time
+          example: '-- dateTime of message --'
+        overallResponse:
+          $ref: '#/components/schemas/OverallResponse'
+        responseCode:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response code --'
+        responseType:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response type --'
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: '-- Response message --'
+        tenantID:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- tenantId supplied in request --'
+      additionalProperties: false
+    ResponseMessage:
+      type: object
+      properties:
+        responseHeader:
+          $ref: '#/components/schemas/ResponseHeader'
+        originalRequestData:
+          $ref: '#/components/schemas/RequestPayload'
+        clientResponsePayload:
+          $ref: '#/components/schemas/ClientResponsePayload'
+      additionalProperties: false
+    Rule:
+      type: object
+      properties:
+        ruleId:
+          maxLength: 200
+          type: string
+          nullable: true
+          example: SAFEIP
+        ruleName:
+          maxLength: 200
+          type: string
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        ruleScore:
+          type: number
+          format: double
+          example: 999
+        ruleText:
+          maxLength: 200
+          type: string
+          nullable: true
+          example: SUSPECT UP ADDRESS FOUND
+        rule:
+          type: string
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        value:
+          type: string
+          nullable: true
+          example: Rule Value 1234
+      additionalProperties: false
+    Score:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: SCORE NAME
+        score:
+          type: number
+          format: double
+          example: 999
+        type:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: SCORE
+      additionalProperties: false
+    Telephone:
+      type: object
+      properties:
+        number:
+          maxLength: 15
+          pattern: '^[\d{0,15}]*$'
+          type: string
+          nullable: true
+          example: '03444810800'
+      additionalProperties: false
+    TimeAtAddress:
+      type: object
+      properties:
+        value:
+          type: string
+          nullable: true
+          example: '24'
+        unit:
+          enum:
+            - MONTH
+            - YEAR
+            - DAYS
+            - HOUR
+          type: string
+          description: 'unit type for the TimeAtAddress - if ommitted, will default to MONTH'
+          example: MONTH
+      additionalProperties: false
+    WarningOrError:
+      type: object
+      properties:
+        responseType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Info
+        responseCode:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: INF001
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: date of birth not provide
+      additionalProperties: false
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-uk-api.experian.com/oauth2/v1/token
+          scopes:
+            user: user scope
+security:
+  - OauthSecurity:
+      - user

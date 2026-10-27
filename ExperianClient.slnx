@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ExperianClient/ExperianClient.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ExperianClient.Tests/ExperianClient.Tests.fsproj" />
+  </Folder>
+</Solution>

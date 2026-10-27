@@ -1,0 +1,2514 @@
+openapi: 3.0.0
+info:
+  title: Verifications - Work Report API
+  description: "# Overview\n\n
+   Work Report is a quick, simple and secure way of PAYE employed customers to consent to share their income and employment information immediately with the organisations they choose, directly from their employer\u2019s payroll/benefit provider(our data partner network), in seconds.\n
+
+    \ The Work Report APIs provide a single-entry point to allow you to search our Work Report data partner network using the customer consent and their supplied personal information.  Where a match to the customer is found, their respective income and employment information is returned.  This includes:\n\n
+    * Employment information such as start date, job title etc.\n
+    * High level salary information (Net and Gross - Year to date and 12-month rolling)\n
+     * Pay frequency\n * Payslip information, including:\n
+      \ * Pay period Net pay \n  \ * Pay period payments \n  \ * Pay period deductions      \n\n\
+
+    Our optional proprietary payslip categorisation engine (CaaSPay) standardises nonstandard payment and deduction line-item descriptions to support complex income verification automation.\n\n
+    # Access restrictions\n\
+    \n  Access to the API, data fields and sections is administrated by Experian.\n\
+    \n # Format\n The APIs default to JSON. Requests should specify [content type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type)\
+    \ as  `application/json`.\n"
+  version: '1.0'
+servers:
+- url: https://sandbox-uk-api.experian.com
+  description: Sandbox
+paths:
+  /cis/verifications/work-report/v1/persons:
+    post:
+      tags:
+      - Work Report
+      summary: Create person
+      description: "This endpoint is used to create a ‘person record’ (i.e. a record with the applicant’s key personal information) for which the Work Report request for income and employment data will be made.  The main response output from the ‘Create Person’ endpoint is a unique ‘id’ that is required to make the final Work Report request using the ‘Connect Work Report’ (persons/{id}/connect) endpoint. \n\nThis API requires the below key information: \n\n
+        \ * First name \n\ * Last name \n\ * Date of birth \n \ * National Insurance Number/Payroll ID. \n \ * Address (House Name/Number, Postcode)"
+      security:
+      - OAuth2: []
+      parameters:
+      - in: header
+        name: Accept
+        description: Format expected for the request.
+        required: true
+        schema:
+          type: string
+          enum:
+          - application/json
+      - in: header
+        name: Content-Type
+        description: Format expected for the response.
+        required: true
+        schema:
+          type: string
+          enum:
+          - application/json
+      requestBody:
+        $ref: '#/components/requestBodies/CreatePerson'
+      responses:
+        '201':
+          $ref: '#/components/responses/PersonSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /cis/verifications/work-report/v1/persons/{id}/connect:
+    post:
+      tags:
+      - Work Report
+      summary: Connect Work Report
+      description: "With the necessary consent captured for the customer and the person ‘id’ generated from the ‘Create Person’ endpoint, the ‘Connect Work Report’ endpoint is used to initiate a connection to the Work Report network of data partners (e.g. payroll provider, benefits provider etc.).  This is the main request endpoint to, if available, obtain the relevant income and employment information for the customer.  The ‘dataOption’ in the request and data available against the customer determines the level of data returned.\n\n
+
+        The income and employment data is returned only when there is a positive match between the customer data associated to the ‘id’ from the ‘Create Person’ endpoint and the personal data returned by the data partner (e.g. the data held on the payroll system).
+        \n\n\
+        **Important Note:**\n\nThe following new fields require our Data Partners to update their integrations in order for the new data items to be included in the response payload. Clients will be notified through our standard release process when these changes are scheduled to take effect. \n\n**unit,\
+        \ isNotional, isSubjectToTax, isSubjectToEENI, isDirector, taxCode, paymentMethod,
+        \ taxableEarningsYTD, grossEarningsYTD, isDeductedBeforeTax, isDeductedBeforeEENI**\n"
+      security:
+      - OAuth2: []
+      parameters:
+      - in: header
+        name: Accept
+        description: Format expected for the request.
+        required: true
+        schema:
+          type: string
+          enum:
+          - application/json
+      - in: header
+        name: Content-Type
+        description: Format expected for the response.
+        required: true
+        schema:
+          type: string
+          enum:
+          - application/json
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: The id of the person, which is created.
+      requestBody:
+        $ref: '#/components/requestBodies/ConnectWorkReport'
+      responses:
+        '200':
+          $ref: '#/components/responses/ConnectWorkReportResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponseConnectWorkReport'
+        '422':
+          $ref: '#/components/responses/UnprocessableResponseWorkReport'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+  /cis/verifications/work-report/v1/persons/{id}/reports:
+    post:
+      tags:
+      - Work Report
+      summary: Retrieve Work Report PDF
+      description: "Where a successful response has been returned on the ‘Connect Work Report’ endpoint, this endpoint can then be used, if required, to retrieve an Experian standardised PDF payslip representation of the Work Report result data. \n\n
+        The ‘dataOption’ in the request allows you to restrict the data level returned in the PDF output if required (e.g. 12 months of payslip data may have been returned via the ‘Connect Work Report’ endpoint, but you only wish the PDF output to contain 3 months of payslip data).  The maximum level of data returned will only ever be the level of data that was returned in the ‘Connect Work Report’ endpoint response."
+      security:
+      - OAuth2: []
+      parameters:
+      - in: header
+        name: Accept
+        description: Format expected for the request.
+        required: true
+        schema:
+          type: string
+          enum:
+          - application/json
+      - in: header
+        name: Content-Type
+        description: Format expected for the response.
+        required: true
+        schema:
+          type: string
+          enum:
+          - application/pdf
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: The ID of the person whose report is being retrieved.
+      requestBody:
+        description: Request body for retrieving a Work Report PDF.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequestBody'
+            examples:
+              RetrieveWorkReport:
+                summary: Retrieve full work report
+                value:
+                  dataOption: M3+
+      responses:
+        '200':
+          description: Successful retrieval of Work Report PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+              examples:
+                WorkReportPDF:
+                  summary: Sample Work Report PDF
+                  value: 'The requested Work Report PDF will be provided on the response to ‘Retrieve Work Report PDF’ endpoint where successful.  To view an example of the Work Report PDF output please click [here](https://gdp.internal.apicoe.uat.coaas.net/system/files/2025-10/workreport-sharon-rajapaksa-10-09-2025.pdf).'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: /oauth2/v1/token
+          scopes: {}
+  schemas:
+    CreatePersonRequestBody:
+      title: Create Person Request Body
+      description: Create a person record (firstName, lastName and dob are mandatory)
+      properties:
+        firstName:
+          title: firstName
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: First name of the person being verified.
+        middleName:
+          title: middleName
+          type: string
+          minLength: 0
+          maxLength: 50
+          description: Middle name of the person being verified.
+        lastName:
+          title: lastName
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Last name of the person being verified.
+        knownAs:
+          title: knownAs
+          type: string
+          minLength: 0
+          maxLength: 50
+          description: An alternative last name of the person being verified. For
+            example a previous last name or other known as last name.
+        dob:
+          title: date of birth
+          type: string
+          format: date-time
+          description: Date of Birth of the person being verified. The format is YYYY-MM-DD.
+        niNumber:
+          title: niNumber
+          type: string
+          minLength: 9
+          maxLength: 9
+          description: National Insurance Number of the person being verified. This should always be supplied when it has been captured from the customer.
+        identifiers:
+          title: identifiers
+          description: "The identifiers array is only used for the following purposes:\n
+
+             **Provision of 'CustomerApplicationID'** - This field allows you to pass your own unique application reference related to the customer(s).  This allows an easy tracking reference for both parties in relation to any queries.  The field is currently optional; however, all new clients are required to populate it for all 'Create Person' requests. \n<br>
+             Please note: This is planned to be made a mandatory field in a future release which will be communicated to existing clients as appropriate.\n
+
+             **Provision of 'payrollId'** - This is only applicable if you are using the NED Query employers AND NED Query Employers/[employerId} endpoints.  This is required if 'payrollId' is one of the 'additionalKeys' returned in the National Employer Database (NED Query Employers/[employerId} endpoint. \n
+
+              If neither the 'CustomerApplicationID' or 'payrollId' is being used, do not populate the ‘identifiers’ array. "
+          minItems: 0
+          maxItems: 2
+          type: array
+          items:
+            type: object
+            properties:
+              scheme:
+                title: scheme
+                type: string
+                minLength: 1
+                maxLength: 50
+                enum:
+                - payrollReference
+                - CustomerApplicationId
+                description: "When 'CustomerApplicationID' is being provided (please note 'identifiers' array supporting guidance above), the 'scheme' should always be set to 'customerApplicationId'.\n
+
+                 When 'payrollId' is being provided (please note 'identifiers' array supporting guidance above), the 'scheme' should always be set to 'payrollReference'."
+              level:
+                title: level
+                type: string
+                minLength: 9
+                maxLength: 9
+                description: If 'payrollId' is being supplied, the 'level' is the 9 character 'employerId' as supplied in the NED employers endpoints.
+              value:
+                title: value
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: If 'payrollId' is being supplied, the 'value' is the  payroll id as collected from the applicant. <br>
+                 If 'CustomerApplicationID' is being supplied, the 'value' is the CustomerApplicationId passed by the lender.
+        addresses:
+          title: addresses
+          description: Postcode and at least one-of houseName and/or houseNumber are mandatory.  Only the current address is required.
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: object
+            properties:
+              city:
+                title: city
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: City of the current address.
+              postCode:
+                title: postCode
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Postcode of the current address.
+              county:
+                title: county
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: County of the current address.
+              country:
+                title: country
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Country of the current address.
+              houseName:
+                title: houseName
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: House name of the current address. Either this or houseNumber
+                  must be supplied.
+              houseNumber:
+                title: houseNumber
+                type: string
+                minLength: 1
+                maxLength: 10
+                description: House number of the current address. Either this or houseName
+                  must be supplied.
+              flat:
+                title: flat
+                type: string
+                minLength: 1
+                maxLength: 30
+                description: Flat number of the current address.
+              streetName:
+                title: streetName
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Street name of the current address.
+              startDate:
+                title: startDate
+                type: string
+                format: date-time
+                description: The date the person started residing at the current address.
+                  The format of date is YYYY-MM-DD.
+            required:
+            - postCode
+            - houseName
+            - houseNumber
+      required:
+      - firstName
+      - lastName
+      - dob
+    PersonSuccessResponse:
+      title: Person Success Response
+      properties:
+        firstName:
+          title: firstName
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: First name as supplied in the request.
+        middleName:
+          title: middleName
+          type: string
+          minLength: 0
+          maxLength: 50
+          description: Middle name as supplied in the request.
+        lastName:
+          title: lastName
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Last name as supplied in the request.
+        knownAs:
+          title: knownAs
+          type: string
+          minLength: 0
+          maxLength: 50
+          description: An alternative last name of the person being verified as supplied
+            in the request.
+        dob:
+          title: date of birth
+          type: string
+          format: date-time
+          description: Date of Birth as supplied in the request. The format of date
+            is YYYY-MM-DD.
+        niNumber:
+          title: niNumber
+          type: string
+          minLength: 9
+          maxLength: 9
+          description: National Insurance Number as supplied in the request.
+        id:
+          title: id
+          type: integer
+          format: int32
+          description: Experian generated ID for the person record. Required in subsequent
+            requests.
+        createdDate:
+          title: createdDate
+          type: string
+          format: date-time
+          description: Date the person record was created. The format of date is YYYY-MM-DD.
+        addresses:
+          title: addresses
+          description: Address(es) as supplied in the request.
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            type: object
+            properties:
+              id:
+                title: id
+                type: integer
+                format: int32
+                description: Experian generated ID for the address.
+              city:
+                title: city
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: City as supplied in the request.
+              postCode:
+                title: postCode
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Postdode as supplied in the request.
+              county:
+                title: county
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: County as supplied in the request.
+              country:
+                title: country
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Country as supplied in the request.
+              isDefault:
+                title: isDefault
+                type: boolean
+                default: true
+                description: Indicates if the address is the primary address. If only
+                  one address is supplied by default isDefault = true.
+              houseName:
+                title: houseName
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: House Name as supplied in the request.
+              houseNumber:
+                title: houseNumber
+                type: string
+                minLength: 1
+                maxLength: 10
+                description: House Number as supplied in the request.
+              flat:
+                title: flat
+                type: string
+                minLength: 1
+                maxLength: 30
+                description: Flat number as supplied in the request.
+              streetName:
+                title: streetName
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: Street name as supplied in the request.
+              startDate:
+                title: startDate
+                type: string
+                format: date-time
+                description: The date the person started residing at the current address
+                  as supplied in the request. The format of date is YYYY-MM-DD.
+        relatedParties:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/relatedParties'
+        identifiers:
+          title: identifiers
+          description: Any relevant identifiers used to support the Work Report request.
+          type: array
+          minItems: 0
+          maxItems: 2
+          items:
+            type: object
+            properties:
+              id:
+                title: id
+                type: integer
+                format: int32
+                description: ID of the identifier.
+              scheme:
+                title: scheme
+                type: string
+                enum:
+                - payrollReference
+                - CustomerApplicationId
+                description: If 'payrollId' is being supplied, the 'scheme' will always be 'payrollReference'<br>
+                    If 'CustomerApplicationID' is being supplied, the 'scheme' will always be 'CustomerApplicationId'.
+              level:
+                title: level
+                type: string
+                minLength: 9
+                maxLength: 9
+                description: If 'payrollId' was supplied, the 'level' is the 9 character
+                  'employerId' as supplied in the request.
+
+              value:
+                title: value
+                type: string
+                minLength: 1
+                maxLength: 50
+                description: If 'payrollId' was supplied, the 'value' is the payroll id as supplied in the request <br>
+                  If 'CustomerApplicationID' is being supplied, the 'value' is the CustomerApplicationId passed by the lender.
+
+        $type:
+          title: $type
+          type: string
+    ErrorResponse:
+      title: ErrorResponse
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Errors'
+          description: Array of Error response.
+        success:
+          type: boolean
+          default: false
+    Errors:
+      type: object
+      properties:
+        errorCode:
+          title: errorCode
+          type: string
+          description: Indicates the status code.
+        errorType:
+          title: errorType
+          type: string
+          description: Indicates the type of the error.
+        message:
+          title: message
+          type: string
+          description: Indicates the reason for the failure.
+    relatedParties:
+      type: object
+      properties:
+        relatedPartyId:
+          title: relatedPartyId
+          type: integer
+          format: int32
+          description: Experian generated ID of the related party.
+        id:
+          title: id
+          type: integer
+          format: int32
+          description: Experian generated ID.
+        $type:
+          title: $type
+          type: string
+          enum:
+          - Referrer
+          description: Always 'Referrer' for this type of request.
+    participants:
+      type: object
+      properties:
+        type:
+          title: type
+          type: string
+          enum:
+          - DataProcessor
+          - DataProvider
+          description: Always 'DataProcessor' for this type of request.
+        name:
+          title: name
+          type: string
+          enum:
+          - Salary Finance
+          - WorkReport
+          description: The name of the data processor.
+        assetIdentifiers:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/assetIdentifiers'
+    assetIdentifiers:
+      type: object
+      properties:
+        name:
+          title: name
+          type: string
+          enum:
+          - EmployerID
+          - ConsentVersion
+          description: Always 'EmployerID' or 'ConsentVersion' for this type of request.
+        value:
+          title: value
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: The value for the 'EmployerID' or 'ConsentVersion'.
+    consent:
+      title: consent
+      type: object
+      properties:
+        id:
+          title: id
+          type: integer
+          format: int32
+          description: The Unique identifier for each consent
+        creationDate:
+          title: creationDate
+          type: string
+          format: date-time
+          description: Date consent was provided.The format of date is YYYY-MM-DD.
+        updatedDate:
+          title: updatedDate
+          type: string
+          format: date-time
+          description: This is the consent date that has been  updated. This date
+            could be updated  for reasons such as the consent being revoked or expired.The
+            format of date is YYYY-MM-DD.
+        date:
+          title: date
+          type: string
+          format: date-time
+        mechanism:
+          title: mechanism
+          type: string
+          enum:
+          - Website
+          - App
+          - Email
+          - Telephone
+          - Letter
+          description: Entity where the consent has been granted. Always 'Website'
+            for this type of request.
+        duration:
+          title: duration
+          type: string
+          enum:
+          - FixedPeriod
+          - Transaction
+          description: FixedPeriod for this type of request.
+        expirationDate:
+          title: expirationDate
+          type: string
+          format: date-time
+          description: The date and time when consent will expire. Date format is
+            YYYY-MM-DD.
+        status:
+          title: status
+          type: string
+          enum:
+          - Active
+          description: Always 'Active' for this type of request.
+        partyId:
+          title: partyId
+          type: integer
+          format: int32
+          description: An id for the person being verified.
+        serviceId:
+          title: serviceId
+          type: integer
+          format: int32
+          description: Always 0 for this type of request.
+        participants:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/participants'
+    employments:
+      title: employments
+      type: object
+      properties:
+        itemValidMethod:
+          title: itemValidMethod
+          type: string
+          enum:
+          - Provider
+          description: Always 'Provider' for this type of request.
+        itemValidDate:
+          title: itemValidDate
+          type: string
+          format: date-time
+          description: The date and time when the API call was made. Date format is
+            YYYY-MM-DD.
+        systemMatchReference:
+          title: systemMatchReference
+          type: string
+          minLength: 9
+          maxLength: 9
+          description: The 'employerId' as supplied in the Connect WorkReport request.
+        unlistedEmployerName:
+          title: unlistedEmployerName
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The name of the employer.
+        employerAddress:
+          $ref: '#/components/schemas/employerAddress'
+        jobTitle:
+          title: jobTitle
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The employee's job title.
+        startDate:
+          title: startDate
+          type: string
+          format: date-time
+          description: The employee's start date with listed employer. The format
+            of date is YYYY-MM-DD.
+        endDate:
+          title: endDate
+          type: string
+          format: date-time
+          description: The employee's end date, if applicable, with listed employer.
+            The format of date is YYYY-MM-DD.
+        payeCode:
+          title: payeCode
+          type: string
+          minLength: 1
+          maxLength: 14
+          description: Employer's tax reference. 3 numbers, a forward slash followed
+            by between 1 and 10 characters that can be letters and numbers.
+        isDirector:
+          title: isDirector
+          type: boolean
+          nullable: true
+        salaries:
+          type: array
+          minItems: 1
+          maxItems: 7
+          items:
+            $ref: '#/components/schemas/salary'
+        contractedHours:
+          title: contractedHours
+          format: double
+          type: number
+          description: Contracted hours per week.
+        payCurrencyCode:
+          title: payCurrencyCode
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: Currency of pay.
+        taxCode:
+          title: taxCode
+          type: string
+          nullable: true
+          description: Tax Code
+        paymentMethod:
+          title: paymentMethod
+          type: string
+          nullable: true
+          description: Method of Payment
+        payPeriods:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/payPeriods'
+        payFrequency:
+          $ref: '#/components/schemas/frequency'
+        payInfo:
+          $ref: '#/components/schemas/payInfo'
+        latestPayDate:
+          title: latestPayDate
+          type: string
+          format: date-time
+          description: Latest pay date.The format of date is YYYY-MM-DD.
+    salary:
+      type: object
+      properties:
+        type:
+          title: type
+          type: string
+          enum:
+          - Base
+          - TotalGross
+          - TotalNet
+          - TotalTaxable
+          - YtdGross
+          - YtdNet
+          - YtdTaxable
+          description: 'TotalGross, TotalNet, TotalTaxable: Sum of (Gross, Net, Taxable)
+            earnings across previous 12 months from request date.<br/>YtdGross, YtdNet,
+            YtdTaxable: Tax year to date (Gross, Net, Taxable) earnings.<br/>Base:
+            Annual Salary.'
+        incomes:
+          $ref: '#/components/schemas/Incomes'
+    Incomes:
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/Income'
+        discriminator:
+          propertyName: $type
+          mapping:
+            Income: '#/components/schemas/Income'
+    Income:
+      type: object
+      properties:
+        amount:
+          title: amount
+          type: number
+          format: double
+          description: Value of the income listed.
+        currencyCode:
+          title: currencyCode
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: Currency of the income listed e.g. GBP.
+        $type:
+          title: $type
+          type: string
+          description: Always 'Income' for this type of request.
+    frequency:
+      type: string
+      enum:
+      - Monthly
+      - Weekly
+      - Fortnightly
+      - Annually
+      - Four Weekly
+      - Quarterly
+      - Semi Monthly
+      - Half Yearly
+      description: Current frequency of the pay.
+    employerAddress:
+      type: object
+      properties:
+        line1:
+          title: line1
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The first line of the employer's address.
+        postcode:
+          title: postcode
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: The employer's postcode.
+    deductions:
+      type: object
+      properties:
+        category:
+          title: category
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Description of the deduction as provided by the employer.
+        amount:
+          title: amount
+          type: number
+          format: double
+          description: Deduction amount.
+        amountPercent:
+          title: amountPercent
+          type: number
+          format: double
+          description: Deduction %.
+        isDeductedBeforeTax:
+          title: isDeductedBeforeTax
+          type: boolean
+          nullable: true
+        isDeductedBeforeEENI:
+          title: isDeductedBeforeEENI
+          type: boolean
+          nullable: true
+        caasLabel:
+          title: caasLabel
+          type: string
+          minLength: 1
+          maxLength: 250
+          description: Combination of 'caasCategory' and 'caasSubcategory'.
+        caasCategory:
+          title: caasCategory
+          type: string
+          minLength: 1
+          maxLength: 250
+          description: Category of the deduction as determined by Experian's categorisation
+            service 'CaaS Pay'.
+        caasSubcategory:
+          title: caasSubcategory
+          type: string
+          minLength: 1
+          maxLength: 250
+          description: Subcategory of the deduction as determined by Experian's categorisation
+            service 'CaaS Pay'.
+        confidence:
+          title: Confidence
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: A confidence score predicting the accuracy of the 'caasCategory'
+            and 'caasSubcategory'.
+    additions:
+      type: object
+      properties:
+        category:
+          title: category
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Description of the addition as provided by the employer.
+        rate:
+          title: rate
+          type: number
+          format: double
+          description: Rate per unit of the addition e.g. hourly rate, if applicable.
+        quantity:
+          title: quantity
+          type: number
+          format: double
+          description: Number of units worked e.g. hours, if applicable.
+        multiplier:
+          title: multiplier
+          type: number
+          format: double
+          description: Multiplier on the rate, if applicable.
+        unit:
+          title: unit
+          type: string
+          nullable: true
+          description: Unit value of the addition e.g. Hourly, if applicable.
+        isNotional:
+          title: isNotional
+          type: boolean
+          nullable: true
+          description: Indicates whether the addition is notional or not.
+        isSubjectToTax:
+          title: isSubjectToTax
+          type: boolean
+          nullable: true
+          description: Indicates whether the addition is subject to tax or not.
+        isSubjectToEENI:
+          title: isSubjectToEENI
+          type: boolean
+          nullable: true
+          description: Indicates whether the addition is subject to EENI or not.
+        grossAmount:
+          title: grossAmount
+          type: number
+          format: double
+          description: Total gross pay for this addition.
+        caasLabel:
+          title: caasLabel
+          type: string
+          minLength: 1
+          maxLength: 250
+          description: Combination of 'caasCategory' and 'caasSubcategory'.
+        caasCategory:
+          title: caasCategory
+          type: string
+          minLength: 1
+          maxLength: 250
+          description: Category of the addition as determined by Experian's categorisation
+            service 'CaaS Pay'.
+        caasSubcategory:
+          title: caasSubcategory
+          type: string
+          minLength: 1
+          maxLength: 250
+          description: Subcategory of the addition as determined by Experian's categorisation
+            service 'CaaS Pay'.
+        confidence:
+          title: Confidence
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: A confidence score predicting the accuracy of the 'caasCategory'
+            and 'caasSubcategory'.
+    payPeriods:
+      type: object
+      properties:
+        payDate:
+          title: payDate
+          type: string
+          format: date-time
+          description: Date within specific pay period employee is paid. The format
+            of date is YYYY-MM-DD.
+        startDate:
+          title: startDate
+          type: string
+          format: date-time
+          description: Start date of pay period. The format of date is YYYY-MM-DD.
+        currencyCode:
+          title: currencyCode
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: Currency of the payments in the pay period e.g. GBP.
+        derivedPayPeriodId:
+          title: derivedPayPeriodId
+          type: integer
+          format: int32
+          description: Chronological order number (ID) of pay periods returned. 1
+            (newest) to 52 (oldest).
+        derivedTaxYearWeekPayPeriod:
+          title: derivedTaxYearWeekPayPeriod
+          type: integer
+          format: int32
+          description: Tax week number that the pay period pay date relates to. 1
+            (first week of April) to 52 (last week of March).
+        derivedTaxYearMonthPayPeriod:
+          title: derivedTaxYearMonthPayPeriod
+          type: integer
+          format: int32
+          description: Tax month number that the pay period pay date relates to. 1
+            (April) to 12 (March).
+        additions:
+          type: array
+          minItems: 0
+          maxItems: 999
+          items:
+            $ref: '#/components/schemas/additions'
+        deductions:
+          type: array
+          minItems: 0
+          maxItems: 999
+          items:
+            $ref: '#/components/schemas/deductions'
+        grossEarnings:
+          title: grossEarnings
+          type: number
+          format: double
+          description: Total gross earnings for this pay period.
+        grossEarningsFixed:
+          title: grossEarningsFixed
+          type: number
+          format: double
+          description: Total fixed gross earnings for this pay period.
+        grossEarningsVariable:
+          title: grossEarningsVariable
+          type: number
+          format: double
+          description: Total variable gross earnings for this pay period.
+        netEarnings:
+          title: netEarnings
+          type: number
+          format: double
+          description: Net earnings for this pay period.
+        taxableEarningsTotal:
+          title: taxableEarningsTotal
+          type: number
+          format: double
+          description: Taxable earnings for this pay period.
+        deductionsTotal:
+          title: deductionsTotal
+          type: number
+          format: double
+          description: Total deductions for this pay period.
+        taxableEarningsYTD:
+          title: taxableEarningsYTD
+          type: number
+          nullable: true
+          format: double
+          description: Total taxable YTD earnings
+        grossEarningsYTD:
+          title: grossEarningsYTD
+          type: number
+          nullable: true
+          format: double
+          description: Total gross YTD earnings
+        reimbursementAllowances:
+          title: reimbursementAllowances
+          type: number
+          format: double
+          description: Total allowances or reimbursements for this pay period.
+        frequency:
+          $ref: '#/components/schemas/frequency'
+    payInfo:
+      title: payInfo
+      type: object
+      properties:
+        monthsOfData:
+          title: monthsOfData
+          type: integer
+          format: int32
+          description: Number of months for which the payslip is available (BE and
+            BEI Dataoption will not get months of data).
+        payslipCount:
+          title: payslipCount
+          type: integer
+          format: int32
+          description: Number of payslip available (BE and BEI Dataoption will not
+            get Payslip data).
+    parameters:
+      title: parameters
+      type: object
+      description: employerId and dataOption are mandatory.
+      properties:
+        employerId:
+          title: employerId
+          type: string
+          minLength: 9
+          maxLength: 9
+          description:
+            "NED being used: This is the 9 character ‘employerId’ returned in the National Employer Database (NED) Query Employers endpoint.<br>
+
+           NED not being used: If the NED is not being used, the default ‘employerId’ of ‘ACDP12345’ will need to be used on all requests"
+        dataOption:
+          title: dataOption
+          type: string
+          enum:
+          - BE
+          - BEI
+          - BEI+
+          - M1
+          - M3
+          - M3+
+          description: The level of data to be returned, if available for the employer.<br/>
+            BE - Employment Check <br/> BEI - Employment & Income Check <br/>  BEI+ - Employment & Income Check Plus <br/>
+            M1 - Employment & Income Check + 1 Month Payslips <br/> M3 - Employment & Income Check + up to 3 Month Payslips <br/> M3+ -  Employment & Income Check + up to 12 Month Payslips <br/>
+        consentVersion:
+          title: consentVersion
+          type: string
+          description: "The consentVersion is required to get the WorkReport.\n
+
+           NED consent text being used: This is the consent ‘version’ returned in the National Employer Database (NED) Query Employers/{employerId} endpoint associated to the current consent text (‘wording’) returned at the same time.\n
+
+           NED consent text not being used: If specific consent text is being agreed with Experian, a specific ‘consentVersion’ of ‘0.0’ will need to be used on all requests."
+      required:
+      - dataOption
+      - employerId
+    ConnectWorkReportRequestBody:
+      title: Connect WorkReport Request Body
+      properties:
+        channel:
+          title: channel
+          type: string
+          enum:
+          - Employment
+          description: The type of verification being requested. Always 'Employment'
+            for a Work Report request.
+        behaviour:
+          title: behaviour
+          type: string
+          enum:
+          - Once
+          description: How often the verification should run. Always 'Once' for a
+            Work Report request.
+        parameters:
+          $ref: '#/components/schemas/parameters'
+      required:
+      - parameters
+    ConnectWorkReportSuccessResponse:
+      title: Connect WorkReport Success Response
+      properties:
+        consent:
+          $ref: '#/components/schemas/consent'
+        employments:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/employments'
+    ReportRequestBody:
+      title: Report Request Body
+      type: object
+      description: Request parameter required to retrieve the required Experian standardised PDF payslip representation of the Work Report result data (the Work Report PDF).  This is needed in combination with the respective person ‘Id’ for the respective customer which is incorporated into the ‘Retrieve Work Report PDF’ endpoint URL.
+      properties:
+        dataOption:
+          title: dataOption
+          type: string
+          enum:
+          - BE
+          - BEI
+          - M1
+          - M3
+          - M3+
+          description: "This parameter determines the level of data you wish to receive within the Work Report PDF output.  <br/> BE - Employment Check, <br/> BEI - Employment & Income Check, <br/> M1 - Employment & Income Check + 1 Month Payslips,  <br/> M3 - Employment & Income Check + up to 3 Month Payslips,  <br/> M3+ - Employment & Income Check + up to 12 Month Payslips. <br/> "
+    ReportResponseBody:
+      title: Report Response Body
+      type: object
+      description: The requested Work Report PDF will be provided on the response to ‘Retrieve Work Report PDF’ endpoint where successful.  To view an example of the Work Report PDF output please click [here](https://gdp.internal.apicoe.uat.coaas.net/system/files/2025-10/workreport-sharon-rajapaksa-10-09-2025.pdf).
+
+  responses:
+    InternalServerErrorResponse:
+      description: Internal server error </br> This message is returned when the server
+        encounters an unexpected error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - errorCode: EXP-500
+              errorType: InternalServerError
+              message: Sorry something went wrong.
+            success: false
+    NotFoundResponse:
+      description: Not found <br/> The requested resource could not be found but may
+        be available again in the future. Subsequent requests by the client are permissible.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - errorCode: EXP-404
+              errorType: Not Found
+              message: Requested Resource was not found
+            success: false
+    NotFoundResponseConnectWorkReport:
+      description: Not found <br/> The requested resource could not be found but may
+        be available again in the future. Subsequent requests by the client are permissible.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - errorCode: EXP-404
+              errorType: NotFound
+              message: Party could not be found.
+            success: false
+    UnauthorizedResponse:
+      description: Unauthorized</br> When authentication is possible but has failed
+        or not yet been provided. The response must include a WWW-Authenticate header
+        field containing a challenge applicable to the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - errorType: Unauthorized
+              message: Access token is invalid.
+            success: false
+    UnprocessableResponse:
+      description: Unprocessable Entity</br>The request was well-formed but was unable
+        to be followed due to semantic errors.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - errorCode: EXP-422
+              errorType: Unprocessable Entity
+              message: The value BES is not valid.
+            success: false
+    UnprocessableResponseWorkReport:
+      description: Unprocessable Entity</br>The request was well-formed but was unable
+        to be followed due to semantic errors.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors:
+            - errorCode: EXP-422
+              errorType: Unprocessable Entity
+              message: Person must have a primary address
+            success: false
+    PersonSuccessResponse:
+      description: Created
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PersonSuccessResponse'
+          examples:
+            Create Person:
+              summary: Person created successfully
+              value:
+                firstName: Sharon
+                middleName: Kumar
+                lastName: Rajapaksa
+                knownAs: Raj Kumar
+                dob: '1973-08-31T00:00:00Z'
+                niNumber: AA121212B
+                id: 9903039
+                createdDate: '2021-08-05T13:15:43.402Z'
+                addresses:
+                - id: 2841664
+                  city: ST. ALBANS
+                  postCode: AL3 8LE
+                  county: ''
+                  country: "UNITED\_KINGDOM"
+                  isDefault: true
+                  houseName: 10 DOWNING STREET
+                  houseNumber: 80B
+                  flat: ''
+                  streetName: HIGH STREET
+                  startDate: '2021-08-05T13:15:43.402Z'
+                relatedParties:
+                - relatedPartyId: 4583223
+                  id: 4801224
+                  $type: Referrer
+                identifiers:
+                - id: 634719
+                  level: TEST12345
+                  scheme: payrollReference
+                  value: consent00
+                - id: 634720
+                  scheme: CustomerApplicationId
+                  value: App-Ref-TwoPartyIds
+                $type: Person
+    ConnectWorkReportResponse:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConnectWorkReportSuccessResponse'
+          examples:
+            ConnectWorkreport:
+              summary: Connection with work report
+              value:
+                consent:
+                  id: 1682062
+                  creationDate: '2022-07-28T17:12:13.674+00:00'
+                  updatedDate: '2023-11-22T11:17:02.894+00:00'
+                  date: '2023-11-22T11:17:02.776+00:00'
+                  mechanism: Website
+                  duration: FixedPeriod
+                  expirationDate: '2026-04-28T12:54:57.785+00:00'
+                  status: Active
+                  partyId: 9859692
+                  serviceId: 0
+                  participants:
+                  - type: DataProcessor
+                    name: WorkReport
+                    assetIdentifiers:
+                    - name: EmployerId
+                      value: TEST12345
+                    - name: ConsentVersion
+                      value: '1.2'
+                employments:
+                - itemValidMethod: Provider
+                  itemValidDate: '2022-08-19T04:50:37.7457592+00:00'
+                  systemMatchReference: TEST12345
+                  unlistedEmployerName: TestEmployer
+                  employerAddress:
+                    line1: 20 Kensington High Street
+                    postcode: W8 5JH
+                  jobTitle: ''
+                  startDate: '1999-01-19T00:00:00+00:00'
+                  endDate: ''
+                  payeCode: TEST12345
+                  isDirector: false
+                  salaries:
+                  - type: Base
+                    incomes:
+                    - amount: 22000
+                      currencyCode: GBP
+                      $type: Income
+                  - type: TotalGross
+                    incomes:
+                    - amount: 28024
+                      currencyCode: GBP
+                      $type: Income
+                  - type: TotalNet
+                    incomes:
+                    - amount: 22549
+                      currencyCode: GBP
+                      $type: Income
+                  - type: TotalTaxable
+                    incomes:
+                    - amount: 21549
+                      currencyCode: GBP
+                      $type: Income
+                  - type: YtdGross
+                    incomes:
+                    - amount: 21345
+                      currencyCode: GBP
+                      $type: Income
+                  - type: YtdNet
+                    incomes:
+                    - amount: 12345
+                      currencyCode: GBP
+                      $type: Income
+                  - type: YtdTaxable
+                    incomes:
+                    - amount: 12121
+                      currencyCode: GBP
+                      $type: Income
+                  contractedHours: 30.0
+                  payCurrencyCode: GBP
+                  latestPayDate: '2023-01-19T06:02:56.806Z'
+                  payFrequency: Weekly
+                  taxCode: "1257L W1/M1"
+                  paymentMethod: "BACS"
+                  payInfo:
+                    monthsOfData: 3
+                    payslipCount: 12
+                  payPeriods:
+                  - payDate: '2021-09-10T00:00:00+00:00'
+                    startDate: '2021-09-06T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 1
+                    derivedTaxYearWeekPayPeriod: 25
+                    derivedTaxYearMonthPayPeriod: 6
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35                     
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16                      
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      isDeductedBeforeTax: false
+                      isDeductedBeforeEENI: false
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      isDeductedBeforeTax: false
+                      isDeductedBeforeEENI: false
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-09-03T00:00:00+00:00'
+                    startDate: '2021-08-30T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 2
+                    derivedTaxYearWeekPayPeriod: 24
+                    derivedTaxYearMonthPayPeriod: 6
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-08-27T00:00:00+00:00'
+                    startDate: '2021-08-23T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 3
+                    derivedTaxYearWeekPayPeriod: 23
+                    derivedTaxYearMonthPayPeriod: 5
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: true
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: true
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-08-20T00:00:00+00:00'
+                    startDate: '2021-08-16T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 4
+                    derivedTaxYearWeekPayPeriod: 22
+                    derivedTaxYearMonthPayPeriod: 5
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: true
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-08-13T00:00:00+00:00'
+                    startDate: '2021-08-09T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 5
+                    derivedTaxYearWeekPayPeriod: 21
+                    derivedTaxYearMonthPayPeriod: 5
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: true
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-08-06T00:00:00+00:00'
+                    startDate: '2021-08-02T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 6
+                    derivedTaxYearWeekPayPeriod: 20
+                    derivedTaxYearMonthPayPeriod: 5
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-07-30T00:00:00+00:00'
+                    startDate: '2021-07-26T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 7
+                    derivedTaxYearWeekPayPeriod: 19
+                    derivedTaxYearMonthPayPeriod: 4
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-07-23T00:00:00+00:00'
+                    startDate: '2021-07-19T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 8
+                    derivedTaxYearWeekPayPeriod: 18
+                    derivedTaxYearMonthPayPeriod: 4
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-07-16T00:00:00+00:00'
+                    startDate: '2021-07-12T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 9
+                    derivedTaxYearWeekPayPeriod: 17
+                    derivedTaxYearMonthPayPeriod: 4
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-07-09T00:00:00+00:00'
+                    startDate: '2021-07-05T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 10
+                    derivedTaxYearWeekPayPeriod: 16
+                    derivedTaxYearMonthPayPeriod: 4
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubCategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: true
+                      isSubjectToEENI: true
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-07-01T00:00:00+00:00'
+                    startDate: '2021-06-28T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 11
+                    derivedTaxYearWeekPayPeriod: 15
+                    derivedTaxYearMonthPayPeriod: 4
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: true
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+                  - payDate: '2021-06-25T00:00:00+00:00'
+                    startDate: '2021-06-21T00:00:00+00:00'
+                    currencyCode: GBP
+                    derivedPayPeriodId: 12
+                    derivedTaxYearWeekPayPeriod: 14
+                    derivedTaxYearMonthPayPeriod: 3
+                    deductions:
+                    - category: TaxDeduction
+                      amount: 198.35
+                      caasLabel: tax/income_tax
+                      caasCategory: tax
+                      caasSubcategory: income_tax
+                      confidence: 0.81
+                    - category: NationalInsuranceDeduction
+                      amount: 149.16
+                      caasLabel: tax/national_insurance
+                      caasCategory: tax
+                      caasSubcategory: national_insurance
+                      confidence: 0.81
+                    - category: StudentLoanDeduction
+                      amount: 379.0
+                      caasLabel: loan_repayment/student_loan_repayment
+                      caasCategory: loan_repayment
+                      caasSubcategory: student_loan_repayment
+                      confidence: 0.81
+                    - category: PensionDeduction
+                      amount: 61.2
+                      caasLabel: pension/pension
+                      caasCategory: pension
+                      caasSubcategory: pension
+                      confidence: 0.81
+                    additions:
+                    - category: Salary
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: salary/basic_salary
+                      caasCategory: salary
+                      caasSubcategory: basic_salary
+                      confidence: 0.81
+                    - category: EmployeeRewards
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: rewards/bonus_and_recognition_awards
+                      caasCategory: rewards
+                      caasSubcategory: bonus_and_recognition_awards
+                      confidence: 0.81
+                    - category: AdditionalHoursOvertime
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: additional_hours/call_out_allowance
+                      caasCategory: additional_hours
+                      caasSubcategory: call_out_allowance
+                      confidence: 0.81
+                    - category: HolidayPay
+                      rate: 0.0
+                      quantity: 0.0
+                      grossAmount: 2040.0
+                      unit: Hours
+                      isNotional: false
+                      isSubjectToTax: false
+                      isSubjectToEENI: false
+                      caasLabel: time_off_allowance/holiday_pay
+                      caasCategory: time_off_allowance
+                      caasSubcategory: holiday_pay
+                      confidence: 0.81
+                    grossEarnings: 4000
+                    grossEarningsFixed: 2000
+                    grossEarningsVariable: 2000
+                    netEarnings: 2896
+                    taxableEarningsTotal: 4000
+                    deductionsTotal: 1104
+                    grossEarningsYTD: 1204
+                    taxableEarningsYTD: 2041
+                    reimbursementAllowances: 0
+                    frequency: Weekly
+  requestBodies:
+    CreatePerson:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatePersonRequestBody'
+          examples:
+            Createpersonrecord:
+              summary: Create record of the person.
+              value:
+                firstName: Sharon
+                middleName: Kumar
+                lastName: Rajapaksa
+                knownAs: Raj Kumar
+                dob: '1973-08-31T00:00:00Z'
+                niNumber: AA121212B
+                identifiers:
+                - scheme: payrollReference
+                  level: TEST12345
+                  value: consent00
+                - scheme: CustomerApplicationId
+                  value: App-Ref-TwoPartyIds
+                addresses:
+                - city: ST. ALBANS
+                  postCode: AL3 8LE
+                  county: HERTFORDSHIRE
+                  country: "UNITED\_KINGDOM"
+                  houseName: "10\_DOWNING\_STREET"
+                  houseNumber: 80B
+                  flat: ''
+                  streetName: HIGH STREET
+                  startDate: '2021-08-05T13:15:43.402Z'
+    ConnectWorkReport:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConnectWorkReportRequestBody'
+          examples:
+            ConnectWorkReport:
+              summary: Connect with the work report.
+              value:
+                channel: Employment
+                behaviour: Once
+                parameters:
+                  employerId: TEST12345
+                  dataOption: M3+
+                  consentVersion: '1.2'
