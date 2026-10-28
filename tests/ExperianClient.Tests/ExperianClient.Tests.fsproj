@@ -11,6 +11,7 @@
     <Compile Include="TokenTests.fs" />
     <Compile Include="ApiTests.fs" />
     <Compile Include="DelphiTests.fs" />
+    <Compile Include="ReportsTests.fs" />
     <Compile Include="WebhookTests.fs" />
     <Compile Include="SandboxTests.fs" />
   </ItemGroup>

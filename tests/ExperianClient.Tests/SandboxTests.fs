@@ -140,3 +140,25 @@ let ``sandbox: debt list from the application, and a typed quotation converted f
         let! converted = Api.DelphiSelect.convertQuoteAsync client reference CreditProduct.DebtConsolidationLoan (ValueSome "A1234") FakeExperian.ct
         FakeExperian.expectOk converted |> ignore
     }
+
+[<Fact>]
+let ``sandbox: credit-file signals carry the applicant's arrangement`` () : Task =
+    task {
+        let client = sandboxClient ()
+        let! application = Api.DelphiSelect.applicationAsync client (ApiTests.sandboxApplication ()) FakeExperian.ct
+        let signals = (CreditFileSignals.ofOutput (FakeExperian.expectOk application)).Value
+        Assert.Contains(ArrangementFound, signals.Flags)
+        Assert.Contains(signals.Instructions, fun account -> account.SpecialInstruction.Value.Instruction = Arrangement)
+    }
+
+[<Fact>]
+let ``sandbox: AuthPlus outcome and impaired credit history read from the application`` () : Task =
+    task {
+        let client = sandboxClient ()
+        let! application = Api.DelphiSelect.applicationAsync client (ApiTests.sandboxApplication ()) FakeExperian.ct
+        let output = FakeExperian.expectOk application
+        let authPlus = Assert.Single(AuthPlus.ofOutput output)
+        Assert.NotEqual(NoDecision, authPlus.Decision)
+        Assert.True((PublicRecords.impairedCredit output).Value.MainApplicant.IsSome)
+        Assert.True((PublicRecords.ofOutput output).IsSome)
+    }

@@ -73,6 +73,52 @@ Before using it for a consolidation loan:
 - **Names and account numbers can be missing.** Experian withholds some lender names (for example company type `10`),
   and shows account numbers only for your own data unless agreed otherwise.
 
+## Financial difficulty and vulnerability signals
+
+Delphi Select has no vulnerability flag. `CreditFileSignals.ofOutput output` gathers the credit-file signals that can
+point to financial difficulty or vulnerability; they corroborate your own assessment, they don't replace it:
+- `Flags`: summary flags for the whole search (arrangement, debt management, credit insurance claim, account query,
+  partial settlement, debt assigned, voluntary termination, recourse, gone away, deceased, CIFAS). They can come from
+  associated people's data, not only the applicant's.
+- `Instructions`: the applicant's own accounts with a special instruction (arrangement, debt management programme,
+  credit insurance claim, …) and its dates. `CreditFileSignals.currentInstructions today` keeps those in force.
+- `Notices`: the consumer's Notices of Correction, their own statement on the file, as text lines. Lenders are expected
+  to read them before deciding.
+- `Cifas`: CIFAS markers matched to the applicant, with protective registration (extra identity checks the consumer
+  asked for) told apart from fraud categories.
+
+Like `CreditAccounts.ofOutput`, it returns `ValueNone` when the answer carries no consumer data.
+
+## Outcomes and reports
+
+Typed views over the parts of an answer that decisions rest on. Codes Experian lists in the spec become cases;
+anything else stays visible as an `Other…` case.
+
+- **AuthPlus:** `AuthPlus.ofOutput output` (or `AuthPlus.ofResults` for second-phase and stand-alone answers) gives
+  each applicant's result:
+  - the decision: `Authenticated`, `NotAuthenticated` or `Refer` with its level, or `NoDecision`;
+  - the decision text, the authentication index, and the level the identity was confirmed at;
+  - the high-risk policy rules that fired.
+- **Impaired credit and public records:**
+  - `PublicRecords.impairedCredit output` gives Experian's classification per applicant: bankruptcy or IVA in the last
+    three years, CCJ total by band, and three or more months of secured or unsecured arrears in the last two years.
+    The joint applicant's is read only when the answer lists two applicants.
+  - `PublicRecords.ofOutput output` lists the public records with Experian's type code, whose file they matched,
+    amount, plaintiff and satisfaction date. `PublicRecords.unsatisfied` keeps the applicant's own unsatisfied ones.
+- **Affordability:** `Affordability.ofOutput output` gives:
+  - CATO income estimates (gross annual, net annual, net monthly) for the main applicant, the joint applicant and the
+    household;
+  - how the income the applicant supplied compares with the estimate;
+  - unsecured and secured debt-to-income, and revolving and non-revolving commitments as a share of income.
+
+  Fields are `ValueNone` when the package that fills them wasn't requested. Clients set up for the CATO warning
+  indicator get verification codes 1-3, which stay as `OtherVerificationCode`. Experian's other affordability variables
+  stay on the generated types.
+- **KYC and PEP/sanctions:** `KycOutcome.ofResponse response` gives:
+  - the overall decision (`Continue`, `Refer`, `Stop`), its reasons and recommended next actions;
+  - per service, the rules that fired. For identity verification they confirm; for contra-indicator and PEP/sanctions
+    services they alert. The housekeeping rules 9990 and 9991 are left out.
+
 ## Use
 
 ```fsharp

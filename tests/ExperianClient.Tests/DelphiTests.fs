@@ -150,3 +150,74 @@ let ``amounts read with or without the pound sign and thousands separators`` () 
     Assert.Equal(ValueNone, CreditAccounts.pounds (Some ""))
     Assert.Equal(ValueNone, CreditAccounts.pounds (Some "N/A"))
     Assert.Equal(ValueNone, CreditAccounts.pounds None)
+
+/// Fictitious file: summary flags, the applicant's current debt management programme and ended arrangement, an
+/// associate's deceased marker, a two-line notice, and CIFAS markers for the applicant, an alias and an associate.
+let private signalsData =
+    """{"Response":{"FullConsumerData":{
+        "ConsumerDataSummary":{"SummaryDetails":{"SummaryFlags":{"Arrangement":"Y","DebtManagement":"N","CIFAS":"Y","ReportedDeceased":"N","AccountQuery":" "}}},
+        "ConsumerData":{
+          "CAIS":[{"CAISDetails":[
+            {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"A","Balance":{"Amount":"£2400"},"SupplyCompanyName":"PLAN LENDER","SpecialInstrInd":"M","SpecialInstrDet":{"StartDate":"2024-01-01"}},
+            {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"A","Balance":{"Amount":"£900"},"SupplyCompanyName":"OLD ARRANGEMENT","SpecialInstrInd":"A","SpecialInstrDet":{"StartDate":"2018-02-02","EndDate":"2019-01-01"}},
+            {"MatchDetails":{"MatchTo":"3"},"AccountStatus":"A","SupplyCompanyName":"ASSOCIATE BANK","SpecialInstrInd":"D"},
+            {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"A","SupplyCompanyName":"PLAIN CARD","SpecialInstrInd":" "}]}],
+          "NOC":[{"NoCDetails":[{"Reference":"NOC0001","NumberOfLines":2,"TextLine":["I was unable to pay while in hospital.","Please contact me before any decision."]}]}],
+          "CIFAS":[{"CIFASDetails":[
+            {"MatchDetails":{"MatchTo":"1"},"FraudCategory":"00"},
+            {"MatchDetails":{"MatchTo":"2"},"FraudCategory":"01"},
+            {"MatchDetails":{"MatchTo":"3"},"FraudCategory":"02"}]}]}}}}"""
+
+let private signals () =
+    use handler = new FakeExperianHandler(fun _ -> 200, "{}")
+    let output = (clientWith handler).DelphiSelect.Deserialize(signalsData, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+    (CreditFileSignals.ofOutput output).Value
+
+[<Fact>]
+let ``summary flags read as a set of file flags`` () =
+    Assert.Equal<Set<FileFlag>>(set [ ArrangementFound; CifasFound ], (signals ()).Flags)
+
+[<Fact>]
+let ``special instructions are the applicant's own, with their dates`` () =
+    let s = signals ()
+    Assert.Equal<string list>([ "PLAN LENDER"; "OLD ARRANGEMENT" ], s.Instructions |> List.map (fun a -> a.Lender.Value))
+    let plan = s.Instructions[0].SpecialInstruction.Value
+    Assert.Equal(DebtManagementProgramme, plan.Instruction)
+    Assert.Equal(ValueSome(DateOnly(2024, 1, 1)), plan.From)
+    Assert.Equal(ValueNone, plan.Until)
+    let arrangement = s.Instructions[1].SpecialInstruction.Value
+    Assert.Equal(Arrangement, arrangement.Instruction)
+    Assert.Equal(ValueSome(DateOnly(2019, 1, 1)), arrangement.Until)
+
+[<Fact>]
+let ``only instructions in force today are current`` () =
+    let s = signals ()
+    let current = CreditFileSignals.currentInstructions (DateOnly(2026, 10, 28)) s
+    Assert.Equal<string list>([ "PLAN LENDER" ], current |> List.map (fun a -> a.Lender.Value))
+    Assert.Equal<string list>([ "OLD ARRANGEMENT" ], CreditFileSignals.currentInstructions (DateOnly(2018, 6, 1)) s |> List.map (fun a -> a.Lender.Value))
+    Assert.Empty(CreditFileSignals.currentInstructions (DateOnly(2017, 1, 1)) s)
+
+[<Fact>]
+let ``notices of correction keep their reference and text lines`` () =
+    let notice = Assert.Single (signals ()).Notices
+    Assert.Equal(ValueSome "NOC0001", notice.Reference)
+    Assert.Equal<string list>([ "I was unable to pay while in hospital."; "Please contact me before any decision." ], notice.Lines)
+
+[<Fact>]
+let ``CIFAS markers are the applicant's own, with protective registration recognised`` () =
+    Assert.Equal<CifasMarker list>([ ProtectiveRegistration; FraudCategory "01" ], (signals ()).Cifas)
+
+[<Fact>]
+let ``a response without consumer data has no signals`` () =
+    Assert.Equal(ValueNone, CreditFileSignals.ofOutput (DelphiSelect.Output()))
+    Assert.Equal(ValueNone, CreditFileSignals.ofOutput null)
+
+[<Fact>]
+let ``empty notices of correction are not notices`` () =
+    use handler = new FakeExperianHandler(fun _ -> 200, "{}")
+    let json =
+        """{"Response":{"FullConsumerData":{"ConsumerData":{"NOC":[{"NoCDetails":[{"TextLine":null},{"Reference":" ","TextLine":["  "]},{"TextLine":["Only text"]}]}]}}}}"""
+    let output = (clientWith handler).DelphiSelect.Deserialize(json, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+    let notice = Assert.Single (CreditFileSignals.ofOutput output).Value.Notices
+    Assert.Equal(ValueNone, notice.Reference)
+    Assert.Equal<string list>([ "Only text" ], notice.Lines)

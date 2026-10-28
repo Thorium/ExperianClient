@@ -5,13 +5,20 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Experian</RootNamespace>
     <PackageId>ExperianClient</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Tuomas Hietanen</Authors>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Description>Client for the most used Experian UK APIs (not every Experian service): Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED and IDP.</Description>
     <PackageTags>experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>v1.0.0:
+    <PackageReleaseNotes>v1.0.1:
+- ADDED: CreditFileSignals.ofOutput / currentInstructions: summary flags, special instructions with dates, Notices of Correction and the applicant's CIFAS markers
+- ADDED: CreditAccount.SpecialInstruction
+- ADDED: AuthPlus.ofOutput / ofResults: decision, authentication index, confirmed level and high-risk rules per applicant
+- ADDED: PublicRecords.impairedCredit / ofOutput / unsatisfied: bankruptcy, IVA, CCJ band and arrears per applicant; public records
+- ADDED: Affordability.ofOutput: CATO income estimates, income verification and debt-to-income ratios
+- ADDED: KycOutcome.ofResponse: overall KYC or PEP/sanctions decision, reasons, next actions and fired rules per service
+v1.0.0:
 - ADDED: generated clients for Delphi Select v2.5, KYC and PEP/sanctions, PowerCurve Customer Acquisition v1.21, Work Report, NED and IDP, each with its own types
 - ADDED: Api modules with Task/Result calls per product, including Delphi Select AuthPlus (in an application, second phase, stand-alone)
 - ADDED: OAuth password-flow token cache shared by all products; renews a minute before expiry, one fetch for concurrent callers, one retry on 401
@@ -36,6 +43,7 @@
     <Compile Include="Providers.fs" />
     <Compile Include="Client.fs" />
     <Compile Include="Delphi.fs" />
+    <Compile Include="Reports.fs" />
     <Compile Include="Api.fs" />
     <Compile Include="Webhook.fs" />
     <CustomAdditionalCompileInputs Include="Schemas\*.yaml;Schemas\*.yml" />
