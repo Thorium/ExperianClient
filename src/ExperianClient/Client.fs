@@ -167,13 +167,13 @@ module internal EncodedJson =
 
     /// The JSON inside a body that is one JSON string holding an object or array, as the KYC sandbox answers.
     let decoded (text: string) =
-        if text.Length > 1 && text.TrimStart().StartsWith "\"" then
+        if text.Length > 1 && text.TrimStart().StartsWith '"' then
             try
                 match JsonSerializer.Deserialize<string> text with
                 | null -> ValueNone
                 | inner ->
                     let trimmed = inner.TrimStart()
-                    if trimmed.StartsWith "{" || trimmed.StartsWith "[" then
+                    if trimmed.StartsWith '{' || trimmed.StartsWith '[' then
                         use _ = JsonDocument.Parse inner
                         ValueSome inner
                     else

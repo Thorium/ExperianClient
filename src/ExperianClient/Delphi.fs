@@ -97,9 +97,10 @@ module SearchType =
 /// an address, a character outside its pattern; a part cut to its limit only costs the search some matching.
 module DelphiText =
 
+    let private plainRegex = Regex @"[^0-9A-Za-z ,\-./*']"
     /// Each character Delphi's address patterns refuse becomes a space.
     let plain (text: string) =
-        Regex.Replace(text, @"[^0-9A-Za-z ,\-./*']", " ").Trim()
+        plainRegex.Replace(text, " ").Trim()
 
     /// At most limit characters, with no spaces left at either end.
     let limited (limit: int) (text: string) =
@@ -336,7 +337,7 @@ module CreditAccounts =
         values |> Option.ofObj |> Option.defaultValue [||] |> Seq.filter (isNull >> not)
 
     /// Whether a Delphi Select response holds the applicant's credit file. A response can carry records that aren't
-    /// theirs, so its consumer data shows nothing: an account or electoral roll record has to be the applicant's
+    /// theirs, so its consumer data shows nothing: an account, electoral roll or public record has to be the applicant's
     /// (isApplicantRecord).
     let fileFound (output: DelphiSelect.Output) =
         match consumerData output with
@@ -356,7 +357,14 @@ module CreditAccounts =
                     let details = detail.MatchDetails
                     not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
 
-            accounts || roll
+            let publicRecords =
+                items consumer.PublicInformation
+                |> Seq.collect (fun block -> items block.PublicInfoDetails)
+                |> Seq.exists (fun detail ->
+                    let details = detail.MatchDetails
+                    not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
+
+            accounts || roll || publicRecords
 
     /// Every credit account in the consumer data, whoever it was matched to.
     let internal allOf (output: DelphiSelect.Output) =

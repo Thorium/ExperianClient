@@ -51,9 +51,9 @@ Api.DelphiSelect.convertQuoteAsync experian experianReference CreditProduct.Debt
 - balance, default balance, delinquent balance, credit limit and payment in pounds;
 - start, settlement and last-updated dates, and the worst status.
 
-`CreditAccounts.fileFound output` says whether the answer holds the applicant's credit file: an account or electoral
-roll record matched to the applicant or their alias as the same person or a potential alias. An answer can carry
-records that aren't theirs, so consumer data alone isn't a file. `ofOutput` returns `ValueNone` without a file and
+`CreditAccounts.fileFound output` says whether the answer holds the applicant's credit file: an account, electoral
+roll or public record matched to the applicant or their alias as the same person or a potential alias. An answer can
+carry records that aren't theirs, so consumer data alone isn't a file. `ofOutput` returns `ValueNone` without a file and
 `ValueSome []` for a file with no accounts, so a missing credit file is never read as "no debts".
 
 `CreditAccounts.amountOwed` is what an account owes now: a defaulted account's current default balance when Experian

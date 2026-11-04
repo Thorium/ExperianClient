@@ -134,12 +134,14 @@ let private accountRecord (matchTo: string) (category: string) =
 let private rollRecord (matchTo: string) (category: string) =
     $$$"""{"VotersRollPerson":[{"VRollPersonDetails":[{"MatchDetails":{"MatchTo":"{{{matchTo}}}","BureauRefCategory":"{{{category}}}"}}]}]}"""
 
-[<Theory>]
-[<InlineData("1", "1")>]
-[<InlineData("2", "4")>]
-let ``an account or electoral roll record of the applicant is a file`` (matchTo: string, category: string) =
+let private publicRecord (matchTo: string) (category: string) =
+    $$$"""{"PublicInformation":[{"PublicInfoDetails":[{"MatchDetails":{"MatchTo":"{{{matchTo}}}","BureauRefCategory":"{{{category}}}"},"InformationType":"02","AmountPounds":"£716"}]}]}"""
+
+[<Theory; InlineData("1", "1"); InlineData("2", "4")>]
+let ``an account, electoral roll or public record of the applicant is a file`` (matchTo: string, category: string) =
     Assert.True(CreditAccounts.fileFound (answer (accountRecord matchTo category)))
     Assert.True(CreditAccounts.fileFound (answer (rollRecord matchTo category)))
+    Assert.True(CreditAccounts.fileFound (answer (publicRecord matchTo category)))
 
 [<Theory>]
 [<InlineData("9", "5")>] // no match, address-based data
@@ -149,6 +151,7 @@ let ``an account or electoral roll record of the applicant is a file`` (matchTo:
 let ``records of other people are no file`` (matchTo: string, category: string) =
     Assert.False(CreditAccounts.fileFound (answer (accountRecord matchTo category)))
     Assert.False(CreditAccounts.fileFound (answer (rollRecord matchTo category)))
+    Assert.False(CreditAccounts.fileFound (answer (publicRecord matchTo category)))
 
 [<Fact>]
 let ``an empty answer is no file`` () =
@@ -162,6 +165,8 @@ let ``only a found file has accounts, and a file can have none`` () =
     Assert.Equal(ValueNone, CreditAccounts.ofOutput (answer (accountRecord "3" "2")))
     Assert.Equal(ValueNone, CreditAccounts.ofOutput (answer (accountRecord "1" "5")))
     Assert.Equal(ValueSome [], CreditAccounts.ofOutput (answer (rollRecord "1" "1")))
+    Assert.Equal(ValueSome [], CreditAccounts.ofOutput (answer (publicRecord "1" "1")))
+    Assert.Equal(ValueNone, CreditAccounts.ofOutput (answer (publicRecord "3" "2")))
     Assert.Equal(1, (CreditAccounts.ofOutput (answer (accountRecord "1" "1"))).Value.Length)
 
 [<Theory>]
