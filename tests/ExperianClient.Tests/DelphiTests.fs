@@ -55,7 +55,8 @@ let ``convertQuoteAsync puts a credit product to the quote's quotetofull`` () : 
     }
 
 /// Fictitious accounts shaped like the sandbox answer: the applicant's open card, an associate's loan, the applicant's
-/// settled store card, a defaulted loan under the applicant's alias, and an account with no match details.
+/// settled store card, a defaulted loan under the applicant's alias, an account with no match details, and open loans of
+/// a same-surname household, of address-based data and with no category, all three matched to the applicant.
 let private consumerData =
     """{"Response":{"FullConsumerData":{"ConsumerData":{"CAIS":[
         {"ApplicantIndicator":"1","CAISDetails":[
@@ -63,10 +64,13 @@ let private consumerData =
            "CAISAccStartDate":"2017-05-30","LastUpdatedDate":"2019-02-24","AccountStatus":"A","WorstStatus":"0","Payment":"£45",
            "CompanyType":"04","AccountType":"05","AccountNumber":"4929000000006","SupplyCompanyName":"EXAMPLE CARD CO","JointAccount":" "},
           {"MatchDetails":{"MatchTo":"3","BureauRefCategory":"2","MatchType":"F"},"Balance":{"Amount":"£800"},"AccountStatus":"A","SupplyCompanyName":"ASSOCIATE LENDER"},
-          {"MatchDetails":{"MatchTo":"1"},"Balance":{"Narrative":"S"},"SettlementDate":"2015-02-08","SupplyCompanyName":"EXAMPLE STORES"}]},
+          {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"Balance":{"Narrative":"S"},"SettlementDate":"2015-02-08","SupplyCompanyName":"EXAMPLE STORES"}]},
         {"ApplicantIndicator":"1","CAISDetails":[
-          {"MatchDetails":{"MatchTo":"2"},"Balance":{"Amount":"£12256"},"AccountStatus":"F","WorstStatus":"8","SupplyCompanyName":"EXAMPLE LOANS","JointAccount":"M"},
-          {"Balance":{"Amount":"£50"},"AccountStatus":"A"}]}]}}}}"""
+          {"MatchDetails":{"MatchTo":"2","BureauRefCategory":"4"},"Balance":{"Amount":"£12256"},"AccountStatus":"F","WorstStatus":"8","SupplyCompanyName":"EXAMPLE LOANS","JointAccount":"M"},
+          {"Balance":{"Amount":"£50"},"AccountStatus":"A"},
+          {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"3"},"Balance":{"Amount":"£70"},"AccountStatus":"A","SupplyCompanyName":"HOUSEHOLD LOANS"},
+          {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"5"},"Balance":{"Amount":"£80"},"AccountStatus":"A","SupplyCompanyName":"ADDRESS LOANS"},
+          {"MatchDetails":{"MatchTo":"1"},"Balance":{"Amount":"£90"},"AccountStatus":"A","SupplyCompanyName":"UNCATEGORISED LOANS"}]}]}}}}"""
 
 let private accounts () =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
@@ -76,11 +80,12 @@ let private accounts () =
 [<Fact>]
 let ``credit accounts are read with lender, holder, status and amounts in pounds`` () =
     let all = accounts ()
-    Assert.Equal(5, all.Length)
+    Assert.Equal(8, all.Length)
     let card = all[0]
     Assert.Equal(ValueSome "EXAMPLE CARD CO", card.Lender)
     Assert.Equal(ValueSome "4929000000006", card.AccountNumber)
     Assert.Equal(MainApplicant, card.Holder)
+    Assert.Equal(SamePerson, card.Match)
     Assert.Equal(Active, card.Status)
     Assert.Equal(ValueSome 1140m, card.Balance)
     Assert.Equal(ValueSome 1900m, card.CreditLimit)
@@ -95,10 +100,20 @@ let ``credit accounts are read with lender, holder, status and amounts in pounds
     Assert.Equal(AliasOfMainApplicant, all[3].Holder)
     Assert.Equal(Defaulted, all[3].Status)
     Assert.True all[3].Joint
+    Assert.Equal(PotentialAlias, all[3].Match)
     Assert.Equal(Unmatched "", all[4].Holder)
+    Assert.Equal(UnknownMatch "", all[4].Match)
+    Assert.Equal(UnassociatedSameFamily, all[5].Match)
+    Assert.Equal(AddressBasedData, all[6].Match)
+    Assert.Equal(UnknownMatch "", all[7].Match)
 
 [<Fact>]
-let ``outstanding keeps the applicant's own unsettled balances, not associates' or settled ones`` () =
+let ``only the applicant's records as the same person or a potential alias are their own`` () =
+    let own = accounts () |> List.filter CreditAccounts.isOwn
+    Assert.Equal<string list>([ "EXAMPLE CARD CO"; "EXAMPLE STORES"; "EXAMPLE LOANS" ], own |> List.map (fun a -> a.Lender.Value))
+
+[<Fact>]
+let ``outstanding keeps the applicant's own unsettled balances, not other people's or settled ones`` () =
     let debts = CreditAccounts.outstanding (accounts ())
     Assert.Equal<string list>([ "EXAMPLE CARD CO"; "EXAMPLE LOANS" ], debts |> List.map (fun d -> d.Lender.Value))
     Assert.Equal(13396m, CreditAccounts.totalOwed debts)
@@ -107,18 +122,80 @@ let ``outstanding keeps the applicant's own unsettled balances, not associates' 
 let ``a response without consumer data is ValueNone, not an empty debt list`` () =
     Assert.Equal(ValueNone, CreditAccounts.ofOutput (DelphiSelect.Output()))
     Assert.Equal(ValueNone, CreditAccounts.ofOutput null)
+
+let private answer (consumerData: string) =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
-    let noAccounts =
-        (clientWith handler).DelphiSelect.Deserialize("""{"Response":{"FullConsumerData":{"ConsumerData":{}}}}""", typeof<DelphiSelect.Output>)
-        :?> DelphiSelect.Output
-    Assert.Equal(ValueSome [], CreditAccounts.ofOutput noAccounts)
+    (clientWith handler).DelphiSelect.Deserialize($"""{{"Response":{{"FullConsumerData":{{"ConsumerData":{consumerData}}}}}}}""", typeof<DelphiSelect.Output>)
+    :?> DelphiSelect.Output
+
+let private accountRecord (matchTo: string) (category: string) =
+    $$$"""{"CAIS":[{"CAISDetails":[{"MatchDetails":{"MatchTo":"{{{matchTo}}}","BureauRefCategory":"{{{category}}}"},"Balance":{"Amount":"£5"},"AccountStatus":"A"}]}]}"""
+
+let private rollRecord (matchTo: string) (category: string) =
+    $$$"""{"VotersRollPerson":[{"VRollPersonDetails":[{"MatchDetails":{"MatchTo":"{{{matchTo}}}","BureauRefCategory":"{{{category}}}"}}]}]}"""
+
+[<Theory>]
+[<InlineData("1", "1")>]
+[<InlineData("2", "4")>]
+let ``an account or electoral roll record of the applicant is a file`` (matchTo: string, category: string) =
+    Assert.True(CreditAccounts.fileFound (answer (accountRecord matchTo category)))
+    Assert.True(CreditAccounts.fileFound (answer (rollRecord matchTo category)))
+
+[<Theory>]
+[<InlineData("9", "5")>] // no match, address-based data
+[<InlineData("3", "2")>] // an associate
+[<InlineData("1", "3")>] // an unassociated same-surname household
+[<InlineData("1", "5")>] // address-based data
+let ``records of other people are no file`` (matchTo: string, category: string) =
+    Assert.False(CreditAccounts.fileFound (answer (accountRecord matchTo category)))
+    Assert.False(CreditAccounts.fileFound (answer (rollRecord matchTo category)))
+
+[<Fact>]
+let ``an empty answer is no file`` () =
+    Assert.False(CreditAccounts.fileFound (answer "{}"))
+    Assert.False(CreditAccounts.fileFound (DelphiSelect.Output()))
+    Assert.False(CreditAccounts.fileFound null)
+
+[<Fact>]
+let ``only a found file has accounts, and a file can have none`` () =
+    Assert.Equal(ValueNone, CreditAccounts.ofOutput (answer "{}"))
+    Assert.Equal(ValueNone, CreditAccounts.ofOutput (answer (accountRecord "3" "2")))
+    Assert.Equal(ValueNone, CreditAccounts.ofOutput (answer (accountRecord "1" "5")))
+    Assert.Equal(ValueSome [], CreditAccounts.ofOutput (answer (rollRecord "1" "1")))
+    Assert.Equal(1, (CreditAccounts.ofOutput (answer (accountRecord "1" "1"))).Value.Length)
+
+[<Theory>]
+[<InlineData("Rose & Crown (old) £", "Rose   Crown  old")>]
+[<InlineData("  12/3-A, O'Neil's *.  ", "12/3-A, O'Neil's *.")>]
+let ``plain turns what address patterns refuse into spaces`` (text: string, expected: string) =
+    Assert.Equal(expected, DelphiText.plain text)
+
+[<Fact>]
+let ``each field is cut to its limit, without a space left at its end`` () =
+    let long = String('a', 70)
+    Assert.Equal(30, (DelphiText.flat long).Length)
+    Assert.Equal(50, (DelphiText.houseName long).Length)
+    Assert.Equal(10, (DelphiText.houseNumber long).Length)
+    Assert.Equal(60, (DelphiText.street long).Length)
+    Assert.Equal(35, (DelphiText.district long).Length)
+    Assert.Equal(30, (DelphiText.postTown long).Length)
+    Assert.Equal(15, (DelphiText.forename long).Length)
+    Assert.Equal(15, (DelphiText.middleName long).Length)
+    Assert.Equal(30, (DelphiText.surname long).Length)
+    Assert.Equal("Rose Court", DelphiText.limited 11 "Rose Court Hall")
+    Assert.Equal("Rose Court", DelphiText.limited 11 " Rose Court ")
+
+[<Fact>]
+let ``names keep characters an address would lose`` () =
+    Assert.Equal("Seán & Co (Jr)", DelphiText.forename " Seán & Co (Jr) ")
+    Assert.Equal("Rose Court", DelphiText.flat "Rose Court£")
 
 /// A default still owing £640 (Balance shows the £900 at default), and a satisfied default.
 let private defaults =
     """{"Response":{"FullConsumerData":{"ConsumerData":{"CAIS":[{"CAISDetails":[
-        {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"F","Balance":{"Amount":"£900"},"CurrentDefBalance":{"Amount":"£640"},
+        {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"AccountStatus":"F","Balance":{"Amount":"£900"},"CurrentDefBalance":{"Amount":"£640"},
          "DelinquentBalance":{"Amount":"£640"},"SupplyCompanyName":"DEFAULTED LOANS"},
-        {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"F","Balance":{"Amount":"£300"},"CurrentDefBalance":{"Amount":"£0","Narrative":"T"},
+        {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"AccountStatus":"F","Balance":{"Amount":"£300"},"CurrentDefBalance":{"Amount":"£0","Narrative":"T"},
          "DefaultSatisfyDate":"2021-03-01","SupplyCompanyName":"PAID DEFAULT CO"}]}]}}}}"""
 
 [<Fact>]
@@ -152,21 +229,24 @@ let ``amounts read with or without the pound sign and thousands separators`` () 
     Assert.Equal(ValueNone, CreditAccounts.pounds None)
 
 /// Fictitious file: summary flags, the applicant's current debt management programme and ended arrangement, an
-/// associate's deceased marker, a two-line notice, and CIFAS markers for the applicant, an alias and an associate.
+/// associate's deceased marker, a same-surname household's marker matched to the applicant, a two-line notice, and CIFAS
+/// markers for the applicant, an alias, an associate and address-based data matched to the applicant.
 let private signalsData =
     """{"Response":{"FullConsumerData":{
         "ConsumerDataSummary":{"SummaryDetails":{"SummaryFlags":{"Arrangement":"Y","DebtManagement":"N","CIFAS":"Y","ReportedDeceased":"N","AccountQuery":" "}}},
         "ConsumerData":{
           "CAIS":[{"CAISDetails":[
-            {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"A","Balance":{"Amount":"£2400"},"SupplyCompanyName":"PLAN LENDER","SpecialInstrInd":"M","SpecialInstrDet":{"StartDate":"2024-01-01"}},
-            {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"A","Balance":{"Amount":"£900"},"SupplyCompanyName":"OLD ARRANGEMENT","SpecialInstrInd":"A","SpecialInstrDet":{"StartDate":"2018-02-02","EndDate":"2019-01-01"}},
-            {"MatchDetails":{"MatchTo":"3"},"AccountStatus":"A","SupplyCompanyName":"ASSOCIATE BANK","SpecialInstrInd":"D"},
-            {"MatchDetails":{"MatchTo":"1"},"AccountStatus":"A","SupplyCompanyName":"PLAIN CARD","SpecialInstrInd":" "}]}],
+            {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"AccountStatus":"A","Balance":{"Amount":"£2400"},"SupplyCompanyName":"PLAN LENDER","SpecialInstrInd":"M","SpecialInstrDet":{"StartDate":"2024-01-01"}},
+            {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"AccountStatus":"A","Balance":{"Amount":"£900"},"SupplyCompanyName":"OLD ARRANGEMENT","SpecialInstrInd":"A","SpecialInstrDet":{"StartDate":"2018-02-02","EndDate":"2019-01-01"}},
+            {"MatchDetails":{"MatchTo":"3","BureauRefCategory":"2"},"AccountStatus":"A","SupplyCompanyName":"ASSOCIATE BANK","SpecialInstrInd":"D"},
+            {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"3"},"AccountStatus":"A","SupplyCompanyName":"HOUSEHOLD BANK","SpecialInstrInd":"D"},
+            {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"AccountStatus":"A","SupplyCompanyName":"PLAIN CARD","SpecialInstrInd":" "}]}],
           "NOC":[{"NoCDetails":[{"Reference":"NOC0001","NumberOfLines":2,"TextLine":["I was unable to pay while in hospital.","Please contact me before any decision."]}]}],
           "CIFAS":[{"CIFASDetails":[
-            {"MatchDetails":{"MatchTo":"1"},"FraudCategory":"00"},
-            {"MatchDetails":{"MatchTo":"2"},"FraudCategory":"01"},
-            {"MatchDetails":{"MatchTo":"3"},"FraudCategory":"02"}]}]}}}}"""
+            {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"FraudCategory":"00"},
+            {"MatchDetails":{"MatchTo":"2","BureauRefCategory":"4"},"FraudCategory":"01"},
+            {"MatchDetails":{"MatchTo":"3","BureauRefCategory":"2"},"FraudCategory":"02"},
+            {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"5"},"FraudCategory":"03"}]}]}}}}"""
 
 let private signals () =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")

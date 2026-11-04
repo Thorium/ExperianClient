@@ -81,20 +81,24 @@ let ``CCJ totals by band`` () =
     Assert.Equal(ValueNone, ccj -9999)
     Assert.Equal(ValueSome(CcjTotal.OtherCcjCode 5), ccj 5)
 
-/// Fictitious: the applicant's unsatisfied judgment, an associate's judgment, and the applicant's satisfied one.
+/// Fictitious: the applicant's unsatisfied judgment, an associate's judgment, the applicant's satisfied one, and an
+/// unsatisfied one of address-based data matched to the applicant.
 let private publicInfo =
     """{"Response":{"FullConsumerData":{"ConsumerData":{"PublicInformation":[{"ApplicantIndicator":"1","PublicInfoDetails":[
-        {"MatchDetails":{"MatchTo":"1"},"InformationDate":"2024-03-01","InformationType":"02","AmountPounds":"£716","AmountPence":50,"CourtPlaintiff":"EXAMPLE COUNTY COURT","DataSource":"LCH"},
-        {"MatchDetails":{"MatchTo":"3"},"InformationDate":"2018-09-03","InformationType":"02","AmountPounds":"£300"},
-        {"MatchDetails":{"MatchTo":"1"},"InformationDate":"2019-01-10","InformationType":"02","AmountPounds":"£120","SatisfactionDate":"2020-05-01"}]}]}}}}"""
+        {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"InformationDate":"2024-03-01","InformationType":"02","AmountPounds":"£716","AmountPence":50,"CourtPlaintiff":"EXAMPLE COUNTY COURT","DataSource":"LCH"},
+        {"MatchDetails":{"MatchTo":"3","BureauRefCategory":"2"},"InformationDate":"2018-09-03","InformationType":"02","AmountPounds":"£300"},
+        {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"1"},"InformationDate":"2019-01-10","InformationType":"02","AmountPounds":"£120","SatisfactionDate":"2020-05-01"},
+        {"MatchDetails":{"MatchTo":"1","BureauRefCategory":"5"},"InformationDate":"2022-02-02","InformationType":"02","AmountPounds":"£90"}]}]}}}}"""
 
 [<Fact>]
 let ``public records read type, holder, amount in pounds and pence, and satisfaction`` () =
     let records = (PublicRecords.ofOutput (delphi publicInfo)).Value
-    Assert.Equal(3, records.Length)
+    Assert.Equal(4, records.Length)
     let judgment = records[0]
     Assert.Equal(ValueSome "02", judgment.TypeCode)
     Assert.Equal(MainApplicant, judgment.Holder)
+    Assert.Equal(SamePerson, judgment.Match)
+    Assert.Equal(AddressBasedData, records[3].Match)
     Assert.Equal(ValueSome(DateOnly(2024, 3, 1)), judgment.Date)
     Assert.Equal(ValueSome 716.5m, judgment.Amount)
     Assert.Equal(ValueSome "EXAMPLE COUNTY COURT", judgment.Plaintiff)

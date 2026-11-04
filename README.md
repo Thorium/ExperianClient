@@ -45,17 +45,21 @@ Api.DelphiSelect.convertQuoteAsync experian experianReference CreditProduct.Debt
 
 `CreditAccounts.ofOutput output` reads every credit account (CAIS record) in a Delphi Select answer, with:
 - the lender, account number, Experian's account and company type codes;
-- whose file it matched (applicant, alias, associate, joint applicant), whether it's joint;
+- whose file it matched (applicant, alias, associate, joint applicant), how firmly (same person, potential alias,
+  same-surname household, address-based data), whether it's joint;
 - its status; a default with a satisfied date or a paid narrative counts as settled;
 - balance, default balance, delinquent balance, credit limit and payment in pounds;
 - start, settlement and last-updated dates, and the worst status.
 
-It returns `ValueNone` when the answer carries no consumer data at all, and `ValueSome []` when there are no
-accounts, so a missing credit file is never read as "no debts".
+`CreditAccounts.fileFound output` says whether the answer holds the applicant's credit file: an account or electoral
+roll record matched to the applicant or their alias as the same person or a potential alias. An answer can carry
+records that aren't theirs, so consumer data alone isn't a file. `ofOutput` returns `ValueNone` without a file and
+`ValueSome []` for a file with no accounts, so a missing credit file is never read as "no debts".
 
 `CreditAccounts.amountOwed` is what an account owes now: a defaulted account's current default balance when Experian
-reports one, otherwise its balance. `CreditAccounts.outstanding` keeps the applicant's own accounts (including under
-an alias) that aren't settled and still owe something; associates' accounts are someone else's credit.
+reports one, otherwise its balance. `CreditAccounts.isOwn` tells the applicant's own accounts from everyone else's:
+`MatchTo` alone isn't enough, since same-surname households and address-based data can be matched to the applicant
+too. `CreditAccounts.outstanding` keeps own accounts that aren't settled and still owe something.
 `CreditAccounts.totalOwed` sums `amountOwed`.
 
 ```fsharp
@@ -73,6 +77,13 @@ Before using it for a consolidation loan:
 - **Names and account numbers can be missing.** Experian withholds some lender names (for example company type `10`),
   and shows account numbers only for your own data unless agreed otherwise.
 
+## Text for request fields
+
+Experian refuses a whole search over a field longer than its limit or an address character outside its pattern.
+`DelphiText` has a function per field (`flat`, `houseName`, `houseNumber`, `street`, `district`, `postTown`,
+`forename`, `middleName`, `surname`) that cuts the text to the field's limit; address fields also replace refused
+characters with spaces (`plain`). Names have no pattern, so only their length is limited.
+
 ## Financial difficulty and vulnerability signals
 
 Delphi Select has no vulnerability flag. `CreditFileSignals.ofOutput output` gathers the credit-file signals that can
@@ -80,14 +91,14 @@ point to financial difficulty or vulnerability; they corroborate your own assess
 - `Flags`: summary flags for the whole search (arrangement, debt management, credit insurance claim, account query,
   partial settlement, debt assigned, voluntary termination, recourse, gone away, deceased, CIFAS). They can come from
   associated people's data, not only the applicant's.
-- `Instructions`: the applicant's own accounts with a special instruction (arrangement, debt management programme,
+- `Instructions`: the applicant's own accounts (`isOwn`) with a special instruction (arrangement, debt management programme,
   credit insurance claim, …) and its dates. `CreditFileSignals.currentInstructions today` keeps those in force.
 - `Notices`: the consumer's Notices of Correction, their own statement on the file, as text lines. Lenders are expected
   to read them before deciding.
 - `Cifas`: CIFAS markers matched to the applicant, with protective registration (extra identity checks the consumer
   asked for) told apart from fraud categories.
 
-Like `CreditAccounts.ofOutput`, it returns `ValueNone` when the answer carries no consumer data.
+It returns `ValueNone` when the answer carries no consumer data.
 
 ## Outcomes and reports
 

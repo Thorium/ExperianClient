@@ -5,13 +5,19 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Experian</RootNamespace>
     <PackageId>ExperianClient</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
     <Authors>Tuomas Hietanen</Authors>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Description>Client for the most used Experian UK APIs (not every Experian service): Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED and IDP.</Description>
     <PackageTags>experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>v1.0.1:
+    <PackageReleaseNotes>v1.1.0:
+- ADDED: CreditAccounts.fileFound: an account or electoral roll record matched to the applicant as the same person or a potential alias
+- ADDED: RecordMatch (BureauRefCategory) as CreditAccount.Match and PublicRecord.Match; CreditAccounts.isOwn / isApplicantRecord
+- ADDED: DelphiText: request text cut to each field's limit, address text without characters Delphi refuses
+- FIXED: CreditAccounts.ofOutput is ValueNone without the applicant's file, not only without consumer data
+- FIXED: outstanding, CreditFileSignals and PublicRecords.unsatisfied no longer take a same-surname household's or address-based record matched to the applicant for the applicant's own
+v1.0.1:
 - ADDED: CreditFileSignals.ofOutput / currentInstructions: summary flags, special instructions with dates, Notices of Correction and the applicant's CIFAS markers
 - ADDED: CreditAccount.SpecialInstruction
 - ADDED: AuthPlus.ofOutput / ofResults: decision, authentication index, confirmed level and high-risk rules per applicant

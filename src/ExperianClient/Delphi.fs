@@ -2,6 +2,7 @@ namespace Experian
 
 open System
 open System.Globalization
+open System.Text.RegularExpressions
 
 /// A quotation search: leaves a soft footprint, which other lenders do not see.
 [<RequireQualifiedAccess>]
@@ -92,6 +93,40 @@ module SearchType =
         | CreditApplication _ -> Hard
         | OtherSearch _ -> Unclassified
 
+/// Text for Delphi Select's request fields. Experian refuses the whole search over a field longer than its limit or, in
+/// an address, a character outside its pattern; a part cut to its limit only costs the search some matching.
+module DelphiText =
+
+    /// Each character Delphi's address patterns refuse becomes a space.
+    let plain (text: string) =
+        Regex.Replace(text, @"[^0-9A-Za-z ,\-./*']", " ").Trim()
+
+    /// At most limit characters, with no spaces left at either end.
+    let limited (limit: int) (text: string) =
+        let trimmed = text.Trim()
+        if trimmed.Length <= limit then trimmed else trimmed.Substring(0, limit).TrimEnd()
+
+    let private addressPart limit text = plain text |> limited limit
+
+    /// UKLocation.Flat.
+    let flat text = addressPart 30 text
+    /// UKLocation.HouseName.
+    let houseName text = addressPart 50 text
+    /// UKLocation.HouseNumber.
+    let houseNumber text = addressPart 10 text
+    /// UKLocation.Street and Street2.
+    let street text = addressPart 60 text
+    /// UKLocation.District and District2.
+    let district text = addressPart 35 text
+    /// UKLocation.PostTown.
+    let postTown text = addressPart 30 text
+    /// Person.Forename. Names have no pattern, so only their length is limited.
+    let forename text = limited 15 text
+    /// Person.MiddleName.
+    let middleName text = limited 15 text
+    /// Person.Surname.
+    let surname text = limited 30 text
+
 /// Whose credit file an account was matched to.
 type AccountHolder =
     | MainApplicant
@@ -102,6 +137,19 @@ type AccountHolder =
     | AssociateOfJointApplicant
     /// "9" (no match), a missing value, or a code Experian may add.
     | Unmatched of code: string
+
+/// How firmly a record is tied to the person AccountHolder names (BureauRefCategory).
+type RecordMatch =
+    | SamePerson
+    /// Someone financially associated with the person.
+    | PersonAssociation
+    /// The same surname at the address, with no link to the person.
+    | UnassociatedSameFamily
+    | PotentialAlias
+    /// Data of the address rather than of a person.
+    | AddressBasedData
+    /// A missing value, or a code Experian may add.
+    | UnknownMatch of code: string
 
 type AccountStatus =
     | Active
@@ -162,6 +210,8 @@ type CreditAccount =
       /// Experian Standard Data Code for the lender's company type.
       CompanyTypeCode: string voption
       Holder: AccountHolder
+      /// Holder alone doesn't make the account theirs: see CreditAccounts.isOwn.
+      Match: RecordMatch
       Joint: bool
       Status: AccountStatus
       Balance: decimal voption
@@ -200,6 +250,30 @@ module CreditAccounts =
         | Some "7" -> AssociateOfJointApplicant
         | other -> Unmatched(other |> Option.defaultValue "")
 
+    let internal recordMatch (category: string option) =
+        match category |> Option.map _.Trim() with
+        | Some "1" -> SamePerson
+        | Some "2" -> PersonAssociation
+        | Some "3" -> UnassociatedSameFamily
+        | Some "4" -> PotentialAlias
+        | Some "5" -> AddressBasedData
+        | other -> UnknownMatch(other |> Option.defaultValue "")
+
+    /// True for a record that is the main applicant's own: matched to them or their alias, as the same person or a
+    /// potential alias. MatchTo alone is not enough: an unassociated same-surname household and address-based data can
+    /// be matched to the applicant too.
+    let isApplicantRecord (recordHolder: AccountHolder) (matched: RecordMatch) =
+        match recordHolder, matched with
+        | (MainApplicant | AliasOfMainApplicant), (SamePerson | PotentialAlias) -> true
+        | _ -> false
+
+    let internal isApplicantMatch (matchTo: string option) (category: string option) =
+        isApplicantRecord (holder matchTo) (recordMatch category)
+
+    /// True for the main applicant's own account (isApplicantRecord).
+    let isOwn (account: CreditAccount) =
+        isApplicantRecord account.Holder account.Match
+
     /// Narrative S (settled) or T (satisfied).
     let private paid (narrative: string option) =
         match narrative |> Option.map _.Trim() with
@@ -220,14 +294,15 @@ module CreditAccounts =
         | None -> UnknownStatus ""
 
     let private ofDetail (detail: DelphiSelect.CAISDetails_Item) =
-        let matchTo = detail.MatchDetails |> Option.ofObj |> Option.bind _.MatchTo
+        let details = detail.MatchDetails |> Option.ofObj
         let balance = detail.Balance |> Option.ofObj
         let defaultBalance = detail.CurrentDefBalance |> Option.ofObj
         { Lender = ValueOption.ofOption detail.SupplyCompanyName
           AccountNumber = ValueOption.ofOption detail.AccountNumber
           AccountTypeCode = ValueOption.ofOption detail.AccountType
           CompanyTypeCode = ValueOption.ofOption detail.CompanyType
-          Holder = holder matchTo
+          Holder = holder (details |> Option.bind _.MatchTo)
+          Match = recordMatch (details |> Option.bind _.BureauRefCategory)
           Joint = (match detail.JointAccount |> Option.map _.Trim() with Some("M" | "J") -> true | _ -> false)
           Status =
             status detail.AccountStatus (balance |> Option.bind _.Narrative) (defaultBalance |> Option.bind _.Narrative) detail.DefaultSatisfyDate
@@ -250,24 +325,53 @@ module CreditAccounts =
                       Until = dates |> Option.bind _.EndDate |> ValueOption.ofOption }
             | None -> ValueNone }
 
-    /// Every credit account in a Delphi Select response, whoever it was matched to. ValueNone when the response carries
-    /// no consumer data, so a missing credit file is never read as "no debts"; ValueSome [] when it has no accounts.
-    let ofOutput (output: DelphiSelect.Output) =
+    let private consumerData (output: DelphiSelect.Output) =
         output
         |> Option.ofObj
         |> Option.bind (fun o -> Option.ofObj o.Response)
         |> Option.bind (fun r -> Option.ofObj r.FullConsumerData)
         |> Option.bind (fun f -> Option.ofObj f.ConsumerData)
+
+    let private items (values: 'T array) =
+        values |> Option.ofObj |> Option.defaultValue [||] |> Seq.filter (isNull >> not)
+
+    /// Whether a Delphi Select response holds the applicant's credit file. A response can carry records that aren't
+    /// theirs, so its consumer data shows nothing: an account or electoral roll record has to be the applicant's
+    /// (isApplicantRecord).
+    let fileFound (output: DelphiSelect.Output) =
+        match consumerData output with
+        | None -> false
+        | Some consumer ->
+            let accounts =
+                items consumer.Cais
+                |> Seq.collect (fun block -> items block.CaisDetails)
+                |> Seq.exists (fun detail ->
+                    let details = detail.MatchDetails
+                    not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
+
+            let roll =
+                items consumer.VotersRollPerson
+                |> Seq.collect (fun block -> items block.VRollPersonDetails)
+                |> Seq.exists (fun detail ->
+                    let details = detail.MatchDetails
+                    not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
+
+            accounts || roll
+
+    /// Every credit account in the consumer data, whoever it was matched to.
+    let internal allOf (output: DelphiSelect.Output) =
+        consumerData output
         |> Option.map (fun consumer ->
-            consumer.Cais
-            |> Option.ofObj
-            |> Option.defaultValue [||]
-            |> Seq.filter (isNull >> not)
-            |> Seq.collect (fun block -> block.CaisDetails |> Option.ofObj |> Option.defaultValue [||])
-            |> Seq.filter (isNull >> not)
+            items consumer.Cais
+            |> Seq.collect (fun block -> items block.CaisDetails)
             |> Seq.map ofDetail
             |> List.ofSeq)
         |> ValueOption.ofOption
+
+    /// Every credit account in a Delphi Select response, whoever it was matched to. ValueNone without the applicant's
+    /// credit file (fileFound), so a missing file is never read as "no debts"; ValueSome [] when the file has no accounts.
+    let ofOutput (output: DelphiSelect.Output) =
+        if fileFound output then allOf output else ValueNone
 
     /// What the account owes now: a defaulted account's default balance when Experian reports one, otherwise the balance.
     let amountOwed (account: CreditAccount) =
@@ -275,14 +379,14 @@ module CreditAccounts =
         | Defaulted, ValueSome owed -> ValueSome owed
         | _ -> account.Balance
 
-    /// The main applicant's own accounts (including under an alias) that are not settled and still owe something.
-    /// Associates' accounts are someone else's credit and are left out. This includes mortgages (type 03) and phone or
+    /// The main applicant's own accounts (isOwn) that are not settled and still owe something. Associates' accounts are
+    /// someone else's credit and are left out. This includes mortgages (type 03) and phone or
     /// utility contracts (type 18): choose what a consolidation loan pays by AccountTypeCode, from Experian's Standard Data Codes.
     let outstanding (accounts: CreditAccount list) =
         accounts
         |> List.filter (fun account ->
-            match account.Holder, account.Status, amountOwed account with
-            | (MainApplicant | AliasOfMainApplicant), (Active | Delinquent | Defaulted | UnknownStatus _), ValueSome owed -> owed > 0m
+            match account.Status, amountOwed account with
+            | (Active | Delinquent | Defaulted | UnknownStatus _), ValueSome owed -> isOwn account && owed > 0m
             | _ -> false)
 
     /// The sum of what the accounts owe (amountOwed).
@@ -327,11 +431,6 @@ type CreditFileSignals =
 
 module CreditFileSignals =
 
-    let private ownRecord (matchTo: string option) =
-        match matchTo |> Option.map _.Trim() with
-        | Some("1" | "2") -> true
-        | _ -> false
-
     let private flags (summary: DelphiSelect.SummaryFlags) =
         let set (value: string option) flag =
             match value |> Option.map _.Trim() with
@@ -366,7 +465,7 @@ module CreditFileSignals =
             |> Option.ofObj
             |> Option.bind (fun o -> Option.ofObj o.Response)
             |> Option.bind (fun r -> Option.ofObj r.FullConsumerData)
-        match full |> Option.bind (fun f -> Option.ofObj f.ConsumerData), CreditAccounts.ofOutput output with
+        match full |> Option.bind (fun f -> Option.ofObj f.ConsumerData), CreditAccounts.allOf output with
         | Some consumer, ValueSome accounts ->
             let summary =
                 full
@@ -377,8 +476,7 @@ module CreditFileSignals =
                 { Flags = summary |> Option.map flags |> Option.defaultValue Set.empty
                   Instructions =
                     accounts
-                    |> List.filter (fun account ->
-                        (account.Holder = MainApplicant || account.Holder = AliasOfMainApplicant) && account.SpecialInstruction.IsSome)
+                    |> List.filter (fun account -> CreditAccounts.isOwn account && account.SpecialInstruction.IsSome)
                   Notices =
                     arrayOrEmpty consumer.Noc
                     |> Seq.collect (fun block -> arrayOrEmpty block.NoCDetails)
@@ -390,7 +488,9 @@ module CreditFileSignals =
                   Cifas =
                     arrayOrEmpty consumer.Cifas
                     |> Seq.collect (fun block -> arrayOrEmpty block.CifasDetails)
-                    |> Seq.filter (fun detail -> ownRecord (detail.MatchDetails |> Option.ofObj |> Option.bind _.MatchTo))
+                    |> Seq.filter (fun detail ->
+                        let details = detail.MatchDetails
+                        not (isNull details) && CreditAccounts.isApplicantMatch details.MatchTo details.BureauRefCategory)
                     |> Seq.choose (fun detail -> detail.FraudCategory |> Option.filter (String.IsNullOrWhiteSpace >> not) |> Option.map cifasMarker)
                     |> List.ofSeq }
         | _ -> ValueNone

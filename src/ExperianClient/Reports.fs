@@ -127,6 +127,8 @@ type ImpairedCreditHistory =
 type PublicRecord =
     { TypeCode: string voption
       Holder: AccountHolder
+      /// Holder alone doesn't make the record theirs: see CreditAccounts.isApplicantRecord.
+      Match: RecordMatch
       Date: DateOnly voption
       Amount: decimal voption
       Plaintiff: string voption
@@ -199,8 +201,10 @@ module PublicRecords =
             |> Seq.filter (isNull >> not)
             |> Seq.map (fun record ->
                 let pounds = CreditAccounts.pounds record.AmountPounds
+                let details = record.MatchDetails |> Option.ofObj
                 { TypeCode = ValueOption.ofOption record.InformationType
-                  Holder = CreditAccounts.holder (record.MatchDetails |> Option.ofObj |> Option.bind _.MatchTo)
+                  Holder = CreditAccounts.holder (details |> Option.bind _.MatchTo)
+                  Match = CreditAccounts.recordMatch (details |> Option.bind _.BureauRefCategory)
                   Date = ValueOption.ofOption record.InformationDate
                   Amount = pounds |> ValueOption.map (fun p -> p + decimal (defaultArg record.AmountPence 0) / 100m)
                   Plaintiff = ValueOption.ofOption record.CourtPlaintiff
@@ -215,11 +219,11 @@ module PublicRecords =
             |> List.ofSeq)
         |> ValueOption.ofOption
 
-    /// The records matched to the main applicant (including under an alias) that are not satisfied.
+    /// The main applicant's own records (CreditAccounts.isApplicantRecord) that are not satisfied.
     let unsatisfied (records: PublicRecord list) =
         records
         |> List.filter (fun record ->
-            (record.Holder = MainApplicant || record.Holder = AliasOfMainApplicant) && record.SatisfiedOn.IsNone)
+            CreditAccounts.isApplicantRecord record.Holder record.Match && record.SatisfiedOn.IsNone)
 
 /// An income figure from current account turnover (CATO), or why there is none.
 [<RequireQualifiedAccess>]
