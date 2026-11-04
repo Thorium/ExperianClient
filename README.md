@@ -1,12 +1,14 @@
 # ExperianClient
 
-An F# client for the most used Experian UK developer-portal APIs, generated with
+For [experian.com](https://www.experian.com). An unofficial client, not affiliated with or endorsed by Experian, a trademark of its owner.
+
+An F# client for Experian's developer-portal APIs in the UK, the US, the Netherlands, Spain and Brazil, generated with
 [SwaggerProvider](https://github.com/fsprojects/SwaggerProvider) from the specs in `src/ExperianClient/Schemas`.
 It targets `net10.0`.
 
-It does not cover every Experian service, only the six products below. To add another, put its spec in `Schemas`,
-add a provider type in `Providers.fs` and its base path in `Endpoints`, and wrap its calls in `Api`. The token, the
-JSON handling and the error type are shared.
+It does not cover every Experian service, only the products below and under [Regions](#regions). To add another, put
+its spec in `Schemas`, add a provider type in `Providers.fs` and its base path in `Endpoints`, and wrap its calls in
+`Api`. The token, the JSON handling and the error type are shared.
 
 Each product is its own type with its own models:
 
@@ -177,7 +179,9 @@ Cancelling your token throws `OperationCanceledException` as usual. For operatio
 clients are on the client, already authorised: `experian.DelphiSelect`, `experian.Kyc`, `experian.PowerCurve`, and so on.
 
 `ExperianClient.create credentials endpoints handler` shares a caller-owned `HttpMessageHandler`, such as one
-`SocketsHttpHandler` for the whole application. The client never disposes it.
+`SocketsHttpHandler` for the whole application. The client never disposes it. Set `AllowAutoRedirect = false` on it, as
+`ExperianClient.CreateHandler()` does: following a redirect would send the request body, the sign-in's password or
+`ApertureClient`'s token to whatever host it points at.
 
 String path parameters (Experian references, PowerCurve ids, NED employer ids, IDP application ids) are escaped as
 one URL segment by the `Api` functions. The generated clients insert them as they are, so if you call those directly
@@ -192,7 +196,8 @@ answers, so this call is sent directly over the same authorised connection.
 Experian's token endpoint uses the OAuth password flow. It needs all four credentials: the developer-portal username
 and password, plus the app's client id and secret. The client fetches the token on first use and keeps it until a
 minute before `expires_in` runs out; concurrent callers share one fetch. A 401 drops the token and the request is
-sent once more with a new one.
+sent once more with a new one. The token only goes to the hosts in the client's `Endpoints`: a request for any other
+host, such as a path value on a generated client that points elsewhere, is `InvalidRequest` and not sent.
 
 ## Lenient reading
 
@@ -213,6 +218,38 @@ as the specs type and name them.
 `Endpoints.sandbox` (`sandbox-uk-api.experian.com`) and `Endpoints.production` (`uk-api.experian.com`) use the
 specs' base paths. The KYC spec only names its sandbox path (`/da/ccis-devportalapis/`), so set
 `{ Endpoints.production with Kyc = ... }` if Experian gives you a different live one.
+
+## Regions
+
+Use only the parts you need. Each region is its own connection, with its own app in the developer portal, and a product's client is only made when first called, so an app enabled for one product needs nothing set up for the others. Connections share the portal login, except Brazil.
+
+| Country | Module | Endpoints | Sign-in | Run against |
+|---|---|---|---|---|
+| UK | `Api.DelphiSelect`, `Kyc`, `PowerCurve`, `WorkReport`, `Ned`, `Idp`, `BankAccountVerify`, `InternationalPayments`, `Kyb`, `AmlFlags`, `AgeAndDateOfBirth` | `sandbox`, `production` | Portal login and app | The sandbox; see below |
+| US | `Api.CreditProfile`, `InstantCredit`, `Verify` | `sandboxUs`, `productionUs` | Portal login and app | The sandbox; see below |
+| US | `Api.SsnVerification`, `VerifyCpd` | `sandboxUs`, `productionUs` | Portal login and app | **A stand-in only**; see below |
+| Most countries | `Api.AddressValidation`, `EmailValidation`, `PhoneValidation` | None: use `ApertureClient` | A token of their own | **A stand-in only**; see below |
+| Netherlands, Spain | `Api.WebData` | `sandboxEu`, `productionEu` | Portal login and app | The sandbox |
+| Brazil | `Api.OpenBanking` | `sandboxBrazil`, `productionBrazil` | `Credentials.ofClient`: app only, as Basic | **A stand-in only** |
+
+- **US:** Instant Credit, automotive and TEC Connect succeed on the sandbox. The spec's credit report examples answer 400 "Inquiry Not Allowed" on the sandbox, and healthcare 503, so `creditReportAsync` and `healthcareAsync` have been run but not seen to succeed. Employment Insight and Connect Check haven't been run.
+- **Netherlands, Spain:** the spec names only the sandbox's `/webscores/test-score`, so the live path may differ.
+- **Brazil:** Serasa's sandbox answers "not found" for its sign-in and for the products, as of 2026-11. The live host's sign-in answers as `Endpoints.productionBrazil` asks it, refusing an unknown client. The answer's fields are taken from Serasa's naming, not seen.
+- **Bank Account Verify, International Payments:** the specs describe demo endpoints serving example answers, at the same address as KYC, so the live path may differ.
+- **KYB, AML Flags:** an app needs "KYB Sandbox" ticked under My Apps; without it Experian answers 401. Use the spec's sandbox values: name `TEST`, company `99999999` or `UI88888888`, director John Smith, location `1234`. Company search, profile, owners, locations, geographies, data sources, location visits, director search, and company and people data all answer, and their real answers keep every field. The sectors call answers 500 on the sandbox, from an error in Experian's own script, so it hasn't been seen to succeed. Directors and shareholders answer `{}` for the sample company. AML Flags is KYB's company data call: ask for it in `DataBlocks`.
+- **Age and date of birth:** both are one CrossCore call, chosen by the request type and tenant id from Experian's delivery team. The age check succeeds on the sandbox. Date of Birth Verify has no spec, so it uses the age check's types, and the sandbox answers it "Undefined requestType", so it hasn't been run. Experian's page shows both `DoBVerify-Standalone` and `Standalone-DoBVerify`, and its answer's fields are taken from that page's description.
+- **SSN (eCBSV):** an app needs "Verification Ecbsv Sandbox" ticked. With it, the sandbox answers 500 `RaiseFault.notFound` to the spec's path and to others tried, so this has only run against a stand-in.
+- **Experian Verify:** an app needs "Experian Verify Sandbox" ticked. Instant reports share one call, and `reportType` in the request and the subcode choose which comes back. The spec gives `/v2/experianverify`, which `Endpoints.productionUs` uses, but the sandbox refuses that and answers on `/v1/experianverify`, which `Endpoints.sandboxUs` uses. There, every report gets one fixed Plus report, wrapped in `incomeReport` rather than the spec's `expVerifyReport`. Only that report's fields have been seen; live v2 hasn't been called.
+- **Experian Verify on a page the client hosts:** `Api.VerifyCpd`: widget, status, report. Live, it answers on `us-ev-api.experian.com`, which `Endpoints.productionUs` has. The sandbox host refuses it, so this has only run against a stand-in.
+- **Address, Email and Phone Validation:** these don't use the developer portal. They answer on one host, `api.experianaperture.io`, to a token from Experian's Self Service Portal, and there's no sandbox. The portal's tokens are refused. Experian's free trial is for the US, Canada, Australia and New Zealand, and covers that region's addresses; elsewhere, ask Experian. `ApertureClient.Create token` connects; calls use up credit. Layouts are on the generated client, `client.Address`. The token can also be replaced by OAuth, which this client doesn't do.
+
+  ```fsharp
+  let aperture = ApertureClient.Create token
+  let! answer = Api.EmailValidation.validateAsync aperture "someone@example.com" Api.ValidationOptions.Default ct
+  ```
+- **Client Gateway:** deploys and runs what a client has on Experian's Ascend platform, for any region. Use `client.ClientGateway` directly; its operations have no `Api` functions. Pass your Experian One JWT as `authorization`, and it's sent in place of the portal token, with no portal sign-in. Pass null to use the portal token. Six operations insert `useCase` at the start of the path as it is, so pass only values you trust. It hasn't been run: it needs an Ascend account, and the spec's host is the developer portal, so set `{ endpoints with ClientGateway = ... }` to the address Experian gives you. Its spec asks for `application/vnd.experian+json`, which the generator can't produce, so requests go as `application/json` until a real call shows whether that's accepted.
+- **Live hosts:** `us-api` and `eu-api.experian.com` answer, but only the sandboxes have been called with an app.
+- **Spec gaps:** Experian's examples send fields its schemas leave out or spell differently, and generated types would drop them without a word, so the bundled specs are corrected to the examples. All 90 examples of the Credit Profile, Instant Credit, Bank Account Verify and International Payments specs were compared with what the client sends. The credit report's `ascendGoData`, `conditionalProcessing`, `consumers` and a second applicant's `currentAddress` appear only in a list of every field, not a working example, so they can't be sent yet.
 
 ## IDP webhooks
 
@@ -247,6 +284,12 @@ stays right:
   - `fullDateFrom` is a plain string: the API sends `2019-01-01T00:00:00`, not a date.
 - **NED:** the employer search returns a list, as in Experian's example, not one employer.
 - **IDP:** event types come as `{"eventNames": [...]}`, not a bare list.
+- **KYB, SSN, Experian Verify:** the `Authorization` parameter is removed, since the handler sets the token. KYB's schema names with spaces take an underscore, and its XML answers are removed. Verify's version moves from the path to the base address, in every Instant report, and its answer also reads `incomeReport`, as the sandbox sends. Experian's separate AML Flags spec is a cut-down copy of KYB's that loses most of a real answer, so it isn't bundled.
+- **Age and date of birth:** `Address`, `Applicant`, `Person` and `Name` gain the fields in Experian's examples, and `fullDateFrom` is a plain string, as in KYC.
+- **Address, Email and Phone Validation** (Experian's current specs at `api.experianaperture.io/docs`, not the developer portal's older ones):
+  - Boolean headers are strings, so `Api` sends `true`/`false`, and only JSON bodies remain.
+  - Named string enums are plain strings: a generated enum would fail a whole answer on a value Experian adds.
+  - Address lookup v2's answer is wrapped in `result`, as in its examples, and a formatted address gains `names`.
 - **PowerCurve:**
   - Two-digit-year dates (`NDDOB`, `EA4S02`, `EA4S04`, `EA4S06`, documented as YY-MM-DD) are plain strings, not
     dates.
@@ -266,3 +309,7 @@ stays right:
 - the Work Report flow up to the PDF;
 - PowerCurve application, query and decision;
 - NED and IDP reads.
+
+Tests of KYB, AML Flags and Experian Verify skip until the app has the product ticked. The SSN test skips while the
+sandbox answers `RaiseFault.notFound`. Tests of Address, Email and Phone Validation run only when
+`EXPERIAN_APERTURE_TOKEN` is set, and may use up credit.

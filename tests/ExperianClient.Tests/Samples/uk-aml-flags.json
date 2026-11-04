@@ -1,0 +1,20 @@
+{
+  "BusinessRef": "99999999",
+  "LegalStatus": "L",
+  "HunterId": "ABC123",
+  "DataBlocks": [
+    "CompanyInformation",
+    "KeyParties"
+  ],
+  "CompanyName": "ABC Ltd",
+  "AddressLine_1": "1 Church Lane",
+  "AddressLine_2": null,
+  "AddressLine_3": null,
+  "AddressLine_4": null,
+  "AddressLine_5": null,
+  "AddressLine_6": null,
+  "Town": "London",
+  "County": "Greater London",
+  "Postcode": "AB1 2XY",
+  "Country": "United Kingdom"
+}

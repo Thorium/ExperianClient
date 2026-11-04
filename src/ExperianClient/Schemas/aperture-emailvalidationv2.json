@@ -1,0 +1,319 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Email Validation",
+    "version": "v3"
+  },
+  "servers": [
+    {
+      "url": "https://api.experianaperture.io/"
+    }
+  ],
+  "paths": {
+    "/email/validate/v2": {
+      "post": {
+        "tags": [
+          "Email Validation"
+        ],
+        "summary": "Submits an email address to the service to be validated and returns the result of the validation.",
+        "parameters": [
+          {
+            "name": "Reference-Id",
+            "in": "header",
+            "description": "Optional identifier that will be returned in the response to help you track the request. The Reference-Id header value can only contain alphanumeric, '-', '/', '_', ':', ' ', '.', ',', '(' and ')' characters and the value must be less than 256 characters.",
+            "schema": {
+              "maxLength": 256,
+              "minLength": 0,
+              "pattern": "^[a-zA-Z0-9:\\-/_.,() ]*$",
+              "type": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Timeout-Seconds",
+            "in": "header",
+            "description": "Optional identifier that can specifies the timeout value. The Timeout-Seconds header value must be between 3 and 15.",
+            "schema": {
+              "maximum": 15,
+              "minimum": 3,
+              "type": "integer",
+              "default": 15,
+              "nullable": true
+            }
+          },
+          {
+            "name": "Add-Metadata",
+            "in": "header",
+            "description": "Optional identifier that specify whether the response should return all fields and values, in addition to the main core information.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The request body.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailValidationV2Request"
+              },
+              "example": {
+                "email": "support@experian.com"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "You've submitted a successful request and a valid response was returned. Your request may contain confidence level or corrections. This is the only chargeable response code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailValidationV2Response"
+                },
+                "example": {
+                  "result": {
+                    "email": "support@experian.cim",
+                    "confidence": "illegitimate",
+                    "verbose_output": "roleAccount",
+                    "did_you_mean": [
+                      "support@experian.com"
+                    ]
+                  },
+                  "metadata": {
+                    "domain_detail": {
+                      "type": "business"
+                    },
+                    "normalized_email": "support@experian.cim"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request\n * You've submitted an invalid email field. Try submitting another request and make sure this field is formatted correctly.\n * You've specified an unsupported timeout value. Try submitting another call and make sure you specify a timeout value that is between 3 and 15.\n * You didn't provide an authentication token. Try submitting another request and make sure you specify your token, which you can find by signing in to the Self Service Portal.\n * You've submitted a malformed request body. Try sending another call and make sure the request body contains all required fields and that they are formatted correctly.\n * You've submitted an empty request body. Try sending another call and make sure the request body contains all required fields.\n * You've submitted an invalid Reference-ID header. Try submitting another request and make sure this header is formatted correctly.\n * You've submitted an invalid Add-Metadata header. Try submitting another request and make sure this header is formatted correctly.\n"
+          },
+          "401": {
+            "description": "Unauthorized <br><br> The authentication token you've provided is incorrect. Sign in to the Self Service Portal to find the right token.\n"
+          },
+          "403": {
+            "description": "Forbidden \n * The authentication token you've provided is valid, but it's associated with another product or you have insufficient credits. Sign in to the Self Service Portal to check if you are using the right token and if you have credits. \n * The authentication token you've provided is disabled. Sign in to the Self Service Portal to activate the token. \n * The domain you've sent the request from does not have access to your integration. Sign in to the Self Service Portal to whitelist the domain.\n * The IP address you've sent the request from does not have access to your integration. Sign in to the Self Service Portal to whitelist the IP address.\n"
+          },
+          "404": {
+            "description": "Not Found <br><br> The resource you've requested could not be found. Try submitting another call and make sure you're using the correct endpoint URL. If the issue persists, contact support.\n"
+          },
+          "406": {
+            "description": "Not Acceptable <br><br> You've specified an invalid Accept header. Try submitting another call and make sure you specify a valid Accept value. Check out Supported data formats for details.\n"
+          },
+          "408": {
+            "description": "Request Timeout <br><br> Your request has timed out (the web server failed to respond in the specified time frame). Try submitting another request.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailValidationV2Response"
+                },
+                "example": {
+                  "result": {
+                    "verbose_output": "timeout",
+                    "email": "example@test.com",
+                    "confidence": "unknown"
+                  },
+                  "metadata": {
+                    "normalized_email": "example@test.com"
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type <br><br> You've specified an invalid Content-Type header. Try submitting another call and make sure you specify a valid Content-Type value. Check out Supported data formats for details.\n"
+          },
+          "429": {
+            "description": "Too Many Requests <br><br> You've submitted too many requests. To protect all customers, your account has been temporarily throttled. Check out Rate limiting for details.\n"
+          },
+          "500": {
+            "description": "Internal Server Error <br><br> An unexpected server error was encountered. Try submitting another request. If the issue persists, contact support.\n"
+          },
+          "503": {
+            "description": "Service Unavailable <br><br> The service is currently unavailable. You can check the API's uptime and downtime by going to the service status page.\n"
+          }
+        },
+        "security": [
+          {
+            "OAuth2": []
+          },
+          {
+            "Auth-Token": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EmailValidationV2Request": {
+        "required": [
+          "email"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "type": "string",
+            "description": "The email address that is the subject of the validation. <br> Maximum local part length is 64 and maximum domain part length is 255",
+            "example": "support@experian.com"
+          }
+        },
+        "additionalProperties": false,
+        "description": "The request model."
+      },
+      "ResponseError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A link to documentation that provides more details about the error you’ve encountered.",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the error.",
+            "nullable": true,
+            "example": "Bad Request"
+          },
+          "detail": {
+            "type": "string",
+            "description": "A description of the error.",
+            "nullable": true,
+            "example": "The request body was malformed."
+          },
+          "instance": {
+            "type": "string",
+            "description": "The endpoint that returned the error.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Error model containing the error details."
+      },
+      "EmailValidationV2Confidence": {
+        "type": "string",
+        "description": "The outcome (confidence level) of the validation."
+      },
+      "EmailValidationV2VerboseOutput": {
+        "type": "string",
+        "description": "Verbose output field value:\n  * verified - The mailbox exists, is reachable, and is not known to be illegitimate or disposable.\n  * mailboxDisabled -  The mailbox is disabled.\n  * mailboxDoesNotExist -  The mailbox does not exist.\n  * mailboxFull -  The mailbox is full.\n  * syntaxFailure -  The syntax of the specified email address is incorrect.\n  * internationalCharactersUnsupported -  The email provider does not support international characters.\n  * unreachable -  The domain is not responding to validation requests or does not have any active mail severs.\n  * illegitimate -  Seed, spamtrap, black hole, technical role account or inactive domain.\n  * roleAccount -  Role accounts such as support, sales, info etc.\n  * typoDomain -  The domain of the email address you've provided was close to a common domain and, although it exists, it is highly unlikely to be correct.\n  * localPartSpamTrap -  Known local portions of the email address that may indicate spam traps.\n  * Profanity -  The email address contains profanity.\n  * disposable -  The domain is administered by a disposable email provider (e.g. Mailinator).\n  * unknown -  We were unable to conclusively verify or invalidate the email address.\n  * timeout -  The request timed out due to the host domain not responding in time.\n  * acceptAll -  The domain is accept-all, so the email address cannot be validated.\n  * relayDenied -  The result was validated at the incorrect mail exchanger.\n  * BLANK -  You are submitting requests at a faster rate than allowed by the email service providers for the domains you are checking.\n"
+      },
+      "EmailValidationV2Result": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "The email address that is the subject of the validation.",
+            "example": "support@experian.com"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/EmailValidationV2Confidence"
+          },
+          "verbose_output": {
+            "$ref": "#/components/schemas/EmailValidationV2VerboseOutput"
+          },
+          "did_you_mean": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of more likely email addresses. Suggestions include fixes to syntax errors in the provided email address, typos in domains etc.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Details about the result. Includes the validated data and its confidence level."
+      },
+      "EmailValidationV2Metadata": {
+        "type": "object",
+        "properties": {
+          "domain_detail": {
+            "$ref": "#/components/schemas/EmailValidationV2DomainDetail"
+          },
+          "normalized_email": {
+            "type": "string",
+            "description": "The normalized version of the request email.",
+            "nullable": true,
+            "example": "support@experian.com"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Details about all properties that metadata includes."
+      },
+      "EmailValidationV2DomainDetail": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "consumer",
+              "business"
+            ],
+            "type": "string",
+            "description": "Type field value:\n  * consumer - returned for \"free\" domains\n  * business -  returned for \"business\" domains\n  * Omit the field \"type\" when we are unable to provide a value (either through DB issues, not having the domain in our DB, or other)\n"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Details about the domain."
+      },
+      "EmailValidationV2Response": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ResponseError"
+          },
+          "result": {
+            "$ref": "#/components/schemas/EmailValidationV2Result"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/EmailValidationV2Metadata"
+          }
+        },
+        "additionalProperties": false,
+        "description": "The response model."
+      }
+    },
+    "headers": {
+      "Reference-Id": {
+        "schema": {
+          "type": "string",
+          "description": "If you chose to submit a \"Reference-Id\" in the response body, the value will be returned with the response.",
+          "nullable": true
+        }
+      },
+      "Transaction-Id": {
+        "schema": {
+          "type": "string",
+          "description": "Unique Experian-assigned transaction identifier.",
+          "example": "ab123ab1-abc1-1234-abcd-ab1a123a1a12"
+        }
+      }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "http",
+        "description": "Token URL: https://sso.experianaperture.io/oauth2/aust0wkxjeKyT3HRO4x7/v1/token \n\n Flow: clientCredentials",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      },
+      "Auth-Token": {
+        "type": "apiKey",
+        "description": "Your unique key, called a token, that is required to submit an API request.",
+        "name": "Auth-Token",
+        "in": "header"
+      },
+      "x-app-key": {
+        "type": "apiKey",
+        "description": "Alternative Auth Token header.",
+        "name": "x-app-key",
+        "in": "header"
+      }
+    }
+  }
+}

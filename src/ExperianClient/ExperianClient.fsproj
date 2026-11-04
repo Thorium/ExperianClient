@@ -5,13 +5,29 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Experian</RootNamespace>
     <PackageId>ExperianClient</PackageId>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Authors>Tuomas Hietanen</Authors>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
-    <Description>Client for the most used Experian UK APIs (not every Experian service): Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED and IDP.</Description>
-    <PackageTags>experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
+    <Description>For experian.com. Unofficial .NET client for Experian's developer-portal APIs. UK: Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED, IDP, Bank Account Verify, International Payments Verification, KYB, AML Flags, age and date of birth checks. US: Credit Profile, Instant Credit, SSN verification (eCBSV), Experian Verify. Netherlands and Spain: Web Data Insights. Brazil: Serasa Experian open banking. Most countries: Address, Email and Phone Validation, Client Gateway.</Description>
+    <PackageTags>experian.com;experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>v1.1.1:
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>v1.2.0:
+- ADDED: US Credit Profile and Instant Credit: Api.CreditProfile, Api.InstantCredit, Endpoints.sandboxUs / productionUs
+- ADDED: UK Bank Account Verify and International Payments Verification: Api.BankAccountVerify, Api.InternationalPayments
+- ADDED: UK KYB and AML Flags: Api.Kyb, Api.AmlFlags, needing "KYB Sandbox" on the app. Sectors not seen to succeed: the sandbox answers 500
+- ADDED: UK age threshold and Date of Birth Verify through CrossCore: Api.AgeAndDateOfBirth. Date of birth not run: the sandbox doesn't know its request type
+- ADDED: US Experian Verify: Api.Verify, Api.VerifyCpd, needing "Experian Verify Sandbox" on the app. Run on the sandbox's v1 only; live v2 and the client-hosted flow not run
+- ADDED: US SSN verification (eCBSV): Api.SsnVerification. Not run: the sandbox answers notFound
+- ADDED: Address, Email and Phone Validation over ApertureClient, with their own token: Api.AddressValidation, Api.EmailValidation, Api.PhoneValidation. Not run against Experian: no sandbox, needs a token
+- ADDED: Client Gateway 2.6.0 as ExperianClient.ClientGateway, the generated client. Not run: it needs an Ascend platform account
+- ADDED: Netherlands and Spain Web Data Insights: Api.WebData, Endpoints.sandboxEu / productionEu
+- ADDED: Brazil open banking through Serasa Experian: Api.OpenBanking, Endpoints.sandboxBrazil / productionBrazil, Credentials.ofClient. Not run against Serasa: its sandbox has stopped answering
+- FIXED: CreateHandler no longer follows redirects, which sent bodies and the sign-in's password, and ApertureClient's token, to the redirect's host; a 3xx answer is an ApiError
+- FIXED: the bearer token only goes to the hosts in the client's Endpoints; others are InvalidRequest, including a 401 retry after a caller's handler followed a redirect
+- FIXED: an Authorization the caller passes, such as Client Gateway's Experian One JWT, is sent as it is, with no portal sign-in
+- ADDED: bundled specs corrected to Experian's examples: fields its schemas leave out or spell differently, such as returnItin and IBAN; International Payments' non-HTTP response codes removed
+v1.1.1:
 - FIXED: CreditAccounts.fileFound counts the applicant's public records, so someone with only a court judgment has a file
 v1.1.0:
 - ADDED: CreditAccounts.fileFound: an account or electoral roll record matched to the applicant as the same person or a potential alias
@@ -45,6 +61,7 @@ v1.0.0:
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,7 +71,7 @@ v1.0.0:
     <Compile Include="Reports.fs" />
     <Compile Include="Api.fs" />
     <Compile Include="Webhook.fs" />
-    <CustomAdditionalCompileInputs Include="Schemas\*.yaml;Schemas\*.yml" />
+    <CustomAdditionalCompileInputs Include="Schemas\*.yaml;Schemas\*.yml;Schemas\*.json" />
     <InternalsVisibleTo Include="ExperianClient.Tests" />
   </ItemGroup>
 

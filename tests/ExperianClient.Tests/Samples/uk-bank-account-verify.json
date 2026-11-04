@@ -1,0 +1,81 @@
+{
+  "header": {
+    "tenantId": "c7f8f55045884847b993d81ca8cdaf",
+    "clientReferenceId": "TEST-123-124",
+    "requestType": "BAVConsumer-Standard",
+    "expRequestId": "",
+    "messageTime": "2022-05-19T16:01:53Z",
+    "txnId": "",
+    "time": "",
+    "options": {}
+  },
+  "payload": {
+    "application": {
+      "applicants": [
+        {
+          "id": "APPLICANT_1",
+          "contactId": "MainContact_1"
+        }
+      ]
+    },
+    "source": "WEB",
+    "contacts": [
+      {
+        "id": "MainContact_1",
+        "person": {
+          "typeOfPerson": "APPLICANT",
+          "personDetails": {
+            "dateOfBirth": null
+          },
+          "names": [
+            {
+              "id": "MAINPERSONNAME_1",
+              "type": "CURRENT",
+              "title": "MISS",
+              "firstName": "MICHELLE",
+              "middleNames": "",
+              "surName": "BOYNTON",
+              "nameSuffix": ""
+            }
+          ]
+        },
+        "addresses": [
+          {
+            "id": "MAINAPPADDRESS_1",
+            "addressIdentifier": "ADDRESS_1",
+            "indicator": "RESIDENTIAL",
+            "addressType": "CURRENT",
+            "poBoxNumber": "",
+            "subBuilding": "",
+            "buildingName": "",
+            "buildingNumber": "76",
+            "street": "TAMNAHERIN ROAD",
+            "street2": "",
+            "subLocality": "",
+            "locality": "",
+            "postTown": "LONDONDERRY",
+            "county": "",
+            "postal": "BT47 3AN",
+            "countryCode": "GBR",
+            "residentFrom": {
+              "fullDateFrom": "2011-04-28",
+              "yearFrom": "2011",
+              "monthFrom": "04",
+              "dayFrom": "28"
+            },
+            "residentTo": {
+              "fullDateTo": "2021-04-28",
+              "yearTo": "2021",
+              "monthTo": "04",
+              "dayTo": "28"
+            }
+          }
+        ],
+        "bankAccount": {
+          "sortCode": "070116",
+          "clearAccountNumber": ""
+        }
+      }
+    ]
+  }
+}

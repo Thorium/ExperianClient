@@ -10,6 +10,13 @@ open System.Text.Json
 open System.Threading
 open System.Threading.Tasks
 
+/// How a region's token endpoint is asked.
+type SignIn =
+    /// Experian's developer portal: the portal user and the app's client id and secret, in JSON.
+    | PortalPassword
+    /// Serasa Experian in Brazil: the app's client id and secret alone, as Basic authentication.
+    | SerasaClient
+
 /// The developer-portal user and the registered app's client id and secret; the token endpoint needs all four.
 /// Printing one (%A, ToString) shows the username and client id only.
 [<StructuredFormatDisplay("{Display}")>]
@@ -30,7 +37,31 @@ type Endpoints =
       Ned: Uri
       WorkReport: Uri
       Idp: Uri
-      PowerCurve: Uri }
+      PowerCurve: Uri
+      SignIn: SignIn
+      ClientGateway: Uri
+      BankAccountVerify: Uri
+      InternationalPayments: Uri
+      Kyb: Uri
+      AgeAndDateOfBirth: Uri
+      SsnVerification: Uri
+      Verify: Uri
+      VerifyCpd: Uri
+      InstantCredit: Uri
+      CreditProfile: Uri
+      WebData: Uri
+      OpenBankingScore: Uri
+      IncomeVerification: Uri
+      TransactionCategorization: Uri
+      AffordabilityCheck: Uri }
+
+/// Credentials for a sign-in that takes only the app's client id and secret: Serasa Experian's.
+module Credentials =
+    let ofClient (clientId: string) (clientSecret: string) =
+        { Username = ""
+          Password = ""
+          ClientId = clientId
+          ClientSecret = clientSecret }
 
 module Endpoints =
 
@@ -43,12 +74,56 @@ module Endpoints =
           Ned = at "/"
           WorkReport = at "/"
           Idp = at "/"
-          PowerCurve = at "/decisioning/experianone/customeracquisition/v1/" }
+          PowerCurve = at "/decisioning/experianone/customeracquisition/v1/"
+          SignIn = PortalPassword
+          ClientGateway = at "/v1/"
+          BankAccountVerify = at "/da/ccis-devportalapis/"
+          InternationalPayments = at "/da/ccis-devportalapis/"
+          Kyb = at "/"
+          AgeAndDateOfBirth = at "/da/ccis-devportalapis/"
+          SsnVerification = at "/consumerservices/ecbsv/v1/"
+          Verify = at "/consumerservices/verification/v2/"
+          VerifyCpd = at "/consumerservices/evcpd/v1/"
+          InstantCredit = at "/consumerservices/credit-profile/"
+          CreditProfile = at "/consumerservices/credit-profile/"
+          WebData = at "/creditrisk/webdata/gdp/v1/"
+          OpenBankingScore = at "/open-banking/score/v1/"
+          IncomeVerification = at "/open-banking/income-verification/v1/"
+          TransactionCategorization = at "/open-banking/categorization/v1/"
+          AffordabilityCheck = at "/open-banking/affordability-check/v1/" }
+
+    /// The scheme, host and port of every address in a set: the only places its token goes.
+    let internal origins (endpoints: Endpoints) =
+        Reflection.FSharpValue.GetRecordFields endpoints
+        |> Array.choose (function
+            | :? Uri as uri -> Some(uri.GetLeftPart UriPartial.Authority)
+            | _ -> None)
+        |> Set.ofArray
+
+    /// Serasa Experian's own sign-in, in Brazil.
+    let private onSerasaHost (host: string) =
+        { onHost host with
+            Token = Uri($"https://{host}/security/iam/v1/client-identities/login")
+            SignIn = SerasaClient }
 
     let sandbox = onHost "sandbox-uk-api.experian.com"
 
     /// The KYC spec only names its sandbox path; set Kyc if Experian gives a different live one.
     let production = onHost "uk-api.experian.com"
+
+    /// The sandbox answers Experian Verify on v1 only, with one fixed report.
+    let sandboxUs = { onHost "sandbox-us-api.experian.com" with Verify = Uri "https://sandbox-us-api.experian.com/consumerservices/verification/v1/" }
+
+    /// Experian Verify on a page the client hosts answers on a host of its own.
+    let productionUs = { onHost "us-api.experian.com" with VerifyCpd = Uri "https://us-ev-api.experian.com/consumerservices/evcpd/v1/" }
+
+    /// Web Data Insights, for the Netherlands and Spain.
+    let sandboxEu = onHost "sandbox-eu-api.experian.com"
+    let productionEu = onHost "eu-api.experian.com"
+
+    /// Serasa Experian's sandbox, as the Brazilian specs name it.
+    let sandboxBrazil = onSerasaHost "sandbox-api.serasaexperian.com.br"
+    let productionBrazil = onSerasaHost "api.serasaexperian.com.br"
 
 type ExperianFailure =
     /// The request was not sent: an argument cannot be valid.
@@ -73,6 +148,9 @@ module ExperianFailure =
 
 /// Raised inside a call when the token endpoint refuses; calls return it as TokenRefused.
 exception TokenRefusedException of httpStatus: int * body: string
+
+/// Raised inside a call when a request would carry the token off the client's endpoints; calls return it as InvalidRequest.
+exception OtherHostException of host: string
 
 /// A bearer token and the time after which it is not used. Printing one shows the expiry only.
 [<StructuredFormatDisplay("{Display}")>]
@@ -163,6 +241,23 @@ type internal BlankAsNoneFactory() =
     override _.CreateConverter(t, _) =
         Activator.CreateInstance(typedefof<BlankAsNoneConverter<_>>.MakeGenericType(t.GetGenericArguments())) :?> Serialization.JsonConverter
 
+module internal Reading =
+
+    /// Unset optional fields are left out of request bodies rather than sent as null. Responses are read leniently:
+    /// strings may arrive as numbers, numbers as strings, optional dates and numbers as "", and names in another case
+    /// (NED sends employerid for employerId); requests are written as the specs type and name them.
+    let options =
+        let options =
+            JsonSerializerOptions(
+                DefaultIgnoreCondition = Serialization.JsonIgnoreCondition.WhenWritingNull,
+                PropertyNameCaseInsensitive = true)
+        options.Converters.Add(BlankAsNoneFactory())
+        options.Converters.Add(LenientStringConverter())
+        options.Converters.Add(LenientInt32Converter())
+        options.Converters.Add(LenientInt64Converter())
+        options.Converters.Add(LenientDoubleConverter())
+        options
+
 module internal EncodedJson =
 
     /// The JSON inside a body that is one JSON string holding an object or array, as the KYC sandbox answers.
@@ -189,6 +284,14 @@ module internal Token =
 
     /// Experian documents 30-minute tokens; used when expires_in is missing or unreadable.
     let defaultLifetime = TimeSpan.FromMinutes 30.
+
+    /// Serasa Experian's sign-in: the client id and secret alone. The answer's names are read by parse.
+    let serasaRequest (credentials: Credentials) (tokenUri: Uri) =
+        let request = new HttpRequestMessage(HttpMethod.Post, tokenUri)
+        let pair = Convert.ToBase64String(Encoding.UTF8.GetBytes $"{credentials.ClientId}:{credentials.ClientSecret}")
+        request.Headers.Authorization <- AuthenticationHeaderValue("Basic", pair)
+        request.Content <- new StringContent("{}", Encoding.UTF8, "application/json")
+        request
 
     let request (credentials: Credentials) (tokenUri: Uri) =
         let body =
@@ -219,22 +322,31 @@ module internal Token =
         try
             use document = JsonDocument.Parse text
             let root = document.RootElement
-            match root.TryGetProperty "access_token" with
-            | true, token when token.ValueKind = JsonValueKind.String && token.GetString() <> "" ->
+            // Serasa Experian names them in camel case
+            let named (snake: string) (camel: string) =
+                match root.TryGetProperty snake with
+                | true, value -> ValueSome value
+                | _ ->
+                    match root.TryGetProperty camel with
+                    | true, value -> ValueSome value
+                    | _ -> ValueNone
+
+            match named "access_token" "accessToken" with
+            | ValueSome token when token.ValueKind = JsonValueKind.String && token.GetString() <> "" ->
                 let lifetime =
-                    match root.TryGetProperty "expires_in" with
-                    | true, expires ->
+                    match named "expires_in" "expiresIn" with
+                    | ValueSome expires ->
                         match seconds expires with
                         | ValueSome s when s > 0. -> TimeSpan.FromSeconds s
                         | _ -> defaultLifetime
-                    | _ -> defaultLifetime
+                    | ValueNone -> defaultLifetime
                 ValueSome { Value = token.GetString(); ExpiresAt = now + lifetime }
             | _ -> ValueNone
         with :? JsonException -> ValueNone
 
 /// Fetches the bearer token and keeps it until a minute before it expires; concurrent callers share one fetch.
 [<Sealed>]
-type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: HttpMessageInvoker, now: unit -> DateTimeOffset) =
+type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: HttpMessageInvoker, now: unit -> DateTimeOffset, ?signIn: SignIn) =
     let gate = new SemaphoreSlim(1, 1)
 
     /// A reference cell, not a voption: it is read outside the gate, and a struct read could be torn.
@@ -247,7 +359,10 @@ type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: Htt
 
     let fetch (ct: CancellationToken) =
         task {
-            use request = Token.request credentials tokenUri
+            use request =
+                match defaultArg signIn PortalPassword with
+                | PortalPassword -> Token.request credentials tokenUri
+                | SerasaClient -> Token.serasaRequest credentials tokenUri
             use! response = invoker.SendAsync(request, ct)
             let! text = response.Content.ReadAsStringAsync ct
             let status = int response.StatusCode
@@ -285,26 +400,37 @@ type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: Htt
         | _ -> ()
 
 /// Adds the bearer token to every request and sends JSON without a charset; a 401 drops the token and the request is sent once more
-/// with a fresh one. A success body that is one JSON string holding an object or array is replaced by that JSON.
-type internal BearerHandler(tokens: TokenSource, inner: HttpMessageHandler) =
+/// with a fresh one. A request already carrying Authorization keeps it, with no sign-in or retry. A request for a host outside origins
+/// isn't sent. A success body that is one JSON string holding an object or array is replaced by that JSON.
+type internal BearerHandler(tokens: TokenSource, origins: Set<string>, inner: HttpMessageHandler) =
     inherit DelegatingHandler(inner)
 
     member private _.SendInner(request, ct) = base.SendAsync(request, ct)
 
     member private this.SendAuthorized(request: HttpRequestMessage, ct) =
+        let refuseOtherHost () =
+            if not (origins.Contains(request.RequestUri.GetLeftPart UriPartial.Authority)) then
+                raise (OtherHostException request.RequestUri.Host)
+
         task {
-            let! token = tokens.GetAsync ct
-            request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", token.Value)
+            refuseOtherHost ()
             Wire.plainJson request.Content
-            let! response = this.SendInner(request, ct)
-            if response.StatusCode <> HttpStatusCode.Unauthorized then
-                return response
-            else
-                response.Dispose()
-                tokens.Invalidate token
-                let! fresh = tokens.GetAsync ct
-                request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", fresh.Value)
+            if request.Headers.Contains "Authorization" then
                 return! this.SendInner(request, ct)
+            else
+                let! token = tokens.GetAsync ct
+                request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", token.Value)
+                let! response = this.SendInner(request, ct)
+                if response.StatusCode <> HttpStatusCode.Unauthorized then
+                    return response
+                else
+                    response.Dispose()
+                    tokens.Invalidate token
+                    // A handler that followed a redirect has moved the request.
+                    refuseOtherHost ()
+                    let! fresh = tokens.GetAsync ct
+                    request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", fresh.Value)
+                    return! this.SendInner(request, ct)
         }
 
     override this.SendAsync(request, ct) =
@@ -325,28 +451,16 @@ type internal BearerHandler(tokens: TokenSource, inner: HttpMessageHandler) =
                     | ValueNone -> response
         }
 
-/// An Experian UK connection: one token cache and the generated client of each product over one shared handler.
-/// Keep it for the application's lifetime; the handler stays the caller's (it is never disposed here).
+/// A connection to one Experian region: one token cache and the generated client of each product over one shared handler. Each
+/// product's client is made when first used, so an app enabled for one product needs nothing set up for the others.
+/// Keep it for the application's lifetime; the handler stays the caller's (it is never disposed here). A caller's handler must not follow
+/// redirects: it would send the body, and the sign-in's password, to wherever a redirect points.
 [<Sealed>]
 type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, handler: HttpMessageHandler, now: unit -> DateTimeOffset) =
-    let tokens = TokenSource(credentials, endpoints.Token, new HttpMessageInvoker(handler, false), now)
-    let authorized = new BearerHandler(tokens, handler)
+    let tokens = TokenSource(credentials, endpoints.Token, new HttpMessageInvoker(handler, false), now, endpoints.SignIn)
+    let authorized = new BearerHandler(tokens, Endpoints.origins endpoints, handler)
 
-    /// Unset optional fields are left out of request bodies rather than sent as null. Responses are read leniently:
-    /// strings may arrive as numbers, numbers as strings, optional dates and numbers as "", and names in another case
-    /// (NED sends employerid for employerId); requests are written as the specs type and name them.
-    let json =
-        let options =
-            JsonSerializerOptions(
-                DefaultIgnoreCondition = Serialization.JsonIgnoreCondition.WhenWritingNull,
-                PropertyNameCaseInsensitive = true)
-        options.Converters.Add(BlankAsNoneFactory())
-        options.Converters.Add(LenientStringConverter())
-        options.Converters.Add(LenientInt32Converter())
-        options.Converters.Add(LenientInt64Converter())
-        options.Converters.Add(LenientDoubleConverter())
-        options
-
+    let json = Reading.options
     let http (baseAddress: Uri) = new HttpClient(authorized, false, BaseAddress = baseAddress)
     let delphiSelect = lazy DelphiSelect.Client(http endpoints.DelphiSelect, json)
     let kyc = lazy Kyc.Client(http endpoints.Kyc, json)
@@ -354,6 +468,32 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     let workReport = lazy WorkReport.Client(http endpoints.WorkReport, json)
     let idp = lazy Idp.Client(http endpoints.Idp, json)
     let powerCurve = lazy PowerCurve.Client(http endpoints.PowerCurve, json)
+    let clientGateway = lazy ClientGateway.Client(http endpoints.ClientGateway, json)
+    let bankAccountVerify = lazy BankAccountVerify.Client(http endpoints.BankAccountVerify, json)
+    let internationalPayments = lazy InternationalPayments.Client(http endpoints.InternationalPayments, json)
+    let kyb = lazy Kyb.Client(http endpoints.Kyb, json)
+    let ageAndDateOfBirth = lazy AgeAndDateOfBirth.Client(http endpoints.AgeAndDateOfBirth, json)
+    let ssnVerification = lazy SsnVerification.Client(http endpoints.SsnVerification, json)
+    let verifyCore = lazy VerifyCore.Client(http endpoints.Verify, json)
+    let verifyPlus = lazy VerifyPlus.Client(http endpoints.Verify, json)
+    let verifyPremium = lazy VerifyPremium.Client(http endpoints.Verify, json)
+    let verifyPremiumPrequal = lazy VerifyPremiumPrequal.Client(http endpoints.Verify, json)
+    let verifyEmployment = lazy VerifyEmployment.Client(http endpoints.Verify, json)
+    let verifyGovernment = lazy VerifyGovernment.Client(http endpoints.Verify, json)
+    let reverifyVoe = lazy ReverifyVoe.Client(http endpoints.Verify, json)
+    let reverifyVoie = lazy ReverifyVoie.Client(http endpoints.Verify, json)
+    let verifyCpdCore = lazy VerifyCpdCore.Client(http endpoints.VerifyCpd, json)
+    let verifyCpdPlus = lazy VerifyCpdPlus.Client(http endpoints.VerifyCpd, json)
+    let verifyCpdPremium = lazy VerifyCpdPremium.Client(http endpoints.VerifyCpd, json)
+    let reverifyCpdVoe = lazy ReverifyCpdVoe.Client(http endpoints.VerifyCpd, json)
+    let reverifyCpdVoie = lazy ReverifyCpdVoie.Client(http endpoints.VerifyCpd, json)
+    let instantCredit = lazy InstantCredit.Client(http endpoints.InstantCredit, json)
+    let creditProfile = lazy CreditProfile.Client(http endpoints.CreditProfile, json)
+    let webData = lazy WebData.Client(http endpoints.WebData, json)
+    let openBankingScore = lazy OpenBankingScore.Client(http endpoints.OpenBankingScore, json)
+    let incomeVerification = lazy IncomeVerifications.Client(http endpoints.IncomeVerification, json)
+    let transactionCategorization = lazy TransactionCategorization.Client(http endpoints.TransactionCategorization, json)
+    let affordabilityCheck = lazy AffordabilityChecks.Client(http endpoints.AffordabilityCheck, json)
 
     /// A client over a caller-owned handler, such as one shared SocketsHttpHandler.
     new(credentials, endpoints, handler) = ExperianClient(credentials, endpoints, handler, fun () -> DateTimeOffset.UtcNow)
@@ -366,10 +506,38 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     member _.WorkReport = workReport.Value
     member _.Idp = idp.Value
     member _.PowerCurve = powerCurve.Value
+    /// The generated client, with no Api functions. Its authorization argument, when given, is sent instead of the portal token.
+    member _.ClientGateway = clientGateway.Value
+    member _.BankAccountVerify = bankAccountVerify.Value
+    member _.InternationalPayments = internationalPayments.Value
+    member _.Kyb = kyb.Value
+    member _.AgeAndDateOfBirth = ageAndDateOfBirth.Value
+    member _.SsnVerification = ssnVerification.Value
+    member _.VerifyCore = verifyCore.Value
+    member _.VerifyPlus = verifyPlus.Value
+    member _.VerifyPremium = verifyPremium.Value
+    member _.VerifyPremiumPrequal = verifyPremiumPrequal.Value
+    member _.VerifyEmployment = verifyEmployment.Value
+    member _.VerifyGovernment = verifyGovernment.Value
+    member _.ReverifyVoe = reverifyVoe.Value
+    member _.ReverifyVoie = reverifyVoie.Value
+    member _.VerifyCpdCore = verifyCpdCore.Value
+    member _.VerifyCpdPlus = verifyCpdPlus.Value
+    member _.VerifyCpdPremium = verifyCpdPremium.Value
+    member _.ReverifyCpdVoe = reverifyCpdVoe.Value
+    member _.ReverifyCpdVoie = reverifyCpdVoie.Value
+    member _.InstantCredit = instantCredit.Value
+    member _.CreditProfile = creditProfile.Value
+    member _.WebData = webData.Value
+    member _.OpenBankingScore = openBankingScore.Value
+    member _.IncomeVerification = incomeVerification.Value
+    member _.TransactionCategorization = transactionCategorization.Value
+    member _.AffordabilityCheck = affordabilityCheck.Value
 
-    /// A handler for the Experian hosts. Create it once per application.
+    /// A handler for the Experian hosts. Create it once per application. It doesn't follow redirects, so a token or personal data can't
+    /// follow one to another host: a 3xx answer is an ApiError.
     static member CreateHandler() : HttpMessageHandler =
-        new SocketsHttpHandler(UseCookies = false, PooledConnectionLifetime = TimeSpan.FromMinutes 5.)
+        new SocketsHttpHandler(UseCookies = false, PooledConnectionLifetime = TimeSpan.FromMinutes 5., AllowAutoRedirect = false)
 
     /// A client with its own handler.
     static member Create(credentials, endpoints) = ExperianClient(credentials, endpoints, ExperianClient.CreateHandler())
@@ -378,6 +546,34 @@ module ExperianClient =
 
     /// A client over a caller-owned handler.
     let create credentials endpoints (handler: HttpMessageHandler) = ExperianClient(credentials, endpoints, handler)
+
+/// Adds the token to every request and sends JSON without a charset.
+type internal AuthTokenHandler(authToken: string, inner: HttpMessageHandler) =
+    inherit DelegatingHandler(inner)
+
+    override _.SendAsync(request, ct) =
+        request.Headers.TryAddWithoutValidation("Auth-Token", authToken) |> ignore
+        Wire.plainJson request.Content
+        base.SendAsync(request, ct)
+
+/// A connection to Experian's Address, Email and Phone Validation. They don't use the developer portal: they answer on one host, for any
+/// region, to a token from Experian's Self Service Portal that opens whichever of them are licensed. Each product's client is made when
+/// first used. Keep it for the application's lifetime; the handler stays the caller's (it is never disposed here). A caller's handler must
+/// not follow redirects: .NET would send this token's header to wherever a redirect points.
+[<Sealed>]
+type ApertureClient(authToken: string, handler: HttpMessageHandler) =
+    let authorized = new AuthTokenHandler(authToken, handler)
+    let http () = new HttpClient(authorized, false, BaseAddress = Uri "https://api.experianaperture.io/")
+    let address = lazy AddressValidation.Client(http (), Reading.options)
+    let email = lazy EmailValidation.Client(http (), Reading.options)
+    let phone = lazy PhoneValidation.Client(http (), Reading.options)
+
+    member _.Address = address.Value
+    member _.Email = email.Value
+    member _.Phone = phone.Value
+
+    /// A client with its own handler.
+    static member Create(authToken) = ApertureClient(authToken, ExperianClient.CreateHandler())
 
 /// How the Api functions run a call and report its failure.
 module internal Call =
@@ -388,6 +584,7 @@ module internal Call =
         | :? AggregateException as e when e.InnerExceptions.Count = 1 -> failureOf e.InnerException
         | :? Swagger.OpenApiException as e -> ApiError(e.StatusCode, e.ResponseBody)
         | TokenRefusedException(status, body) -> TokenRefused(status, body)
+        | OtherHostException host -> InvalidRequest $"{host} isn't one of the client's endpoints, so the token isn't sent there"
         | e -> TransportError e
 
     /// Runs a call; exceptions become Error. Cancellation of the token propagates.

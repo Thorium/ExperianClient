@@ -1,0 +1,46 @@
+{
+  "SearchSummary": {
+    "NumberMatches": 2,
+    "BusinessName": "TEST"
+  },
+  "SearchResults": [
+    {
+      "LegalStatus": "L",
+      "BusinessRef": "99999999",
+      "CommercialName": "TEST LIMITED",
+      "BusinessLocation": {
+        "LocationLine1": "THE SIR JOHN PEACE BUILDING",
+        "LocationLine2": "EXPERIAN WAY",
+        "LocationLine3": "NOTTINGHAM",
+        "Postcode": "NG80 1ZZ"
+      },
+      "SICInformation": {
+        "CodeType": "B",
+        "SICCode": "7210",
+        "Description": "HARDWARE CONSULTANCY"
+      },
+      "BusinessStatus": "A",
+      "Name": "TEST LIMITED",
+      "NameType": "RC"
+    },
+    {
+      "LegalStatus": "L",
+      "BusinessRef": "99999998",
+      "CommercialName": "TEST (COMPANY 2) LIMITED",
+      "BusinessLocation": {
+        "LocationLine1": "THE SIR JOHN PEACE BUILDING",
+        "LocationLine2": "EXPERIAN WAY",
+        "LocationLine3": "NOTTINGHAM",
+        "Postcode": "NG80 1ZZ"
+      },
+      "SICInformation": {
+        "CodeType": "B",
+        "SICCode": "7415",
+        "Description": "MANAGEMENT ACTIVITIES HOLDING COMPS"
+      },
+      "BusinessStatus": "A",
+      "Name": "TEST (COMPANY 2) LIMITED",
+      "NameType": "RC"
+    }
+  ]
+}

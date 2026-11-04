@@ -1,0 +1,1882 @@
+openapi: 3.0.1
+info:
+  title: Age Threshold Verification Demo
+  description: Dummy endpoint serving example responses from Crosscore Identity Services' Age Threshold Verification
+  contact:
+    name: Crosscore Identity Onboarding Support
+    email: idfnikeonboardingsupport@experian.com
+  version: '1.0'
+servers:
+  - url: https://sandbox-uk-api.experian.com/da/ccis-devportalapis/
+paths:
+  /v1/api:
+    post:
+      tags:
+        - ATV
+      summary: CrossCore Submit
+      description: CrossCore API Submit Request
+      parameters:
+        - name: AcceptLanguage
+          in: header
+          schema:
+            type: string
+      requestBody:
+        description: CrossCore Request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+            examples:
+              Ambiguous:
+                description: The individual JACK MITCHELL's data records cannot be uniquely distinguished when compared with other user(s) on record. A STOP decision is returned.
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: JACK
+                              middleNames: ''
+                              initials: ''
+                              surName: MITCHELL
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              ApplicantNotFound:
+                description: A request for the individual CHRIS CATHPOLE returns 0 data counts. A STOP decision is returned.
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: CHRIS
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              BlankClientReferenceId:
+                description: 'Error scenario: A request with a blank client reference ID returns an error.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: ''
+                    expRequestId: 
+                    messageTime: '2022-08-04T14:24:16.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1985-05-01'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mrs
+                              firstName: KATHERINE
+                              middleNames: GRAHAMS
+                              initials: ''
+                              surName: ABAD
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '4'
+                            street: TREM Y DON
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: BARRY
+                            county: SOUTH GLAMORGAN
+                            postal: CF62 6QL
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              BlankRequestType:
+                description: 'Error scenario: A request with blank request type returns an error'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: ''
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2022-08-04T14:24:16.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1985-05-01'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mrs
+                              firstName: KATHERINE
+                              middleNames: GRAHAMS
+                              initials: ''
+                              surName: ABAD
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '4'
+                            street: TREM Y DON
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: BARRY
+                            county: SOUTH GLAMORGAN
+                            postal: CF62 6QL
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              Continue:
+                description: 'A request for the individual NEIL CATHPOLE returns 18 data counts, all of which are within the requested age range of 18 to 99. A CONTINUE decision is returned.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              Inconclusive:
+                description: 'A request for the individual BARRY INCONCLUSIVE returns 18 data counts. Of these, 12 are within, and 6 above, the requested age range of 18 to 68. A REFER decision is returned.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: BARRY
+                              middleNames: ''
+                              initials: ''
+                              surName: INCONCLUSIVE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              InvalidClientReferenceId:
+                description: 'Error scenario: A request containing invalid characters in client reference ID returns an error.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: .AgeCheck.
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              InvalidPostCodeRegex:
+                description: 'Error scenario: Providing a postcode with invalid characters returns an error. Details of the error are found in clientResponsePayload.decisionElements.warningsErrors.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T08:00:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: 'AB51 #$%'
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              NonCAPSData:
+                description: 'A request for the individual CHRISTOPHER MCFETRIDGE returns 0 non-CAPS data sources in range, and 2 CAPS data sources in range. Decision:FAIL DECISION-ALL-DATA:Pass. Overall decision:STOP'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T08:00:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1988-09-29'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: CHRISTOPHER
+                              middleNames: ZENA ESTELLE
+                              initials: ''
+                              surName: MCFETRIDGE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '20'
+                            street: MAUREPAS ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: ST. PETER PORT
+                            county: GUERNSEY
+                            postal: GY1 2DG
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              PostCodeLength:
+                description: 'Error scenario: Providing a postcode of invalid length returns an error. Details of the error are found in clientResponsePayload.decisionElements.warningsErrors.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX2344566
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              Stop:
+                description: 'A request for the individual TODD CATHPOLE returns 17 data counts, all of which are above the requested age range of 18 to 20. A STOP decision is returned.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '20'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: TODD
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              UndefinedRequestType:
+                description: 'Error scenario: The request type in the CrossCore header of the ATV Request is not of valid type.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f
+                    requestType: Ae
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+              WrongTenantId:
+                description: 'Error scenario: The tenant ID provided in the CrossCore header of the ATV Request is invalid.'
+                value:
+                  header:
+                    tenantId: d52357b5bf9842ba9118397f10ce0f1234567
+                    requestType: AgeThreshold-Standalone
+                    clientReferenceId: AgeCheck
+                    expRequestId: 
+                    messageTime: '2021-04-14T12:15:46.0000000+00:00'
+                    options: { }
+                  payload:
+                    control:
+                      - option: AGEVERIFY_LOWERBOUND
+                        value: '18'
+                      - option: AGEVERIFY_UPPERBOUND
+                        value: '99'
+                    source: WEB
+                    contacts:
+                      - id: MAINCONTACT_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personIdentifier: ''
+                          personDetails:
+                            dateOfBirth: '1968-02-08'
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: Mr
+                              firstName: NEIL
+                              middleNames: ''
+                              initials: ''
+                              surName: CATHPOLE
+                              namePrefix: ''
+                              nameSuffix: ''
+                              nameCode: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            stateProvinceCode: ''
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2019-01-01'
+                              yearFrom: '2019'
+                              monthFrom: '01'
+                              dayFrom: '01'
+                            residentTo:
+                              fullDateTo: '2020-01-01'
+                              yearTo: '2020'
+                              monthTo: '01'
+                              dayTo: '01'
+                            timeAtAddress:
+                              value: '12'
+                              unit: MONTH
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MAINCONTACT_1
+                          type: INDIVIDUAL
+                          applicantType: APPLICANT
+                          consent: true
+                          consentId: abcdefg
+                          consentTimeStamp: '2020-09-07T09:15:00.0000000+00:00'
+                          knownCustomer: true
+          text/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+        '500':
+          description: Server Error
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+            text/json:
+              schema:
+                type: string
+components:
+  schemas:
+    Address:
+      type: object
+      properties:
+        poBoxNumber:
+          type: string
+          nullable: true
+        addressIdentifier:
+          type: string
+          nullable: true
+        indicator:
+          type: string
+          nullable: true
+        subLocality:
+          type: string
+          nullable: true
+        stateProvinceCode:
+          type: string
+          nullable: true
+        residentTo:
+          $ref: '#/components/schemas/ResidentTo'
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINADDRESS_1
+        addressType:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - PRIMARY
+            - SECONDARY
+            - REGISTERED_OFFICE
+            - TRADING
+            - CORRESPONDANCE
+            - LINKED
+            - RISK
+            - GARAGE
+            - INSPECTION_ADDRESS
+            - INCIDENT_LOCATION
+            - INSURED_ADDRESS
+            - BILLING
+            - DELIVERY
+            - COLLATERAL
+            - FINANCED
+            - SERVICE
+            - SUPPLY
+            - STORE_ADDRESS
+          type: string
+          description: A type for this Address - Only the first occurrence of an Address having AddressType of CURRENT will be considered. Failure to include an Address of such a type will likely cause an error as not Address information will be used at all
+          example: CURRENT
+        subBuilding:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: The Barn
+        buildingName:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: Sycamore Farm
+        buildingNumber:
+          maxLength: 10
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: '78'
+        street:
+          maxLength: 50
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: Acacia Avenue
+        street2:
+          maxLength: 50
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: Honeysuckle Lane
+        county:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: Greater London
+        postTown:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: London
+        postal:
+          maxLength: 99
+          pattern: '^[a-zA-Z0-9]+$'
+          type: string
+          nullable: true
+          example: SE1 8EZ
+        countryCode:
+          maxLength: 3
+          pattern: '^[a-zA-Z]+$'
+          type: string
+          nullable: true
+          example: GBR
+        locality:
+          maxLength: 40
+          pattern: '^[-a-zA-Z0-9 ''.,/#]+$'
+          type: string
+          nullable: true
+          example: South London
+        residentFrom:
+          $ref: '#/components/schemas/ResidentFrom'
+        timeAtAddress:
+          $ref: '#/components/schemas/TimeAtAddress'
+      additionalProperties: false
+    Applicant:
+      required:
+        - consent
+        - contactId
+      type: object
+      properties:
+        knownCustomer:
+          type: boolean
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINAPPLICANT_1
+        type:
+          enum:
+            - INDIVIDUAL
+            - JOINT
+            - COMMERCIAL
+            - POLICY_HOLDER
+            - MAIN_DRIVER
+            - ADD_DRIVER
+            - CLAIMANT
+          type: string
+          description: Types of Application
+          example: INDIVIDUAL
+        applicantType:
+          enum:
+            - APPLICANT
+            - CO_APPLICANT
+            - GUARANTOR
+            - MAIN_APPLICANT
+            - JOINT_APPLICANT
+            - ADDITIONAL_CARDHOLDER
+            - APPLYING_ORGANIZATION
+            - DIRECTOR
+            - COMPANY_SECRETARY
+            - POLICY_HOLDER
+            - ADDITIONAL_DRIVER
+            - CLAIMANT
+            - POLICY_HOLDER_ORGANIZATION
+            - CLAIMANT_ORGANIZATION
+            - CO_APPLICANT_ORGANIZATION
+            - GUARANTOR_ORGANIZATION
+            - OWNER_PERSON
+            - OWNER_ORGANIZATION
+            - REFERENCE
+            - SHAREHOLDER
+            - GUARANTOR_FULL
+          type: string
+          description: Types of Person
+          example: APPLICANT
+        consent:
+          type: boolean
+          example: true
+        consentId:
+          maxLength: 128
+          pattern: '^[-a-zA-Z0-9 _]+$'
+          type: string
+          nullable: true
+          example: uyciydfoudqwg912863017
+        consentTimeStamp:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2016-11-30T14:20:04.0000000+00:00'
+        contactId:
+          maxLength: 40
+          type: string
+          example: MAINCONTACT_1
+        applicantReference:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: TRANS000002
+      additionalProperties: false
+    Application:
+      type: object
+      properties:
+        applicants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Applicant'
+          nullable: true
+      additionalProperties: false
+    ClientResponsePayload:
+      type: object
+      properties:
+        orchestrationDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrchestrationDecision'
+          nullable: true
+        decisionElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecisionElements'
+          nullable: true
+      additionalProperties: false
+    Contact:
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINCONTACT_1
+        person:
+          $ref: '#/components/schemas/Person'
+        addresses:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          nullable: true
+      additionalProperties: false
+    ControlOption:
+      type: object
+      properties:
+        option:
+          enum:
+            - AGEVERIFY_LOWERBOUND
+            - AGEVERIFY_UPPERBOUND
+            - AGEVERIFY_ACCOUNT_OVERRIDE
+            - AGEVERIFY_BRANCH_OVERRIDE
+          type: string
+          description: 'Any string value is accepted, but only the enumerations detailed here will be used by Age Verify'
+        value:
+          maxLength: 3
+          type: string
+          description: "The value for AGEVERIFY_LOWERBOUND must be 18 or higher, and for AGEVERIFY_UPPERBOUND must be equal to or greater than the lower bound. \r\nIf omitted, the age verification will default tot he upper and lower bounds configured for your service with Experian, and failing that, will default to 18 and 999 respectively.\r\nAccount and branch overrides by default are not set."
+          nullable: true
+          example: '18'
+      additionalProperties: false
+    DataCount:
+      type: object
+      properties:
+        name:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: NoOfMatches
+        value:
+          type: number
+          format: double
+          example: 3
+      additionalProperties: false
+    Decision:
+      type: object
+      properties:
+        element:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: Element Name
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ACCEPT
+        reason:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: No Risk Detected
+      additionalProperties: false
+    DecisionElements:
+      type: object
+      properties:
+        serviceName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: UK-AgeVerify
+        applicantId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: APPLICANT_1
+        decision:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          format: double
+          example: 999
+        appReference:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: REF123456
+        warningsErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarningOrError'
+          nullable: true
+        decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
+          nullable: true
+        dataCounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataCount'
+          nullable: true
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Score'
+          nullable: true
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+          nullable: true
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+          nullable: true
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+          nullable: true
+      additionalProperties: false
+    Match:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Name and Address Match
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MATCH
+      additionalProperties: false
+    Name:
+      required:
+        - firstName
+        - surName
+      type: object
+      properties:
+        namePrefix:
+          type: string
+          nullable: true
+        nameCode:
+          type: string
+          nullable: true
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINPERSONNAME_1
+        type:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - MAIDEN
+            - ALIAS
+            - OTHER
+            - FATHER
+            - HUSBAND
+            - NAME
+            - NAME_NATIVE
+          type: string
+          description: Only the first occurrence of a name of type CURRENT will be considered. Failure to include a Name of this type will result in an error as no Name information will be used at all
+          example: CURRENT
+        title:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 '',]+$'
+          type: string
+          nullable: true
+          example: MR
+        firstName:
+          maxLength: 40
+          minLength: 1
+          pattern: '^[-a-zA-Z0-9 '',]+$'
+          type: string
+          example: FRANK
+        middleNames:
+          maxLength: 100
+          pattern: '^[-a-zA-Z0-9 '',]+$'
+          type: string
+          nullable: true
+          example: SIMON
+        surName:
+          maxLength: 40
+          minLength: 1
+          pattern: '^[-a-zA-Z0-9 '',]+$'
+          type: string
+          example: SMITH
+        nameSuffix:
+          maxLength: 20
+          pattern: '^[-a-zA-Z0-9 '',]+$'
+          type: string
+          nullable: true
+          example: JR
+        initials:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 '',]+$'
+          type: string
+          nullable: true
+          example: F S
+      additionalProperties: false
+    Options:
+      type: object
+      properties:
+        version:
+          maxLength: 90
+          type: string
+          nullable: true
+      additionalProperties: false
+    OrchestrationDecision:
+      type: object
+      properties:
+        sequenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- Strategy sequenceId --'
+        decisionSource:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- serviceName of the strategy decision point --'
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: '-- Outcome from strategy for service --'
+        decisionReasons:
+          maxItems: 90
+          type: array
+          items:
+            type: string
+          nullable: true
+        score:
+          type: number
+          format: double
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- text defined in strategy --'
+        nextAction:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- defined in strategy --'
+        appReference:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: REF1234567
+        decisionTime:
+          type: string
+          format: date-time
+          example: '2016-09-09T04:06:53.0000000+00:00'
+      additionalProperties: false
+    OverallResponse:
+      type: object
+      properties:
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          format: double
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: NO FRAUD
+        decisionReasons:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[DECISION_1,DECISION_2]'
+        recommendedNextActions:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Action_1,Action_2]'
+        spareObjects:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Spare_1,Spare_2]'
+      additionalProperties: false
+    Person:
+      type: object
+      properties:
+        typeOfPerson:
+          type: string
+          nullable: true
+        personIdentifier:
+          type: string
+          nullable: true
+        personDetails:
+          $ref: '#/components/schemas/PersonDetails'
+        names:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Name'
+          nullable: true
+      additionalProperties: false
+    PersonDetails:
+      type: object
+      properties:
+        dateOfBirth:
+          type: string
+          description: 'A valid date of birth, that must not be a future date'
+          format: date
+          nullable: true
+          example: '1978-01-10T00:00:00.0000000'
+      additionalProperties: false
+    Record:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          nullable: true
+        httpHeaders:
+          type: object
+          additionalProperties:
+            type: string
+            nullable: true
+          nullable: true
+      additionalProperties: false
+    RequestHeader:
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '--Your Request Type provided by Delivery--'
+        clientReferenceId:
+          maxLength: 90
+          pattern: '^[-a-zA-Z0-9 _]+$'
+          type: string
+          nullable: true
+          example: '-- Your unique Client reference --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          description: Needs to be present but not populated; it will be replaced by the system
+          nullable: true
+          example: 
+        messageTime:
+          type: string
+          description: Must be populated with a valid DateTime
+          format: date-time
+          example: '2018-11-30T14:20:04.0000000+00:00'
+        tenantId:
+          type: string
+          nullable: true
+          example: '-- Your Tenant ID provided by delivery --'
+        options:
+          $ref: '#/components/schemas/Options'
+      additionalProperties: false
+    RequestMessage:
+      required:
+        - header
+        - payload
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/RequestHeader'
+        payload:
+          $ref: '#/components/schemas/RequestPayload'
+      additionalProperties: false
+    RequestPayload:
+      type: object
+      properties:
+        control:
+          type: array
+          items:
+            $ref: '#/components/schemas/ControlOption'
+          nullable: true
+        source:
+          enum:
+            - WEB
+            - FAX
+            - KIOSK
+            - MOBILE
+            - PHONE
+            - UNKNOWN
+            - POSTAL
+            - BRANCH
+            - DIRECT
+            - STORE
+            - STORE_INSTANT_CREDIT
+          type: string
+          example: WEB
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          nullable: true
+        application:
+          $ref: '#/components/schemas/Application'
+      additionalProperties: false
+    ResidentTo:
+      type: object
+      properties:
+        fullDateTo:
+          type: string
+          nullable: true
+        yearTo:
+          type: string
+          nullable: true
+        monthTo:
+          type: string
+          nullable: true
+        dayTo:
+          type: string
+          nullable: true
+    ResidentFrom:
+      type: object
+      properties:
+        fullDateFrom:
+          type: string
+          example: '2018-01-01T00:00:00.0000000'
+        yearFrom:
+          maxLength: 4
+          type: string
+          nullable: true
+          example: '2018'
+        monthFrom:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+        dayFrom:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+      additionalProperties: false
+    ResponseHeader:
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- requestType supplied in request --'
+        clientReferenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- clientReferenceId supplied in request --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: '-- Experian generated unique reference --'
+        messageTime:
+          type: string
+          format: date-time
+          example: '-- dateTime of message --'
+        overallResponse:
+          $ref: '#/components/schemas/OverallResponse'
+        responseCode:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response code --'
+        responseType:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response type --'
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: '-- Response message --'
+        tenantID:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- tenantId supplied in request --'
+        category:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: AO
+        expirationDate:
+          type: string
+          format: date-time
+          example: '-- dateTime record expires --'
+      additionalProperties: false
+    ResponseMessage:
+      type: object
+      properties:
+        responseHeader:
+          $ref: '#/components/schemas/ResponseHeader'
+        originalRequestData:
+          $ref: '#/components/schemas/RequestPayload'
+        clientResponsePayload:
+          $ref: '#/components/schemas/ClientResponsePayload'
+      additionalProperties: false
+    Rule:
+      type: object
+      properties:
+        rule:
+          type: string
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        ruleName:
+          maxLength: 200
+          type: string
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        ruleId:
+          maxLength: 200
+          type: string
+          nullable: true
+          example: SAFEIP
+        ruleScore:
+          type: number
+          format: double
+          example: 999
+        ruleText:
+          maxLength: 200
+          type: string
+          nullable: true
+          example: SUSPECT UP ADDRESS FOUND
+        value:
+          type: string
+          nullable: true
+          example: Rule Value 1234
+      additionalProperties: false
+    Score:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: SCORE NAME
+        type:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: SCORE
+        score:
+          type: number
+          format: double
+          example: 999
+      additionalProperties: false
+    TimeAtAddress:
+      type: object
+      properties:
+        value:
+          maxLength: 4
+          type: string
+          nullable: true
+          example: '24'
+        unit:
+          enum:
+            - MONTH
+            - YEAR
+            - DAY
+            - HOUR
+          type: string
+          description: 'unit type for the TimeAtAddress - if ommitted, will default to MONTH'
+          example: MONTH
+      additionalProperties: false
+    WarningOrError:
+      type: object
+      properties:
+        responseType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Info
+        responseCode:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: INF001
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: date of birth not provide
+      additionalProperties: false
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-uk-api.experian.com/oauth2/v1/token
+          scopes:
+            user: user scope
+security:
+  - OauthSecurity:
+      - user

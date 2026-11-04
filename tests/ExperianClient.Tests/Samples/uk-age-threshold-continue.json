@@ -1,0 +1,100 @@
+{
+  "header": {
+    "tenantId": "d52357b5bf9842ba9118397f10ce0f",
+    "requestType": "AgeThreshold-Standalone",
+    "clientReferenceId": "AgeCheck",
+    "expRequestId": null,
+    "messageTime": "2021-04-14T12:15:46.0000000+00:00",
+    "options": {}
+  },
+  "payload": {
+    "control": [
+      {
+        "option": "AGEVERIFY_LOWERBOUND",
+        "value": "18"
+      },
+      {
+        "option": "AGEVERIFY_UPPERBOUND",
+        "value": "99"
+      }
+    ],
+    "source": "WEB",
+    "contacts": [
+      {
+        "id": "MAINCONTACT_1",
+        "person": {
+          "typeOfPerson": "APPLICANT",
+          "personIdentifier": "",
+          "personDetails": {
+            "dateOfBirth": "1968-02-08"
+          },
+          "names": [
+            {
+              "id": "MAINPERSONNAME_1",
+              "type": "CURRENT",
+              "title": "Mr",
+              "firstName": "NEIL",
+              "middleNames": "",
+              "initials": "",
+              "surName": "CATHPOLE",
+              "namePrefix": "",
+              "nameSuffix": "",
+              "nameCode": ""
+            }
+          ]
+        },
+        "addresses": [
+          {
+            "id": "MAINAPPADDRESS_1",
+            "addressIdentifier": "ADDRESS_1",
+            "indicator": "RESIDENTIAL",
+            "addressType": "CURRENT",
+            "poBoxNumber": "",
+            "subBuilding": "",
+            "buildingName": "",
+            "buildingNumber": "1A",
+            "street": "GEORGE SQUARE",
+            "street2": "",
+            "subLocality": "",
+            "locality": "",
+            "postTown": "INVERURIE",
+            "county": "ABERDEENSHIRE",
+            "postal": "AB51 3XX",
+            "stateProvinceCode": "",
+            "countryCode": "GBR",
+            "residentFrom": {
+              "fullDateFrom": "2019-01-01",
+              "yearFrom": "2019",
+              "monthFrom": "01",
+              "dayFrom": "01"
+            },
+            "residentTo": {
+              "fullDateTo": "2020-01-01",
+              "yearTo": "2020",
+              "monthTo": "01",
+              "dayTo": "01"
+            },
+            "timeAtAddress": {
+              "value": "12",
+              "unit": "MONTH"
+            }
+          }
+        ]
+      }
+    ],
+    "application": {
+      "applicants": [
+        {
+          "id": "APPLICANT_1",
+          "contactId": "MAINCONTACT_1",
+          "type": "INDIVIDUAL",
+          "applicantType": "APPLICANT",
+          "consent": true,
+          "consentId": "abcdefg",
+          "consentTimeStamp": "2020-09-07T09:15:00.0000000+00:00",
+          "knownCustomer": true
+        }
+      ]
+    }
+  }
+}

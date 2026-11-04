@@ -1,0 +1,84 @@
+{
+  "incomeReport": {
+    "reportId": "82be01e0-7e72-4585-bfd4-acb0c33f26f5",
+    "reportType": "ExpVerify-Plus",
+    "reportGeneratedDate": "1614150406",
+    "requestor": {
+      "subscriberCode": "2733780",
+      "verifierName": "Example Lender"
+    },
+    "consumerPii": {
+      "applicantInformation": {
+        "name": {
+          "lastName": "MILLER",
+          "firstName": "DOROTHY",
+          "middleName": "B",
+          "generationCode": null
+        },
+        "ssn": {
+          "ssn": "666447510"
+        },
+        "dob": {
+          "dob": null
+        },
+        "phone": null,
+        "currentAddress": {
+          "line1": "2801 TORREYA CT",
+          "line2": null,
+          "line3": null,
+          "city": "FLOWER MOUND",
+          "state": "TX",
+          "zipCode": "750283699"
+        }
+      },
+      "employmentHistory": [
+        {
+          "originReportId": "94180f35-6303-6dbd-f403-e9998d69c8f2",
+          "originSourceId": null,
+          "employerIdentificationNumber": "135455163",
+          "employerName": "Howell, Jones and Bradtke",
+          "originalHireDate": "01202020",
+          "mostRecentHireDate": "11202020",
+          "employmentStatus": {
+            "code": null,
+            "name": "FULL-TIME"
+          },
+          "workStatus": {
+            "code": null,
+            "name": "ACTIVE"
+          },
+          "employerAddress": {
+            "lineOne": "391 Hodkiewicz Trace",
+            "lineTwo": "Terrencechester",
+            "lineThree": null,
+            "cityName": "Hegmannshire",
+            "state": "Bedfordshire",
+            "countryCode": null,
+            "postalCode": "66815"
+          },
+          "paymentHistory": [
+            {
+              "payDate": null,
+              "payCycle": "BIWEEKLY",
+              "payPeriod": {
+                "startDate": null,
+                "endDate": "02232021"
+              },
+              "grossPayAmount": {
+                "amount": 56788.97,
+                "currencyCode": "USD"
+              }
+            }
+          ],
+          "totalAnnualRemuneration": [
+            {
+              "year": 0,
+              "amount": 164048.47,
+              "currencyCode": "USD"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

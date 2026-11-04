@@ -1,0 +1,53 @@
+{
+  "consumerpii": {
+    "applicantInformation": {
+      "name": {
+        "lastName": "CONSUMER",
+        "firstName": "JOHN",
+        "middleName": "QUINCY",
+        "generationCode": ""
+      },
+      "ssn": {
+        "ssn": "123456789"
+      },
+      "dob": {
+        "dob": "10181955"
+      },
+      "phone": [
+        {
+          "number": "818.555.1111",
+          "type": "R"
+        }
+      ],
+      "currentAddress": {
+        "line1": "10655 N BIRCH ST",
+        "line3": " ",
+        "city": "BURBANK",
+        "state": "CA",
+        "zipCode": "915021234"
+      }
+    }
+  },
+  "requestor": {
+    "subscriberCode": "5991764",
+    "verifierName": "experian"
+  },
+  "permissiblePurpose": {
+    "type": "18"
+  },
+  "resellerInfo": {},
+  "reportType": "ExpVerify-Core",
+  "vendorData": {
+    "vendorNumber": "1.00"
+  },
+  "customOptions": {
+    "optionId": []
+  },
+  "reportCustomLabels": {
+    "label1": {},
+    "label2": {},
+    "label3": {},
+    "label4": {},
+    "label5": {}
+  }
+}

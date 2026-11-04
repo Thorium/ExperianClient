@@ -1,0 +1,1007 @@
+openapi: 3.0.1
+info:
+  title: International Payments Verification
+  description: Serving example responses from Crosscore Identity Services' International Payments Verification
+  contact:
+    name: Crosscore Identity Onboarding Support
+    email: idfnikeonboardingsupport@experian.com
+  version: '8.0'
+servers:
+  - url: https://sandbox-uk-api.experian.com/da/ccis-devportalapis/
+paths:
+  /v1/api:
+    post:
+      tags:
+        - InternationalPaymentsVerification
+      summary: International Payments Verification Submit.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+            examples:
+              IntlPaymentsErrorRequestForValidation.json:
+                description: Contains an international payments validation request that triggers an error response
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: Intl-Payments-PTS
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options:
+                      workflow: wf1
+                    requestType: Intlpayments
+                  payload:
+                    control: [ ]
+                    source: WEB
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: VALIDATION
+                    contacts:
+                      - id: '0'
+                        bankAccount:
+                          IBAN: NL84ABNA042560090
+                          isoCountry: NL
+                    financialAccounts: [ ]
+              IntlPaymentsErrorRequestForVerification.json:
+                description: Contains an international payments verification request that triggers an error response
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: Intl-Payments-PTS
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options:
+                      workflow: wf1
+                    requestType: Intlpayments
+                  payload:
+                    source: WEB
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: CONSUMER
+                    contacts:
+                      - id: '0'
+                        person:
+                          names:
+                            - firstName: JOHN
+                              surName: DOE
+                        bankAccount:
+                          bbans:
+                            - '12345678909876543212'
+                          isoCountry: PE
+              IntlPaymentsRequestForBBANCommercial.json:
+                description: Contains a BBAN international payments request for business verification
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: Intl-Payments
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options:
+                      workflow: wf1
+                    requestType: Intlpayments
+                  payload:
+                    source: WEB
+                    contacts:
+                      - id: '0'
+                        organization:
+                          orgName: LIONEL MESSI
+                        bankAccount:
+                          bbans:
+                            - '0170032450000643500000'
+                          isoCountry: AR
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: COMMERCIAL
+              IntlPaymentsRequestForBBANConsumer.json:
+                description: Contains a BBAN international payments request for individual verification
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    requestType: Intlpayments
+                    clientReferenceId: intlPay-Pass
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options: { }
+                  payload:
+                    source: WEB
+                    contacts:
+                      - id: '0'
+                        person:
+                          names:
+                            - firstName: MELANIE
+                              surName: DANIELS
+                        bankAccount:
+                          bbans:
+                            - '101000019'
+                            - '781245633'
+                          isoCountry: US
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: CONSUMER
+              IntlPaymentsRequestForIBANCommercial.json:
+                description: Contains an IBAN international payments request for business verification
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: Intl-Payments
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options:
+                      workflow: wf1
+                    requestType: Intlpayments
+                  payload:
+                    source: WEB
+                    contacts:
+                      - id: '0'
+                        organization:
+                          orgName: CLODAGH KELLY
+                        bankAccount:
+                          IBAN: IE83AIBK93115200000001
+                          isoCountry: IE
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: COMMERCIAL
+              IntlPaymentsRequestForIBANConsumer.json:
+                description: Contains an IBAN international payments request for individual verification
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: Intl-Payments
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options:
+                      workflow: wf1
+                    requestType: Intlpayments
+                  payload:
+                    source: WEB
+                    contacts:
+                      - id: '0'
+                        person:
+                          names:
+                            - firstName: ALESSIA
+                              surName: LOMBARDI
+                        bankAccount:
+                          IBAN: IT97X0100000000012300000001
+                          isoCountry: IT
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: CONSUMER
+              IntlPaymentsRequestForValidation.json:
+                description: Contains an IBAN international payments validation request
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: Intl-Payments
+                    expRequestId: ''
+                    messageTime: '2024-06-05T12:00:00Z'
+                    options:
+                      workflow: wf1
+                    requestType: Intlpayments
+                  payload:
+                    control: [ ]
+                    source: WEB
+                    contacts:
+                      - id: '0'
+                        bankAccount:
+                          IBAN: IE92BOFI90001710027952
+                          isoCountry: IE
+                    userDefinedFields:
+                      - { }
+                      - userDefinedTableName: ''
+                        userDefinedElements:
+                          - fieldName: checkingLevel
+                            fieldValue: VALIDATION
+                    financialAccounts: [ ]
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+components:
+  schemas:
+    AccountHolder:
+      type: object
+      properties:
+        contact:
+          $ref: '#/components/schemas/Contact'
+      additionalProperties: false
+    AuditLog:
+      type: object
+      properties:
+        eventType:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: JourneyStart
+        eventDate:
+          type: string
+          format: date-time
+          example: '2015-11-30T14:20:04Z'
+        eventDateTime:
+          type: string
+          format: date-time
+          example: '2015-11-30T14:20:04Z'
+        eventOutcome:
+          type: string
+          nullable: true
+      additionalProperties: false
+    BankAccount:
+      type: object
+      properties:
+        IBAN:
+          type: string
+        bbans:
+          type: array
+          items:
+            type: string
+        isoCountry:
+          type: string
+        sortCode:
+          maxLength: 10
+          pattern: '^[-0-9 ]*'
+          type: string
+          description: Sortcode field of bank account
+          nullable: true
+          example: 12-34-56
+        clearAccountNumber:
+          maxLength: 20
+          pattern: '^[0-9]*'
+          type: string
+          description: Cleartext account number for bank account
+          nullable: true
+          example: '12345678'
+        bban:
+          maxItems: 399
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '12345678'
+        isoCountryCode:
+          maxLength: 2
+          minLength: 1
+          type: string
+          example: IE
+        bic:
+          pattern: '^[-a-zA-Z0-9 ./-]*$'
+          type: string
+          nullable: true
+      additionalProperties: false
+      description: ''
+    ClientResponsePayload:
+      type: object
+      properties:
+        orchestrationDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrchestrationDecision'
+          nullable: true
+        decisionElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecisionElements'
+          nullable: true
+      additionalProperties: false
+    Contact:
+      required:
+        - bankAccount
+        - id
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          minLength: 1
+          type: string
+          example: MAINCONTACT_1
+        person:
+          $ref: '#/components/schemas/Person'
+        organization:
+          $ref: '#/components/schemas/Organization'
+        bankAccount:
+          $ref: '#/components/schemas/BankAccount'
+      additionalProperties: false
+    DataCount:
+      type: object
+      properties:
+        name:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: NoOfMatches
+        value:
+          type: number
+          example: 3
+      additionalProperties: false
+    Decision:
+      type: object
+      properties:
+        element:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: Element Name
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ACCEPT
+        reason:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: No Risk Detected
+      additionalProperties: false
+    DecisionElements:
+      type: object
+      properties:
+        serviceName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: IntlPayments
+        applicantId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: APPLICANT_1
+        decision:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          example: 999
+        appReference:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: REF123456
+        rules:
+          maxItems: 399
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+          nullable: true
+        warningsErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarningOrError'
+          nullable: true
+        otherData:
+          $ref: '#/components/schemas/OtherData'
+        decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
+          nullable: true
+        dataCounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataCount'
+          nullable: true
+        auditLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+          nullable: true
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+          nullable: true
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Score'
+          nullable: true
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+          nullable: true
+      additionalProperties: false
+    ExternalDataElement1:
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldName_1
+        fieldValue:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldValue_1
+        externalDataName:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Detect
+        externalDataElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalDataElement2'
+          nullable: true
+      additionalProperties: false
+    ExternalDataElement2:
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldName_1
+        fieldValue:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldValue_1
+        externalDataName:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Detect
+      additionalProperties: false
+    ExternalLookup:
+      type: object
+      properties:
+        source:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: Experian
+        parameter:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Entire Application
+        externalData:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalDataElement1'
+          nullable: true
+        contactId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: reference to the payload contact.id details that belong to the ExternalLookup.
+        addressId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ADDRESS_1
+      additionalProperties: false
+    FinancialAccount:
+      required:
+        - bankAccount
+      type: object
+      properties:
+        bankAccount:
+          $ref: '#/components/schemas/BankAccount'
+        accountHolders:
+          maxItems: 399
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountHolder'
+          nullable: true
+      additionalProperties: false
+    Match:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Name and Address Match
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MATCH
+      additionalProperties: false
+    Name:
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINPERSONNAME_1
+        type:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - MAIDEN
+            - ALIAS
+            - OTHER
+            - FATHER
+            - HUSBAND
+            - NAME
+            - NAME_NATIVE
+          type: string
+          description: 'The first occurrence of a name of type CURRENT will be considered if present. As this is not required, if not populated then the first name will be considered.'
+          example: CURRENT
+        title:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          nullable: true
+          example: MR
+        firstName:
+          maxLength: 40
+          minLength: 0
+          pattern: '^[-a-zA-Z0-9 ��������������ӑ�\-,'']*$'
+          type: string
+          description: A firstname is required if a surname supplied
+          nullable: true
+          example: FRANK
+        middleNames:
+          maxLength: 100
+          pattern: '^[-a-zA-Z0-9 ��������������ӑ�\-,'']*$'
+          type: string
+          nullable: true
+          example: SIMON
+        surName:
+          maxLength: 40
+          minLength: 0
+          pattern: '^[-a-zA-Z0-9 ��������������ӑ�\-,'']*$'
+          type: string
+          description: A surname is required if a firstname supplied
+          nullable: true
+          example: SMITH
+        namePrefix:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: PROFESSOR
+        nameSuffix:
+          maxLength: 20
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          nullable: true
+          example: JR
+        initials:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 \'',]*$'
+          type: string
+          nullable: true
+          example: F S
+        nameCode:
+          enum:
+            - P
+            - E
+            - T
+            - O
+          type: string
+          description: Types of Person Name Codes for Aliases
+          example: E
+      additionalProperties: false
+    Options:
+      type: object
+      properties:
+        workflow:
+          type: string
+        version:
+          maxLength: 90
+          type: string
+          nullable: true
+      additionalProperties: false
+    OrchestrationDecision:
+      type: object
+      properties:
+        sequenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- Strategy sequenceId --'
+        decisionSource:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- serviceName of the strategy decision point --'
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: '-- Outcome from strategy for service --'
+        decisionReasons:
+          maxItems: 90
+          type: array
+          items:
+            type: string
+          nullable: true
+        score:
+          type: number
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- text defined in strategy --'
+        nextAction:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- defined in strategy --'
+        appReference:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: REF1234567
+        decisionTime:
+          type: string
+          format: date-time
+          example: '2016-09-09T04:06:53Z'
+      additionalProperties: false
+    Organization:
+      type: object
+      properties:
+        orgName:
+          pattern: '^[-a-zA-Z0-9 ./-]*$'
+          type: string
+          nullable: true
+        companyRegistrationNumber:
+          pattern: '^[-a-zA-Z0-9 ./-]*$'
+          type: string
+          nullable: true
+      additionalProperties: false
+    OtherData:
+      type: object
+      properties:
+        otherDataResponse:
+          type: string
+          nullable: true
+      additionalProperties: false
+      description: Other data contains field value mapping of data required in mapping
+    OverallResponse:
+      type: object
+      properties:
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: NO FRAUD
+        decisionReasons:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[DECISION_1,DECISION_2]'
+        recommendedNextActions:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Action_1,Action_2]'
+        spareObjects:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Spare_1,Spare_2]'
+      additionalProperties: false
+    Person:
+      type: object
+      properties:
+        typeOfPerson:
+          enum:
+            - APPLICANT
+            - CO_APPLICANT
+            - EMPLOYER
+            - WITNESS
+            - GUARANTOR
+            - RELATIVE
+            - PRINCIPAL
+            - ACCOUNTANT
+            - SALES_AGENT
+            - POLICY_HOLDER
+            - MAIN_DRIVER
+            - ADD_DRIVER
+            - CLAIMANT
+            - REFERENCE
+            - BROKER
+            - BUILDER
+            - CONVEYANCER
+            - CO_OWNER
+            - INTRODUCER
+            - NEXT_OF_KIN
+            - REFEREE
+            - SOLICITOR
+            - SUPPLIER
+            - VALUER
+            - VENDOR
+            - VENDOR_AGENT
+            - VENDOR_SOLICITOR
+            - OTHER
+            - INITIATING_AGENT
+            - PROCESSING_AGENT
+            - CONTACT
+          type: string
+          description: Types of Person
+        names:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Name'
+          nullable: true
+      additionalProperties: false
+    Record:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          nullable: true
+        externalLookups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalLookup'
+          nullable: true
+      additionalProperties: false
+    RequestHeader:
+      required:
+        - clientReferenceId
+        - messageTime
+        - requestType
+        - tenantId
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          minLength: 1
+          type: string
+          example: '--Your Request Type provided by Delivery--'
+        clientReferenceId:
+          maxLength: 90
+          minLength: 1
+          pattern: .*
+          type: string
+          example: '-- Your unique Client reference --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          description: Needs to be present but not populated; it will be replaced by the system
+          nullable: true
+          example: 
+        messageTime:
+          type: string
+          description: Must be populated with a valid DateTime
+          format: date-time
+          example: '2018-11-30T14:20:04Z'
+        tenantId:
+          minLength: 1
+          type: string
+          example: '-- Your Tenant ID provided by delivery --'
+        options:
+          $ref: '#/components/schemas/Options'
+      additionalProperties: false
+    RequestMessage:
+      required:
+        - header
+        - payload
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/RequestHeader'
+        payload:
+          $ref: '#/components/schemas/RequestPayload'
+      additionalProperties: false
+    RequestPayload:
+      type: object
+      properties:
+        source:
+          type: string
+        userDefinedFields:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDefinedField'
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+        financialAccount:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinancialAccount'
+        userDefinedElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDefinedField'
+      additionalProperties: false
+      description: 'Mandatory fields will vary based on the type of check selected, refer InternationalPaymentsCountryDetails document for additional details'
+    ResponseHeader:
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- requestType supplied in request --'
+        clientReferenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- clientReferenceId supplied in request --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: '-- Experian generated unique reference --'
+        messageTime:
+          type: string
+          format: date-time
+          example: '-- dateTime of message --'
+        overallResponse:
+          $ref: '#/components/schemas/OverallResponse'
+        responseCode:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response code --'
+        responseType:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response type --'
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: '-- Response message --'
+        tenantID:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- tenantId supplied in request --'
+      additionalProperties: false
+    ResponseMessage:
+      type: object
+      properties:
+        responseHeader:
+          $ref: '#/components/schemas/ResponseHeader'
+        originalRequestData:
+          $ref: '#/components/schemas/RequestPayload'
+        clientResponsePayload:
+          $ref: '#/components/schemas/ClientResponsePayload'
+      additionalProperties: false
+    Rule:
+      type: object
+      properties:
+        ruleId:
+          maxLength: 200
+          type: string
+          description: 'The total combined length of the ''ruleId'', ''ruleName'', and ''ruleText'' must not exceed 250 chars'
+          nullable: true
+          example: SAFEIP
+        ruleName:
+          maxLength: 200
+          type: string
+          description: 'The total combined length of the ''ruleId'', ''ruleName'', and ''ruleText'' must not exceed 250 chars'
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        ruleScore:
+          type: number
+          example: 999
+        ruleText:
+          maxLength: 90
+          type: string
+          description: 'The total combined length of the ''ruleId'', ''ruleName'', and ''ruleText'' must not exceed 250 chars'
+          nullable: true
+          example: SUSPECT UP ADDRESS FOUND
+        rule:
+          type: string
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        value:
+          type: string
+          nullable: true
+          example: Rule Value 1234
+      additionalProperties: false
+    Score:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: SCORE NAME
+        score:
+          type: number
+          example: 999
+        type:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: SCORE
+      additionalProperties: false
+    UserDefinedElement:
+      required:
+        - fieldName
+        - fieldValue
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          minLength: 1
+          type: string
+        fieldValue:
+          maxLength: 100
+          minLength: 1
+          type: string
+      additionalProperties: false
+    UserDefinedField:
+      type: object
+      properties:
+        userDefinedTableName:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: Experian
+        userDefinedElements:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDefinedElement'
+      additionalProperties: false
+    WarningOrError:
+      type: object
+      properties:
+        responseType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Info
+        responseCode:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: INF001
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: date of birth not provide
+      additionalProperties: false
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-uk-api.experian.com/oauth2/v1/token
+          scopes:
+            user: user scope
+security:
+  - OauthSecurity:
+      - user

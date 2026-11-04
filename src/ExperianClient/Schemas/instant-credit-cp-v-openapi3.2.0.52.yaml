@@ -1,0 +1,2941 @@
+openapi: 3.0.1
+info:
+  title: Instant Credit
+  version: OpenAPI3.2.0.52
+servers:
+- url: https://sandbox-us-api.experian.com/consumerservices/credit-profile
+paths:
+  /v1/advanced-instant-credit:
+    post:
+      tags:
+      - Consumer Services
+      summary: Advanced Instant Credit
+      description: 'Advanced Instant Credit is a highly configurable product that
+        allows you to select from a large number of attributes, including Experian''s
+        highly preditive Premier Attributes and models to make credit decisions. <br><br>
+        We are providing non-executable "Request schema" which contains all request parameters and executable 2 test cases for client testing under "Examples" dropdown below which includes first 1 positive test cases and rest 1 negative test cases. Eg: Success, Failure.'
+      operationId: advanced-instant-credit
+      parameters:
+      - name: clientReferenceId
+        in: header
+        description: API client generated reference Id to uniquely identify the API
+          request.
+        schema:
+          type: string
+          default: SBMYSQL
+          enum:
+          - SBMYSQL
+      - name: Content-Type
+        in: header
+        description: Input Request format
+        required: true
+        schema:
+          type: string
+          default: application/json
+          enum:
+          - application/json
+      - name: Accept
+        in: header
+        description: Output Response format
+        schema:
+          type: string
+          default: application/json
+          enum:
+          - application/json
+      requestBody:
+        description: Consumer's PII , Requestor Information, Addons and any custom
+          options to be specified here.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/attributesRequest'
+            examples:
+              Request schema:   #Request schema
+                value:
+                  {
+                    "consumerPii": {
+                        "primaryApplicant": {
+                            "name": {
+                                "lastName": "string",
+                                "firstName": "string",
+                                "middleName": "string",
+                                "generationCode": "string"
+                            },
+                            "dob": {
+                                "dob": "string"
+                            },
+                            "ssn": {
+                                "ssn": "string"
+                            },
+                            "driverslicense": {
+                                "number": "string",
+                                "state": "string"
+                            },
+                            "phone": [
+                                {
+                                    "number": "string",
+                                    "type": "string"
+                                }
+                            ],
+                            "employment": {
+                                "employerName": "string",
+                                "employerAddress": {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            },
+                            "currentAddress": {
+                                "line1": "string",
+                                "line2": "string",
+                                "city": "string",
+                                "state": "string",
+                                "zipCode": "string"
+                            },
+                            "previousAddress": [
+                                {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            ]
+                        },
+                        "secondaryApplicant": {
+                            "name": {
+                                "lastName": "string",
+                                "firstName": "string",
+                                "middleName": "string",
+                                "generationCode": "string"
+                            },
+                            "dob": {
+                                "dob": "string"
+                            },
+                            "ssn": {
+                                "ssn": "string"
+                            },
+                            "driverslicense": {
+                                "number": "string",
+                                "state": "string"
+                            },
+                            "phone": [
+                                {
+                                    "number": "string",
+                                    "type": "string"
+                                }
+                            ],
+                            "employment": {
+                                "employerName": "string",
+                                "employerAddress": {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            },
+                            "currentAddress": {
+                                "line1": "string",
+                                "line2": "string",
+                                "city": "string",
+                                "state": "string",
+                                "zipCode": "string"
+                            },
+                            "previousAddress": [
+                                {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "requestor": {
+                        "subscriberCode": "string"
+                    },
+                    "permissiblePurpose": {
+                        "type": "string",
+                        "terms": "string",
+                        "abbreviatedAmount": "string"
+                    },
+                    "resellerInfo": {
+                        "endUserName": "string"
+                    },
+                    "freezeOverride": {
+                        "primaryApplFreezeOverrideCode": "string",
+                        "secondaryApplFreezeOverrideCode": "string"
+                    },
+                    "vendorData": {
+                        "vendorNumber": "string",
+                        "vendorVersion": "string"
+                    },
+                    "addOns": {
+                        "directCheck": "string",
+                        "demographics": "string",
+                        "liftPremium": "string",
+                        "clarityEarlyRiskScore": "string",
+                        "clarityData": {
+                            "clarityAccountId": "string",
+                            "clarityLocationId": "string",
+                            "clarityControlFileName": "string",
+                            "clarityControlFileVersion": "string"
+                        },
+                        "creditScoreNotice": "string",
+                        "creditScoreNoticeData": {
+                            "noticeType": "string",
+                            "riskModelIndicator": "string"
+                        },
+                        "riskModels": {
+                            "modelIndicator": [
+                                "string"
+                            ],
+                            "scorePercentile": "string"
+                        },
+                        "summaries": {
+                            "summaryType": [
+                                "string"
+                            ]
+                        },
+                        "fraudShield": "string",
+                        "mla": "string",
+                        "ofacmsg": "string",
+                        "ofac": "string",
+                        "brokerNumber": "string",
+                        "consumerIdentCheck": {
+                            "getUniqueConsumerIdentifier": "string",
+                            "verifyPrimaryConsumerIdentifier": "string",
+                            "verifySecondaryConsumerIdentifier": "string"
+                        },
+                        "joint": "string",
+                        "paymentHistory84": "string",
+                        "outputType": "string",
+                        "outputTypeData": {
+                            "heading": "string"
+                        },
+                        "taxRefundLoan": "string",
+                        "trendedData": "string",
+                        "sureProfile": "string",
+                        "ssnIndicators": "string",
+                        "newConsumer": "string"
+                    },
+                    "customOptions": {
+                        "optionId": [
+                            "string"
+                        ]
+                    },
+                    "solutionId": "string",
+                    "verifyId": "string",
+                    "daasReferenceId": "string",
+                    "infoId1": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId2": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId3": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId4": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId5": {
+                        "item": [
+                            "string"
+                        ]
+                    }
+                  }
+              Success:
+                value:
+                  {
+                    "consumerPii": {
+                        "primaryApplicant": {
+                            "name": {
+                                "lastName": "ARMSTRONG",
+                                "firstName": "KARL",
+                                "middleName": "E"
+                            },
+                            "dob": {
+                                "dob": "1959"
+                            },
+                            "ssn": {
+                                "ssn": "111111111"
+                            },
+                            "currentAddress": {
+                                "line1": "1073 BUCKINGHAM DR",
+                                "city": "CAROL STREAM",
+                                "state": "IL",
+                                "zipCode": "60188"
+                            }
+                        },
+                        "secondaryApplicant": {
+                            "name": {
+                                "lastName": "REYNOLDS",
+                                "firstName": "ROBERTS"
+                            },
+                            "dob": {
+                                "dob": "10041962"
+                            },
+                            "ssn": {
+                                "ssn": "333333333"
+                            },
+                            "driverslicense": {
+                                "number": "A00000000000",
+                                "state": "CT"
+                            },
+                            "employment": {
+                                "employerName": "HOMELAND SECURITY"
+                            }
+                        }
+                    },
+                    "requestor": {
+                        "subscriberCode": "2222222"
+                    },
+                    "permissiblePurpose": {
+                        "type": "3F",
+                        "terms": "",
+                        "abbreviatedAmount": ""
+                    },
+                    "resellerInfo": {
+                        "endUserName": "CPAPIV2TC24"
+                    },
+                    "freezeOverride": {
+                        "primaryApplFreezeOverrideCode": "000002522653451",
+                        "secondaryApplFreezeOverrideCode": "000002909814012"
+                    },
+                    "addOns": {
+                        "directCheck": "Y",
+                        "demographics": "Geocode and Phone",
+                        "liftPremium": "Y",
+                        "clarityData": {
+                            "clarityAccountId": "0000000",
+                            "clarityLocationId": "000000",
+                            "clarityControlFileName": "test_file",
+                            "clarityControlFileVersion": "0000000"
+                        },
+                        "summaries": {
+                            "summaryType": [
+                                "Profile Summary"
+                            ]
+                        },
+                        "mla": "Y",
+                        "ofacmsg": "Y",
+                        "consumerIdentCheck": {
+                            "getUniqueConsumerIdentifier": "Y"
+                        },
+                        "joint": "Y",
+                        "sureProfile": "Y",
+                        "ssnIndicators": "Y",
+                        "newConsumer": "Y"
+                    },
+                    "customOptions": {
+                        "optionId": [
+                            "COADEX"
+                        ]
+                    },
+                    "solutionId": "63DXP1",
+                    "daasReferenceId": "GOOGLEIC",
+                    "infoId1": {
+                        "item": [
+                            "Credit Card/PreApproved/ContCtr/5/1X11/0000000100.00/0000000020.00/0000000000.00"
+                        ]
+                    }
+                  }
+              Failure:
+                value:
+                  consumerPii:
+                    primaryApplicant:
+                      name:
+                        lastName: '-'
+                        firstName: PEGGY
+                      dob:
+                        dob: '1948'
+                      ssn:
+                        ssn: '111111111'
+                      phone:
+                        - type: T
+                          number: 555-673-1001
+                      currentAddress:
+                        line1: 2965 ATTERBERRY CT
+                        city: ' '
+                        zipCode: ' '
+                    secondaryApplicant:
+                      name:
+                        lastName: REYNOLDS
+                        firstName: ROBERTS
+                      dob:
+                        dob: '10041962'
+                      ssn:
+                        ssn: '333333333'
+                      driverslicense:
+                        number: A00000000000
+                        state: CT
+                      employment:
+                        employerName: HOMELAND SECURITY
+                  requestor:
+                    subscriberCode: '2222222'
+                  permissiblePurpose:
+                    type: 3F
+                    terms: ''
+                    abbreviatedAmount: ''
+                  resellerInfo:
+                    endUserName: CPAPIV2TC24
+                  freezeOverride:
+                    primaryApplFreezeOverrideCode: '000002522653451'
+                    secondaryApplFreezeOverrideCode: 000002909814012
+                  addOns:
+                    directCheck: 'Y'
+                    demographics: Geocode and Phone
+                    summaries:
+                      summaryType:
+                        - Profile Summary
+                    mla: 'Y'
+                    ofacmsg: 'Y'
+                    consumerIdentCheck:
+                      getUniqueConsumerIdentifier: 'Y'
+                    joint: 'Y'
+                  customOptions:
+                    optionId:
+                      - COADEX
+                  solutionId: 63DXP1
+                  daasReferenceId: GOOGLEIC
+                  infoId1:
+                    item:
+                      - Credit Card/PreApproved/ContCtr/5/1X11/0000000100.00/0000000020.00/0000000000.00
+                  
+        required: true
+      responses:
+        200:
+          description: API responds with a JSON.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/creditProfileResponseFordaas'
+        400:
+          description: Client Exception due to invalid data.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        403:
+          description: Request Forbidden.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        404:
+          description: Not found Data.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        500:
+          description: Server Related Error.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        504:
+          description: Timeout.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+      security:
+      - OauthSecurity:
+        - user
+      x-codegen-request-body-name: body
+  /v1/custom-standalone-instant-credit:
+    post:
+      tags:
+      - Consumer Services
+      summary: Custom Instant Credit
+      description: 'Custom Instant Credit is a flexible customized product for clients
+        with complex decisioning needs, custom models and/or attributes that need
+        client-supplied files for decisioning purposes. <br><br> 
+        We are providing non-executable "Request schema" which contains all request parameters and executable 2 test cases for client testing under "Examples" dropdown below which includes first 1 positive test cases and rest 1 negative test cases. Eg: Success, Failure.'
+      operationId: custom-standalone-instant-credit
+      parameters:
+      - name: clientReferenceId
+        in: header
+        description: API client generated reference Id to uniquely identify the API
+          request.
+        schema:
+          type: string
+          default: SBMYSQL
+          enum:
+          - SBMYSQL
+      - name: Content-Type
+        in: header
+        description: Input Request format
+        required: true
+        schema:
+          type: string
+          default: application/json
+          enum:
+          - application/json
+      - name: Accept
+        in: header
+        description: Output Response format
+        schema:
+          type: string
+          default: application/json
+          enum:
+          - application/json
+      requestBody:
+        description: Consumer's PII , Requestor Information, Addons and any custom
+          options to be specified here.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/attributesRequest'
+            examples:
+              Request schema:   #Request schema
+                value:
+                  {
+                    "consumerPii": {
+                        "primaryApplicant": {
+                            "name": {
+                                "lastName": "string",
+                                "firstName": "string",
+                                "middleName": "string",
+                                "generationCode": "string"
+                            },
+                            "dob": {
+                                "dob": "string"
+                            },
+                            "ssn": {
+                                "ssn": "string"
+                            },
+                            "driverslicense": {
+                                "number": "string",
+                                "state": "string"
+                            },
+                            "phone": [
+                                {
+                                    "number": "string",
+                                    "type": "string"
+                                }
+                            ],
+                            "employment": {
+                                "employerName": "string",
+                                "employerAddress": {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            },
+                            "currentAddress": {
+                                "line1": "string",
+                                "line2": "string",
+                                "city": "string",
+                                "state": "string",
+                                "zipCode": "string"
+                            },
+                            "previousAddress": [
+                                {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            ]
+                        },
+                        "secondaryApplicant": {
+                            "name": {
+                                "lastName": "string",
+                                "firstName": "string",
+                                "middleName": "string",
+                                "generationCode": "string"
+                            },
+                            "dob": {
+                                "dob": "string"
+                            },
+                            "ssn": {
+                                "ssn": "string"
+                            },
+                            "driverslicense": {
+                                "number": "string",
+                                "state": "string"
+                            },
+                            "phone": [
+                                {
+                                    "number": "string",
+                                    "type": "string"
+                                }
+                            ],
+                            "employment": {
+                                "employerName": "string",
+                                "employerAddress": {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            },
+                            "currentAddress": {
+                                "line1": "string",
+                                "line2": "string",
+                                "city": "string",
+                                "state": "string",
+                                "zipCode": "string"
+                            },
+                            "previousAddress": [
+                                {
+                                    "line1": "string",
+                                    "line2": "string",
+                                    "city": "string",
+                                    "state": "string",
+                                    "zipCode": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "requestor": {
+                        "subscriberCode": "string"
+                    },
+                    "permissiblePurpose": {
+                        "type": "string",
+                        "terms": "string",
+                        "abbreviatedAmount": "string"
+                    },
+                    "resellerInfo": {
+                        "endUserName": "string"
+                    },
+                    "freezeOverride": {
+                        "primaryApplFreezeOverrideCode": "string",
+                        "secondaryApplFreezeOverrideCode": "string"
+                    },
+                    "vendorData": {
+                        "vendorNumber": "string",
+                        "vendorVersion": "string"
+                    },
+                    "addOns": {
+                        "directCheck": "string",
+                        "demographics": "string",
+                        "liftPremium": "string",
+                        "clarityEarlyRiskScore": "string",
+                        "clarityData": {
+                            "clarityAccountId": "string",
+                            "clarityLocationId": "string",
+                            "clarityControlFileName": "string",
+                            "clarityControlFileVersion": "string"
+                        },
+                        "creditScoreNotice": "string",
+                        "creditScoreNoticeData": {
+                            "noticeType": "string",
+                            "riskModelIndicator": "string"
+                        },
+                        "riskModels": {
+                            "modelIndicator": [
+                                "string"
+                            ],
+                            "scorePercentile": "string"
+                        },
+                        "summaries": {
+                            "summaryType": [
+                                "string"
+                            ]
+                        },
+                        "fraudShield": "string",
+                        "mla": "string",
+                        "ofacmsg": "string",
+                        "ofac": "string",
+                        "brokerNumber": "string",
+                        "consumerIdentCheck": {
+                            "getUniqueConsumerIdentifier": "string",
+                            "verifyPrimaryConsumerIdentifier": "string",
+                            "verifySecondaryConsumerIdentifier": "string"
+                        },
+                        "joint": "string",
+                        "paymentHistory84": "string",
+                        "outputType": "string",
+                        "outputTypeData": {
+                            "heading": "string"
+                        },
+                        "taxRefundLoan": "string",
+                        "trendedData": "string",
+                        "sureProfile": "string",
+                        "ssnIndicators": "string",
+                        "newConsumer": "string"
+                    },
+                    "customOptions": {
+                        "optionId": [
+                            "string"
+                        ]
+                    },
+                    "solutionId": "string",
+                    "verifyId": "string",
+                    "daasReferenceId": "string",
+                    "infoId1": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId2": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId3": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId4": {
+                        "item": [
+                            "string"
+                        ]
+                    },
+                    "infoId5": {
+                        "item": [
+                            "string"
+                        ]
+                    }
+                  }
+              Success:
+                value:
+                  {
+                    "consumerPii": {
+                        "primaryApplicant": {
+                            "name": {
+                                "lastName": "ARMSTRONG",
+                                "firstName": "KARL",
+                                "middleName": "E"
+                            },
+                            "dob": {
+                                "dob": "1959"
+                            },
+                            "ssn": {
+                                "ssn": "111111111"
+                            },
+                            "currentAddress": {
+                                "line1": "1073 BUCKINGHAM DR",
+                                "city": "CAROL STREAM",
+                                "state": "IL",
+                                "zipCode": "60188"
+                            }
+                        },
+                        "secondaryApplicant": {
+                            "name": {
+                                "lastName": "REYNOLDS",
+                                "firstName": "ROBERTS"
+                            },
+                            "dob": {
+                                "dob": "10041962"
+                            },
+                            "ssn": {
+                                "ssn": "333333333"
+                            },
+                            "driverslicense": {
+                                "number": "A00000000000",
+                                "state": "CT"
+                            },
+                            "employment": {
+                                "employerName": "HOMELAND SECURITY"
+                            }
+                        }
+                    },
+                    "requestor": {
+                        "subscriberCode": "2222222"
+                    },
+                    "permissiblePurpose": {
+                        "type": "3F",
+                        "terms": "",
+                        "abbreviatedAmount": ""
+                    },
+                    "resellerInfo": {
+                        "endUserName": "CPAPIV2TC27"
+                    },
+                    "freezeOverride": {
+                        "primaryApplFreezeOverrideCode": "000002522653451",
+                        "secondaryApplFreezeOverrideCode": "000002909814012"
+                    },
+                    "addOns": {
+                        "directCheck": "Y",
+                        "demographics": "Geocode and Phone",
+                        "liftPremium": "Y",
+                        "clarityData": {
+                            "clarityAccountId": "0000000",
+                            "clarityLocationId": "000000",
+                            "clarityControlFileName": "test_file",
+                            "clarityControlFileVersion": "0000000"
+                        },
+                        "summaries": {
+                            "summaryType": [
+                                "Profile Summary"
+                            ]
+                        },
+                        "riskModels": {
+                            "modelIndicator": [
+                                "F",
+                                "V3"
+                            ]
+                        },
+                        "fraudShield": "Y",
+                        "mla": "Y",
+                        "ofacmsg": "Y",
+                        "consumerIdentCheck": {
+                            "getUniqueConsumerIdentifier": "Y"
+                        },
+                        "joint": "Y",
+                        "paymentHistory84": "",
+                        "sureProfile": "Y",
+                        "ssnIndicators": "Y",
+                        "newConsumer": "Y"
+                    },
+                    "customOptions": {
+                        "optionId": [
+                            "COADEX"
+                        ]
+                    },
+                    "solutionId": "63CR1IC",
+                    "verifyId": "RM",
+                    "infoId1": {
+                        "item": [
+                            "SG15/1"
+                        ]
+                    }
+                  }                
+              Failure:
+                value:
+                  consumerPii:
+                    primaryApplicant:
+                      name:
+                        lastName: '-'
+                        firstName: PEGGY
+                      dob:
+                        dob: '1948'
+                      ssn:
+                        ssn: '111111111'
+                      phone:
+                        - type: T
+                          number: 555-673-1001
+                      currentAddress:
+                        line1: 2965 ATTERBERRY CT
+                        city: ' '
+                        zipCode: ' '
+                    secondaryApplicant:
+                      name:
+                        lastName: REYNOLDS
+                        firstName: ROBERTS
+                      dob:
+                        dob: '10041962'
+                      ssn:
+                        ssn: '333333333'
+                      driverslicense:
+                        number: A00000000000
+                        state: CT
+                      employment:
+                        employerName: HOMELAND SECURITY
+                  requestor:
+                    subscriberCode: '2222222'
+                  permissiblePurpose:
+                    type: 3F
+                    terms: ''
+                    abbreviatedAmount: ''
+                  resellerInfo:
+                    endUserName: CPAPIV2TC27
+                  freezeOverride:
+                    primaryApplFreezeOverrideCode: '000002522653451'
+                    secondaryApplFreezeOverrideCode: 000002909814012
+                  addOns:
+                    directCheck: 'Y'
+                    demographics: Geocode and Phone
+                    summaries:
+                      summaryType:
+                        - Profile Summary
+                    riskModels:
+                      modelIndicator:
+                        - F
+                        - V3
+                    fraudShield: 'Y'
+                    mla: 'Y'
+                    ofacmsg: 'Y'
+                    consumerIdentCheck:
+                      getUniqueConsumerIdentifier: 'Y'
+                    joint: 'Y'
+                    paymentHistory84: ''
+                  customOptions:
+                    optionId:
+                      - COADEX
+                  solutionId: 63CR1IC
+                  verifyId: RM
+                  infoId1:
+                    item:
+                      - SG15/1
+                  
+        required: true
+      responses:
+        200:
+          description: API responds with a JSON.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/creditProfileResponseFordaas'
+        400:
+          description: Client Exception due to invalid data.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        403:
+          description: Request Forbidden.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        404:
+          description: Not found Data.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        500:
+          description: Server Related Error.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+        504:
+          description: Timeout.
+          headers:
+            experianTransactionId:
+              description: Unique ID generated by Experian for this API request
+              schema:
+                type: string
+            clientReferenceId:
+              description: Echo back of the reference Id , if provided on API request
+                header
+              schema:
+                type: string
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorResponseWithHeaderTrailerAndErrorType'
+      security:
+      - OauthSecurity:
+        - user
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    attributesRequest:
+      required:
+      - consumerPii
+      - requestor
+      - solutionId
+      type: object
+      properties:
+        consumerPii:
+          $ref: '#/components/schemas/PIIDAAS'
+        requestor:
+          $ref: '#/components/schemas/Requestor'
+        permissiblePurpose:
+          $ref: '#/components/schemas/PermissiblePurpose'
+        resellerInfo:
+          $ref: '#/components/schemas/Reseller'
+        freezeOverride:
+          $ref: '#/components/schemas/FreezeOverride'
+        vendorData:
+          $ref: '#/components/schemas/vendorData'
+        addOns:
+          $ref: '#/components/schemas/Addons-daas'
+        customOptions:
+          $ref: '#/components/schemas/CustomOptions'
+        solutionId:
+          type: string
+          description: SolutionId provided by Experian during the setup process used
+            for the RR- keyword.  Tells DaaS system how to route to the correct processing
+            environment, which will process your request.
+        verifyId:
+          type: string
+          description: verifyId provided by Experian during the setup process used
+            for the verify- keyword.  Tells DaaS system how to format the response.
+        daasReferenceId:
+          type: string
+          description: daasReferenceId provided by Experian during the setup process
+            used for m- keyword.  Tells DaaS system which DaaS Products you are requesting.
+        infoId1:
+          $ref: '#/components/schemas/InfoId1'
+        infoId2:
+          $ref: '#/components/schemas/InfoId2'
+        infoId3:
+          $ref: '#/components/schemas/InfoId3'
+        infoId4:
+          $ref: '#/components/schemas/InfoId4'
+        infoId5:
+          $ref: '#/components/schemas/InfoId5'
+      description: Credit Profile Request Body
+    PIIDAAS:
+      required:
+      - primaryApplicant
+      type: object
+      properties:
+        primaryApplicant:
+          $ref: '#/components/schemas/PrimaryApplicant'
+        secondaryApplicant:
+          $ref: '#/components/schemas/SecondaryApplicantDAAS'
+      description: Personally Identifiable Information
+    PAName:
+      required:
+      - firstName
+      - lastName
+      type: object
+      properties:
+        lastName:
+          type: string
+          description: The full applicant's surname is required. If the surname contains
+            two surnames, then split the surnames with a hyphen (e.g., Smith-Jones).
+            The surname can also be input with an apostrophe (e.g., O'Brien), although
+            apostrophe usage is limited to the letters D, L, and O.
+        firstName:
+          type: string
+          description: The full first name is required. The minimum entry is the first
+            name initial. Blanks and special characters (except dash) are not allowed.
+            Compound names should contain a dash (e.g., Billy-Bob).
+        middleName:
+          type: string
+          description: The full middle name should be entered when available. A middle
+            initial is acceptable. Blanks and special characters are not allowed.
+            Omit if the middle name is not available.
+
+        generationCode:
+          type: string
+          description: Generation Code
+      description: Consumer's Name
+    SAName:
+      required:
+      - firstName
+      type: object
+      properties:
+        lastName:
+          type: string
+          description: The full applicant's surname is required. If the surname contains
+            two surnames, then split the surnames with a hyphen (e.g., Smith-Jones).
+            The surname can also be input with an apostrophe (e.g., O'Brien), although
+            apostrophe usage is limited to the letters D, L, and O.
+        firstName:
+          type: string
+          description: The full first name is required. The minimum entry is the first
+            name initial. Blanks and special characters (except dash) are not allowed.
+            Compound names should contain a dash (e.g., Billy-Bob).
+        middleName:
+          type: string
+          description: The full middle name should be entered when available. A middle
+            initial is acceptable. Blanks and special characters are not allowed.
+            Omit if the middle name is not available.
+        generationCode:
+          type: string
+          description: Generation Code
+      description: Consumer's Name
+    Address:
+      required:
+      - line1
+      - zipCode
+      type: object
+      properties:
+        line1:
+          type: string
+          description: Address Line 1
+        line2:
+          type: string
+          description: Address Line 2
+        city:
+          type: string
+          description: City
+        state:
+          type: string
+          description: State
+        zipCode:
+          type: string
+          description: ZIP Code
+      description: Consumer's Address
+    DOB:
+      type: object
+      properties:
+        dob:
+          type: string
+          description: Year Of Birth or Date of Birth. This describes year of birth
+            of the primary applicant. It must be 4 (YYYY) or 8 (MMDDYYYY) digits.
+      description: Consumer's Date of Birth
+    SSN:
+      type: object
+      properties:
+        ssn:
+          type: string
+          description: Social Security Number
+      description: Consumer's Social Security Number
+    Phone:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Phone Number
+        type:
+          type: string
+          description: Phone Type
+      description: Consumer's Phone
+    Employment:
+      required:
+      - employerName
+      type: object
+      properties:
+        employerName:
+          type: string
+          description: Employer's Name
+        employerAddress:
+          $ref: '#/components/schemas/Address'
+      description: Consumer's Employment Details
+    DriverLicense:
+      required:
+      - number
+      - state
+      type: object
+      properties:
+        number:
+          type: string
+          description: DL Number
+        state:
+          type: string
+          description: State in which DL was issued
+      description: Consumer's Driver License
+    PrimaryApplicant:
+      required:
+      - currentAddress
+      - name
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/PAName'
+        dob:
+          $ref: '#/components/schemas/DOB'
+        ssn:
+          $ref: '#/components/schemas/SSN'
+        driverslicense:
+          $ref: '#/components/schemas/DriverLicense'
+        phone:
+          type: array
+          items:
+            $ref: '#/components/schemas/Phone'
+        employment:
+          $ref: '#/components/schemas/Employment'
+        currentAddress:
+          $ref: '#/components/schemas/Address'
+        previousAddress:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+      description: Primary Credit Applicant Information
+    SecondaryApplicantDAAS:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/SAName'
+        dob:
+          $ref: '#/components/schemas/DOB'
+        ssn:
+          $ref: '#/components/schemas/SSN'
+        driverslicense:
+          $ref: '#/components/schemas/DriverLicense'
+        phone:
+          type: array
+          items:
+            $ref: '#/components/schemas/Phone'
+        employment:
+          $ref: '#/components/schemas/Employment'
+        currentAddress:
+          $ref: '#/components/schemas/Address'
+        previousAddress:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+      description: Secondary Credit Applicant Information for DAAS
+    Requestor:
+      required:
+      - subscriberCode
+      type: object
+      properties:
+        subscriberCode:
+          type: string
+          description: Subscriber Number assigned by Experian
+      description: Information on the API requestor
+    PermissiblePurpose:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Permissible Purpose Type Code. 2 digits containing the account
+            type code only.
+        terms:
+          type: string
+          description: The Terms must be 3 digits. If unknown             , substitute
+            three periods. Mortgage loans use terms expressed in YEARS. Revolving
+            accounts use terms expressed as either "001" to indicate a monthly payment
+            plan or "010" to indicate a revolving account. All other type codes have
+            terms that are expressed in MONTHS
+        abbreviatedAmount:
+          type: string
+          description: Input the amount of the account. Must             be 3 digits.
+            If unknown, substitute              three periods. Mortgage loans have
+            amounts expressed in THOUSANDS.             For example, a $100,000 VA
+            mortgage              for 30 years would be entered as "100". Under 1000;
+            enter 000. All other type accounts are expressed in HUNDREDS. For example,
+            a $15,000 auto loan would be entered as "150". Under 100; input 000.
+      description: Specifies information on why this credit inquiry is being submitted
+        This is used to denote the purpose type, terms, and amount.
+    Reseller:
+      required:
+      - endUserName
+      type: object
+      properties:
+        endUserName:
+          type: string
+          description: End User Identification. Resellers of credit reports must enter
+            the name of the end user upto 30 characters.
+      description: If the API requestor is a reseller submitting a credit inquiry
+        to Experian, additional information should be provided.
+    Addons-daas:
+      type: object
+      properties:
+        directCheck:
+          type: string
+          description: Send back subscriber information on the credit profile. When
+            set to Y indicates that subscriber and court names, addresses, and phone
+            numbers who have reported data on the consumer's profile will be sent
+            back on the response.
+        demographics:
+          type: string
+          description: Indicates the type of demographic data that should be returned
+            back.
+        liftPremium:
+          type: string
+          description: 'liftPremium "type": "string", "pattern": "^[A-Z]{0,1}$", "enum":
+            ["Y", "N",""]'
+        clarityEarlyRiskScore:
+          type: string
+          description: Y.  Returns Clarity's 90 day Clear Early Risk Score (CERS)
+            which predict the risk of a consumer going 90 days past due in first 12
+            months of a traditional bureau trade. This can be omitted if Clarity Early
+            Risk Score is not needed.
+        clarityData:
+          $ref: '#/components/schemas/clarityAccountData'
+        creditScoreNotice:
+          type: string
+          description: Y.  It makes 'creditScoreNoticeData' a mandatory element.
+        creditScoreNoticeData:
+          $ref: '#/components/schemas/creditScoreNoticeDataDaas'
+        riskModels:
+          $ref: '#/components/schemas/RiskModel-daas'
+        summaries:
+          type: object
+          properties:
+            summaryType:
+              type: array
+              items:
+                type: string
+                description: Summary type being requested
+          description: Details of what summaries are requested in output like profile
+            summary or auto summary
+        fraudShield:
+          type: string
+          description: Y - Fraud Shield Product Option will be output
+        mla:
+          type: string
+          description: Y - Trigger a screening process of taking the consumer data
+            from an inquiry to match against the Dept of Defense MLA lists. Message
+            codes 1203-1207 could be returned. Permissible Purpose with valid YOB
+            required for getting this option.
+        ofacmsg:
+          type: string
+          description: Y- Trigger a screening process of taking the consumer data
+            from an inquiry to match against the OFAC (Office of Foreign Asset Control)
+            and PLC (Palestinian Legislative Council) lists. A message 1202 NAME DOES
+            NOT MATCH OFAC/PLC LIST will be printed on credit profile if the consumer
+            is not found on either OFAC or PLC list. A message 1200 NAME MATCHES OFAC/PLC
+            LIST will be printed on credit profile if the consumer is found on either
+            OFAC or PLC list.
+        ofac:
+          type: string
+          description: Y- The OFAC keyword is used to trigger a screening process
+            of taking the consumer data from an inquiry to match aginst the OFAC(Office
+            of Foreign Asset Control)list.  A message "spelling of name used to access
+            report matches OFAC list" will be printed on credit profile if the consumer
+            is found on OFAC list.
+        brokerNumber:
+          type: string
+          description: Broker Number is required if the inquiry SIN has customer master
+            service rule 30/350 set on at fileone system.  And it is retained in the
+            reference id field for inquiry logging purpose at fileone system. Broker
+            Number is an optional field and accepts 1 to 10 digits of numeric values.
+        consumerIdentCheck:
+          $ref: '#/components/schemas/ConsumerIdentifierCheckOptions'
+        joint:
+          type: string
+          description: If specified as Y it means that the client is requesting a
+            joint credit report. This is used to request the Dual or Joint Report.
+            Two separate credit reports are returned?one on the primary applicant
+            and one on the secondary applicant. The joint applicant should have the
+            same current address as the primary applicant. Include as much information
+            on the joint applicant as possible, including the surname if it is different
+            from the primary applicant. If NOt specified or N it means that a joint
+            report is NOT being requested.
+        paymentHistory84:
+          type: string
+          description: Y.  84 month payment history is requested instead of the 25
+            month history. This can be omitted if 84 month history is not needed
+        outputType:
+          type: string
+          description: ENUM JSON,ARF,COMBO,TTY,COMBO1,COMBO2 If JSON is type, API
+            coverts the output from DaaS to JSON tags and discards the output from
+            DaaS If ARF is type, API creates a JSON wrapper with a single data tag
+            that contains the DaaS output. If COMBO is type, API converts the output
+            from DaaS (excluding the 700 segments) into JSON and also inserts the
+            DaaS output into a single data             tag. If TTY is type, If TTY
+            is type, API returns the output in TTY format and wraps that into a single
+            JSON data tag. COMBO1 is cobination of JSON and TTY. COMBO2 is used to
+            get the third party data source data from 700 segment.
+        outputTypeData:
+          $ref: '#/components/schemas/OutputTypeDataDaas'
+        taxRefundLoan:
+          type: string
+          description: "Y will be displayed \n  in the indicator field; if no inquiry\
+            \ is found for a tax refund loan inquiry from January 1 through October\
+            \ 17, an N will be displayed in the indicator field.                  "
+        trendedData:
+          type: string
+          description: To display Trended Data at json response in accordance with
+            trendedData request in DaaS api. Enum - Y or N,
+        sureProfile:
+          type: string
+          description: 'Sure profile is a new product for subscribed financial institutions.
+            Using machine learning models to assess the overall credit health of a
+            consumer,  Experian will guarantee three types of credit types for an
+            approved consumer: credit card, revolving credit, and check card.  The
+            guarantee will cover one year, and Experian will be financially liable
+            to the issuing financial institution if the consumer fails to pay. Enum-
+            Y, N'
+        ssnIndicators:
+          type: string
+          description: SSN Indicators is an optional field for DaaS api. Enum - Y
+            or N.
+        newConsumer:
+          type: string
+          description: 'Indicates if the consumer is new. This is an optional field
+            for DaaS api. Enum - Y or N. '
+      description: Add on products that can be requested. Each add on is billable.
+        These are optional parameters and can be omitted if not needed.
+    OutputTypeDataDaas:
+      type: object
+      properties:
+        heading:
+          type: string
+      description: Heading element is added to get the column headers in the pages
+        for TTY output type based on H- inquiry keyword.  The outputTypeData element
+        is optional field and heading element is also optional filed and it supports
+        "Y" or "N" enum values.
+    RiskModel-daas:
+      type: object
+      properties:
+        modelIndicator:
+          type: array
+          items:
+            type: string
+            description: The 2 byte model indicator if the risk score.
+        scorePercentile:
+          type: string
+          description: Y - Percentile data for Risk-based Pricing policies. Must be
+            requested along with a Risk Model.
+      description: Risk Models that are being requested. Upto 29 models can be requested.
+    ConsumerIdentifierCheckOptions:
+      type: object
+      properties:
+        getUniqueConsumerIdentifier:
+          type: string
+          description: Y -17 byte unique consumer identifier on output.
+        verifyPrimaryConsumerIdentifier:
+          type: string
+          description: Y - 17 byte unique consumer identifier output for Primary Applicant.
+        verifySecondaryConsumerIdentifier:
+          type: string
+          description: Y - 17 byte unique consumer identifier output for Secondary
+            Applicant.
+      description: Output a 17 byte unique consumer identifier for requestor and/or
+        verify an input 17 byte unique consumer identifier.
+    CustomOptions:
+      type: object
+      properties:
+        optionId:
+          type: array
+          items:
+            type: string
+            description: Custom option id
+      description: Ancillary Credit Reporting Options (Client custom options if any
+        that have been setup) that can be requested by client. Multiple options can
+        be requested here.
+    FreezeOverride:
+      type: object
+      properties:
+        primaryApplFreezeOverrideCode:
+          type: string
+          description: This is the freeze override code for the primary applicant
+            Used when a consumer has authorized the client to access his or her frozen
+            file and has provided the client with his or her pass code. This passcode
+            is to be provided to Experian so that Experian can override the freeze
+            and return credit data for the consumer back to the client.
+        secondaryApplFreezeOverrideCode:
+          type: string
+          description: This is the freeze override code for the secondary applicant
+            Used when a consumer has authorized the client to access his or her frozen
+            file and has provided the client with his or her pass code. This passcode
+            is to be provided to Experian so that Experian can override the freeze
+            and return credit data for the consumer back to the client.
+      description: If a consumer's profile is frozen, then consumer can get a password
+        using which a lender can override the freeze and get credit data. This parameter
+        is provided when consumer has provided the lender with the password to override
+        his profile freeze.
+    InfoId1:
+      type: object
+      properties:
+        item:
+          type: array
+          items:
+            type: string
+            description: info- keyword Custom Properties
+      description: infoId1 contains additional properties or parameters needed by
+        Decisioning to complete the request.
+    InfoId2:
+      type: object
+      properties:
+        item:
+          type: array
+          items:
+            type: string
+            description: info2- keyword Custom Properties
+      description: infoId2 contains additional properties or parameters needed by
+        Decisioning to complete the request.
+    InfoId3:
+      type: object
+      properties:
+        item:
+          type: array
+          items:
+            type: string
+            description: info3- keyword Custom Properties
+      description: infoId3 contains additional properties or parameters needed by
+        Decisioning to complete the request.
+    InfoId4:
+      type: object
+      properties:
+        item:
+          type: array
+          items:
+            type: string
+            description: info4- keyword Custom Properties
+      description: infoId4 contains additional properties or parameters needed by
+        Decisioning to complete the request.
+    InfoId5:
+      type: object
+      properties:
+        item:
+          type: array
+          items:
+            type: string
+            description: info5- keyword Custom Properties
+      description: infoId5 contains additional properties or parameters needed by
+        Decisioning to complete the request.
+    vendorData:
+      type: object
+      properties:
+        vendorNumber:
+          type: string
+          description: Optional. Alpha-numeric. Must be 3 Character long.
+        vendorVersion:
+          type: string
+          description: Optional. Alpha-numeric with dot(.). Max length is 6.
+      description: Optional field. To understand who's application the client is using
+        to send in the inquiry - Vendor, 3rd Party, Reseller, or client home grown.
+    creditProfileResponseFordaas:
+      type: object
+      properties:
+        creditProfile:
+          type: array
+          description: DaaS Credit Profile Response
+          items:
+            $ref: '#/components/schemas/creditProfileRespFordaasData'
+        arf:
+          $ref: '#/components/schemas/arf'
+        tty:
+          $ref: '#/components/schemas/ttyResponse'
+        dataSource:
+          $ref: '#/components/schemas/dataSourceDaas'
+    creditProfileRespFordaasData:
+      type: object
+      properties:
+        headerRecord:
+          $ref: '#/components/schemas/headerRecord'
+        addressInformation:
+          type: array
+          description: Best Consumer Addresses
+          items:
+            $ref: '#/components/schemas/addressInformationRespDaas'
+        consumerAssistanceReferralAddress:
+          $ref: '#/components/schemas/consumerAssistanceReferralAddress'
+        consumerIdentity:
+          $ref: '#/components/schemas/consumerIdentityDaas'
+        directCheck:
+          $ref: '#/components/schemas/directCheck'
+        employmentInformation:
+          $ref: '#/components/schemas/employmentInformation'
+        fraudShield:
+          $ref: '#/components/schemas/fraudShieldDaas'
+        informationalMessage:
+          $ref: '#/components/schemas/informationalMessagefordaas'
+        inquiry:
+          $ref: '#/components/schemas/inquiryDaas'
+        mla:
+          $ref: '#/components/schemas/mlaResp'
+        ofac:
+          $ref: '#/components/schemas/ofacResp'
+        summaries:
+          $ref: '#/components/schemas/summaries'
+        publicRecord:
+          $ref: '#/components/schemas/publicRecordDaas'
+        riskModel:
+          $ref: '#/components/schemas/riskModelDaas'
+        ssn:
+          $ref: '#/components/schemas/ssnDaas'
+        statement:
+          $ref: '#/components/schemas/statement'
+        tradeline:
+          $ref: '#/components/schemas/tradelineDaas'
+        uniqueConsumerIdentifier:
+          $ref: '#/components/schemas/uniqueConsumerIdentifierDaas'
+        extendedViewAttributes:
+          $ref: '#/components/schemas/extendedView'
+        premierAttributes:
+          $ref: '#/components/schemas/PremierAttribute'
+        trendedAttributes:
+          $ref: '#/components/schemas/TrendedAttribute'
+        trendView:
+          $ref: '#/components/schemas/trendView'
+        staggAttributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/staggAttributesDaas'
+        modelAttributes:
+          $ref: '#/components/schemas/modelAttributes'
+        customAttributes:
+          $ref: '#/components/schemas/customAttributes'
+        connectCheck:
+          $ref: '#/components/schemas/connectCheck'
+        connectCheckGen3InquiryData:
+          $ref: '#/components/schemas/connectCheckGen3InquiryData'
+        connectCheckGen3TradeLine:
+          $ref: '#/components/schemas/connectCheckGen3TradeLine'
+        endTotals:
+          $ref: '#/components/schemas/endTotals'
+    TrendedAttribute:
+      type: array
+      description: Trended Attributes
+      items:
+        $ref: '#/components/schemas/attributeResp'
+    PremierAttribute:
+      type: array
+      description: Premier Attributes
+      items:
+        $ref: '#/components/schemas/attributeResp'
+    extendedView:
+      type: array
+      description: EV Attributes
+      items:
+        $ref: '#/components/schemas/extendedViewResp'
+    extendedViewResp:
+      type: object
+      properties:
+        categoryCd:
+          type: string
+          description: This indicates what type of attributes are being returned
+          enum:
+          - "0"
+          - "1"
+          - "2"
+        categoryTxt:
+          type: string
+          description: This explains the category of Extended View attributes It could
+            be "Experian Premier Attributes" or "Lexis Nexis Attributes"
+        attribute:
+          type: array
+          description: EV Attribute Information
+          items:
+            $ref: '#/components/schemas/attributeResp'
+      description: Present when Extended View attributes are requested.
+    addressInformationRespDaas:
+      type: object
+      properties:
+        censusGeoCode:
+          type: string
+          description: Address range that includes the address and the census geography
+            the address is within
+        city:
+          type: string
+          description: City for the address.
+        countyCode:
+          type: string
+          description: County Code
+        dwellingType:
+          type: string
+          description: Structural Characteristic/Dwelling Configuration
+        dwellingTypeText:
+          type: string
+          description: Verbose mapping for dwellingType
+        firstReportedDate:
+          type: string
+          description: 'Date address first reported. Format = MMDDCCYY '
+        lastReportingSubscriberCode:
+          type: string
+          description: Last Subscriber reporting this address. May be blanks.
+        lastUpdatedDate:
+          type: string
+          description: 'Date address last updated. Format = MMDDCCYY '
+        msaCode:
+          type: string
+          description: Metropolitan Statistical Area Code when DemographicsAll or
+            DemographicsGeoCode is requested.
+        source:
+          type: string
+          description: Source of Address
+        sourceText:
+          type: string
+          description: Verbose mapping for source
+        state:
+          type: string
+          description: 'Valid two-letter US state code or Canadian province. '
+        stateCode:
+          type: string
+          description: State Geo Code when demographics = 1 or 2.
+        streetName:
+          type: string
+          description: 'Full street name. '
+        streetPrefix:
+          type: string
+          description: Data that precedes the street name like house number and directional.
+        streetSuffix:
+          type: string
+          description: Street name type like ST, LN.
+        timesReported:
+          type: string
+          description: Number of times the Address was reported to Experian.
+        unitId:
+          type: string
+          description: Unit Identifier for Apartment.
+        unitType:
+          type: string
+          description: 'Words such as apartment, suite, etc. '
+        zipCode:
+          type: string
+          description: ZIP Code.
+      description: Best Consumer Addresses
+    consumerAssistanceReferralAddress:
+      type: object
+      properties:
+        cityStateZip:
+          type: string
+          description: CRS City, State, ZIP.
+        officeName:
+          type: string
+          description: Name of CRS Office
+        phone:
+          type: string
+          description: CRS Phone Number
+        poBox:
+          type: string
+          description: CRS PO Box Address
+        streetName:
+          type: string
+          description: CRS Street
+    consumerIdentityDaas:
+      type: object
+      properties:
+        dob:
+          $ref: '#/components/schemas/dob'
+        name:
+          $ref: '#/components/schemas/consumerIdentityName'
+        phone:
+          $ref: '#/components/schemas/consumerIdentityPhoneDaas'
+    dob:
+      type: object
+      properties:
+        day:
+          type: string
+          description: When available it will be output in DD format.
+        month:
+          type: string
+          description: When available it will be output in MM format.
+        year:
+          type: string
+          description: When available it will be output in CCYY format.
+    consumerIdentityName:
+      type: array
+      description: Best Consumer Name for Request
+      items:
+        $ref: '#/components/schemas/consumerIdentityNameResp'
+    consumerIdentityNameResp:
+      type: object
+      properties:
+        firstName:
+          type: string
+          description: Consumer's Full First Name.
+        generationCode:
+          type: string
+          description: Generation Code if applicable.
+        middleName:
+          type: string
+          description: Consumer's Full Middle Name or Middle Initial
+        secondSurname:
+          type: string
+          description: Second half of the surname for dual surnames.
+        surname:
+          type: string
+          description: 'Consumer''s last name. '
+        type:
+          type: string
+          description: Name Type
+    consumerIdentityPhoneDaas:
+      type: array
+      description: Present when DemographicsAll or DemographicsPhone is requested
+        on input or via subcode option.
+      items:
+        $ref: '#/components/schemas/consumerIdentityPhoneRespDaas'
+    consumerIdentityPhoneRespDaas:
+      type: object
+      properties:
+        number:
+          type: string
+          description: 'Consumer Phone Number. '
+        source:
+          type: string
+          description: Phone Source.
+        sourceText:
+          type: string
+          description: Verbose mapping for source
+        type:
+          type: string
+          description: Phone number type
+        typeText:
+          type: string
+          description: Verbose mapping for type
+    directCheck:
+      type: array
+      description: Subscriber Information of subscriber codes shown on credit profile.
+        Present when direct check is requested on input or via subcode option.
+      items:
+        $ref: '#/components/schemas/directCheckResp'
+    directCheckResp:
+      type: object
+      properties:
+        subscriberAddress:
+          type: string
+          description: Subscriber's Address
+        subscriberCity:
+          type: string
+          description: Subscriber's City
+        subscriberCode:
+          type: string
+          description: Experian assigned number.
+        subscriberName:
+          type: string
+          description: Name of subscriber
+        subscriberPhone:
+          type: string
+          description: Telephone number of subscriber or "BYMAILONLY"
+        subscriberState:
+          type: string
+          description: Two-digit state code.
+        subscriberZipCode:
+          type: string
+          description: Subscriber's Zip Code.
+    employmentInformation:
+      type: array
+      description: Best Consumer Employments.
+      items:
+        $ref: '#/components/schemas/employmentInformationResp'
+    employmentInformationResp:
+      type: object
+      properties:
+        addressExtraLine:
+          type: string
+          description: Extra line of employer's address
+        addressFirstLine:
+          type: string
+          description: 1st line of employer's address
+        addressSecondLine:
+          type: string
+          description: 2nd line of employer's address
+        firstReportedDate:
+          type: string
+          description: 'Date employment first reported. Format = MMDDCCYY '
+        lastUpdatedDate:
+          type: string
+          description: Date employment last updated. Format = MMDDCCYY.
+        name:
+          type: string
+          description: Employer's Name.
+        source:
+          type: string
+          description: Source of Employment
+        zipCode:
+          type: string
+          description: 'ZIP code of employer. '
+    fraudShieldIndicators:
+      type: object
+      properties:
+        indicator:
+          type: array
+          description: Fraud Shield Information for the input request.
+          items:
+            type: string
+      description: Fraud Shield Information for the input request.
+    fraudShieldDaas:
+      type: array
+      description: Fraud Shield information when requested on input or via subcode.
+      items:
+        $ref: '#/components/schemas/fraudShieldRespDaas'
+    fraudShieldRespDaas:
+      type: object
+      properties:
+        addressCount:
+          type: string
+          description: Number of times the address was used in the last 90-120 days
+        addressDate:
+          type: string
+          description: 'Format = MMDDCCYY. Date when address counter accumulation
+            started. '
+        addressErrorCode:
+          type: string
+          description: Address Error Code if applicable.
+        addressErrorCodeText:
+          type: string
+          description: Verbose mapping for addressErrorCode
+        dateOfBirth:
+          type: string
+          description: Format = MMDDCCYY
+        dateOfDeath:
+          type: string
+          description: Format = MMDDCCYY
+        fraudShieldIndicators:
+          $ref: '#/components/schemas/fraudShieldIndicators'
+        sic:
+          type: string
+          description: Group Identifiers if applicable.
+        sicText:
+          type: string
+          description: Verbose mapping for sic
+        socialCount:
+          type: string
+          description: Number of times the social was used in the last 90-120 days.
+        socialDate:
+          type: string
+          description: Date posted when social counter accumulation started. Format
+            = MMDDCCYY.
+        socialErrorCode:
+          type: string
+          description: Social error code if applicable.
+        socialErrorCodeText:
+          type: string
+          description: Verbose mapping for socialErrorCode
+        ssnFirstPossibleIssuanceYear:
+          type: string
+          description: First year possible for SSN issuance (YYYY).
+        ssnLastPossibleIssuanceYear:
+          type: string
+          description: Last year possible for SSN issuance (YYYY).
+        text:
+          type: string
+          description: Shield message.
+        type:
+          type: string
+          description: Fraud Shield Record Type
+        typeText:
+          type: string
+          description: Verbose mapping for type
+    informationalMessagefordaas:
+      type: array
+      description: informational messages for request and response scenarios. e.g.
+        if a product option requested is NOT setup for the subcode, response will
+        reflect a warning.  Message Text is a general area which is customized by
+        each client.  The layout can be different from client to client.  Each client
+        should have the layout of their customized Message Text area.
+      items:
+        $ref: '#/components/schemas/informationalMessagefordaasResp'
+    informationalMessagefordaasResp:
+      type: object
+      properties:
+        messageNumber:
+          type: string
+          description: Contains the two digit Message Code.
+        messageText:
+          type: string
+          description: The message customized Message Text area.
+    inquiryDaas:
+      type: array
+      description: Onfile Inquiries for the consumer.
+      items:
+        $ref: '#/components/schemas/inquiryRespDaas'
+    inquiryRespDaas:
+      type: object
+      properties:
+        amount:
+          type: string
+          description: Full dollar amount.
+        date:
+          type: string
+          description: Date of inquiry. MMDDCCYY
+        kob:
+          type: string
+          description: Kind of Business Codes.
+        kobText:
+          type: string
+          description: Verbose mapping for kob
+        subscriberCode:
+          type: string
+          description: Subscriber Code of inquiring creditor.
+        subscriberName:
+          type: string
+          description: Subscriber Name of inquirying creditor.
+        terms:
+          type: string
+          description: Terms Reported.
+        termsText:
+          type: string
+          description: Verbose mapping for terms
+        type:
+          type: string
+          description: 'Permissible Purpose Reason for the inquiry. '
+        typeText:
+          type: string
+          description: Verbose mapping for type
+    mlaResp:
+      type: object
+      properties:
+        messageNumber:
+          type: string
+          description: Message Number for mla.
+        messageText:
+          type: string
+          description: 'Message Text matching message number is output in this element. '
+      description: Present when "mla" is requested on input or via subcode and is
+        allowed for the subcode.
+    ofacResp:
+      type: object
+      properties:
+        messageNumber:
+          type: string
+          description: Message Number for ofac.
+        messageText:
+          type: string
+          description: Message Text for corresponding message number.
+      description: Present when "ofacmsg" is requested on input or via subcode and
+        is allowed for the subcode.
+    attributeResp:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Attribute id
+        value:
+          type: string
+          description: Attribute Value
+    summaries:
+      type: array
+      items:
+        $ref: '#/components/schemas/summary'
+    summary:
+      type: object
+      properties:
+        summaryType:
+          type: string
+          description: Summary Type
+        attributes:
+          type: array
+          description: Summary Attributes
+          items:
+            $ref: '#/components/schemas/attributeResp'
+    publicRecordDaas:
+      type: array
+      description: Bankruptcy, Lien and Civil Action public records for Consumer.
+      items:
+        $ref: '#/components/schemas/publicRecordRespDaas'
+    publicRecordRespDaas:
+      type: object
+      properties:
+        adjustmentPercent:
+          type: string
+          description: For BK Chapter 13 Only.
+        amount:
+          type: string
+          description: Full rounded dollar amount or rounded amount.
+        bankruptcyAssetAmount:
+          type: string
+          description: 'Full dollar amount for Bankruptcies. '
+        bankruptcyVoluntaryIndicator:
+          type: string
+          description: Bankruptcy Voluntary Indicator
+        bookPageSequence:
+          type: string
+          description: Book, page and sequence number.
+        consumerComment:
+          type: string
+          description: Public Record Comment Text (Free Form).
+        courtCode:
+          type: string
+          description: Seven-digit code unique to each court.
+        courtName:
+          type: string
+          description: Court name
+        disputeFlag:
+          type: string
+          description: Indicates a dispute.
+        ecoa:
+          type: string
+          description: ""
+        ecoaText:
+          type: string
+          description: Verbose mapping for ecoa
+        evaluation:
+          type: string
+          description: N (constant) = negative
+        evaluationText:
+          type: string
+          description: Verbose mapping for evaluation
+        filingDate:
+          type: string
+          description: Original filing date Format = MMDDCCYY.
+        plaintiffName:
+          type: string
+          description: Plaintiff Name
+        referenceNumber:
+          type: string
+          description: Contains docket number or certificate ID.
+        repaymentPercent:
+          type: string
+          description: For BK Chapter 13 Only
+        status:
+          type: string
+          description: Public Record Status Codes.
+        statusText:
+          type: string
+          description: Verbose mapping for status
+        statusDate:
+          type: string
+          description: 'Date of court action associated with status. Format = MMDDCCYY. '
+    riskModelDaas:
+      type: array
+      description: Risk Models present when requested via input or subscriber code.
+      items:
+        $ref: '#/components/schemas/riskModelDaasResp'
+    riskModelDaasResp:
+      type: object
+      properties:
+        evaluation:
+          type: string
+          description: Sign of risk score.
+        grade:
+          type: string
+          description: Indicates grade.
+        modelIndicator:
+          type: string
+          description: Indicates which model is being returned.
+        score:
+          type: string
+          description: Present when RiskModels is requested on input or via subcode.
+            4 character score for the model requested.
+        scoreFactors:
+          type: array
+          description: Score Factor Codes (Upto 5 items can be returned)
+          items:
+            $ref: '#/components/schemas/ScoreFactor'
+        scorePercentile:
+          type: string
+          description: Present when ScorePercentile is requested on input and is available
+            for a score. Nation Score Percentile.
+    ScoreFactor:
+      type: object
+      properties:
+        importance:
+          type: string
+          description: The importance of this score factor code
+        code:
+          type: string
+          description: Score Factor Code
+      description: Score Factor
+    ssnDaas:
+      type: array
+      description: Consumer's profile SSN.
+      items:
+        $ref: '#/components/schemas/ssnRespDaas'
+    ssnRespDaas:
+      type: object
+      properties:
+        number:
+          type: string
+          description: 'SSN(s) present for the consumer. '
+        ssnIndicators:
+          type: string
+          description: Indicates how the SSN in the response matched to the inquiry
+            SSN, digit by digit.
+        variationIndicator:
+          type: string
+          description: 'Indicates if SSN is different than input. '
+        variationIndicatorText:
+          type: string
+          description: Verbose mapping for variationIndicator
+    statement:
+      type: array
+      description: Consumer Statements present onfile.
+      items:
+        $ref: '#/components/schemas/statementResp'
+    statementResp:
+      type: object
+      properties:
+        dateReported:
+          type: string
+          description: Date reported. Format = MMDDCCYY
+        statementText:
+          type: string
+          description: 'Consumer Statement Text. '
+        type:
+          type: string
+          description: '2 character statement type. '
+    tradelineDaas:
+      type: array
+      description: Consumer tradeline information.
+      items:
+        $ref: '#/components/schemas/tradelineRespDaas'
+    tradelineRespDaas:
+      type: object
+      properties:
+        accountNumber:
+          type: string
+          description: Account Number upto 40 characters.
+        accountType:
+          type: string
+          description: Indicates Type of Account.
+        accountTypeText:
+          type: string
+          description: Verbose mapping for accountType
+        amount1:
+          type: string
+          description: Full dollar amount.
+        amount1Qualifier:
+          type: string
+          description: Amount Type.
+        amount1QualifierText:
+          type: string
+          description: Verbose mapping for amount1Qualifier
+        amount2:
+          type: string
+          description: Full dollar amount.
+        amount2Qualifier:
+          type: string
+          description: Amount Type.
+        amount2QualifierText:
+          type: string
+          description: Verbose mapping for amount2Qualifier
+        amountBalloonPayment:
+          type: string
+          description: Full dollar amount
+        amountPastDue:
+          type: string
+          description: Full dollar amount
+        balanceAmount:
+          type: string
+          description: Full dollar amount
+        balanceDate:
+          type: string
+          description: Date account was last updated. Format = MMDDCCYY.
+        bankruptcyChapterNumber:
+          type: string
+          description: Bankruptcy Chapter Number.
+        consumerComment:
+          type: string
+          description: Free Form Text from consumer.
+        consumerDisputeFlag:
+          type: string
+          description: Indicates if trade is disputed by consumer.
+        datePaymentDue:
+          type: string
+          description: Date balloon payment due. Format = MMDDCCYY.
+        delinquencies30Days:
+          type: string
+          description: 30 to 59 day delinquencies
+        delinquencies60Days:
+          type: string
+          description: 60 to 89 day delinquencies
+        delinquencies90to180Days:
+          type: string
+          description: 90 to 180 day delinquencies
+        derogCounter:
+          type: string
+          description: Indicates the number of months the account has been reported
+            as seriously derogatory.
+        ecoa:
+          type: string
+          description: Attribute code.
+        ecoaText:
+          type: string
+          description: Verbose mapping for ecoa
+        enhancedPaymentData:
+          $ref: '#/components/schemas/enhancedPaymentDataDaas'
+        evaluation:
+          type: string
+          description: Indicates if additional review is required.
+        evaluationText:
+          type: string
+          description: Verbose mapping for evaluation
+        kob:
+          type: string
+          description: Kind of business code of subscriber
+        kobText:
+          type: string
+          description: Verbose mapping for kob
+        lastPaymentDate:
+          type: string
+          description: Date of last payment. Format = MMDDCCYY.
+        maxDelinquencyDate:
+          type: string
+          description: Date of worst payment code beyond the monthly payment profile.
+            Format = (MMDDCCYY)
+        monthlyPaymentAmount:
+          type: string
+          description: Full dollar amount.
+        monthlyPaymentType:
+          type: string
+          description: ""
+        monthsHistory:
+          type: string
+          description: Number of Months Reviewed
+        openDate:
+          type: string
+          description: 'Date account opened. Format = MMDDCCYY. '
+        openOrClosed:
+          type: string
+          description: Indicates if trade is Open or Closed
+        openOrClosedText:
+          type: string
+          description: Verbose mapping for openOrClosed
+        originalCreditorName:
+          type: string
+          description: Name of original creditor if a collection account.
+        paymentHistory:
+          type: string
+          description: 84 Month payment history when requested on input. Otherwise
+            25 month payment history.
+        revolvingOrInstallment:
+          type: string
+          description: ""
+        revolvingOrInstallmentText:
+          type: string
+          description: Verbose mapping for revolvingOrInstallment
+        soldToName:
+          type: string
+          description: Name of the creditor to whom the account was sold.
+        specialComment:
+          type: string
+          description: Special Comments.
+        specialcommentText:
+          type: string
+          description: Verbose mapping for specialcomment
+        status:
+          type: string
+          description: Account Condition/Payment Status Codes.
+        statusText:
+          type: string
+          description: Verbose mapping for status
+        statusDate:
+          type: string
+          description: Account Status Date. Format = MMDDCCYY.
+        subscriberCode:
+          type: string
+          description: Subscriber number that reported tradeline.
+        subscriberName:
+          type: string
+          description: Name of Subscriber
+        terms:
+          type: string
+          description: Payment terms for the Account.
+        trendedTrades:
+          type: array
+          description: Trended Data for a tradeline
+          items:
+            $ref: '#/components/schemas/trendedTrade'
+    trendView:
+      type: array
+      description: Trend View.
+      items:
+        $ref: '#/components/schemas/trendViewResp'
+    trendViewResp:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Trend View Attribute id.
+        value:
+          type: string
+          description: Trend View Attribute Value.
+    customAttributes:
+      type: array
+      description: Custom Attributes.
+      items:
+        $ref: '#/components/schemas/customAttributesResp'
+    customAttributesResp:
+      type: object
+      properties:
+        modelTypeIndicator:
+          type: string
+          description: Custom Type Indicator.
+        variableName:
+          type: string
+          description: Custom Variable Name.
+        signofAttribute:
+          type: string
+          description: Custom Sign of Attribute.
+        attributeValue:
+          type: string
+          description: Custom attribute value data.
+    connectCheckGen3InquiryData:
+      type: array
+      description: Utility connection credit information. Generation 3 Connect Check
+        Inquiry Data.
+      items:
+        $ref: '#/components/schemas/connectCheckGen3InquiryDataResp'
+    connectCheckGen3InquiryDataResp:
+      type: object
+      properties:
+        subCode:
+          type: string
+          description: Inquiry Subscriber Code.
+        inquiryDate:
+          type: string
+          description: Inquiry Date.
+        inquiryType:
+          type: string
+          description: Inquiry Type.
+        inquiryTerms:
+          type: string
+          description: Inquiry Terms.
+        inquiryAmount:
+          type: string
+          description: Inquiry Amount.
+        accountNumberLen:
+          type: string
+          description: Account Number Length.
+        accountNumber:
+          type: string
+          description: Account Number.
+    connectCheckGen3TradeLine:
+      type: array
+      description: Utility connection credit information. Generation 3 Connect Check
+        Trade Line.
+      items:
+        $ref: '#/components/schemas/connectCheckGen3TradeLineResp'
+    connectCheckGen3TradeLineResp:
+      type: object
+      properties:
+        subCode:
+          type: string
+          description: Trade Subscriber Code.
+        statusCode:
+          type: string
+          description: Trade Status Code.
+        accountTypeCode:
+          type: string
+          description: Trade Type.
+        specialComment:
+          type: string
+          description: Trade Special Comment.
+        balanceAmount:
+          type: string
+          description: Balance Amount.
+        balanceDate:
+          type: string
+          description: Balance Date.
+        accountNumberLen:
+          type: string
+          description: Trade Account Number Length.
+        accountNumber:
+          type: string
+          description: Trade Account Number Length.
+    connectCheck:
+      type: array
+      description: Utility connection credit information.
+      items:
+        $ref: '#/components/schemas/connectCheckResp'
+    connectCheckResp:
+      type: object
+      properties:
+        inputType:
+          type: string
+          description: Inquiry data elements.
+        iDMatchCondition:
+          type: string
+          description: ID Verification Result Code.
+        creditClassCode:
+          type: string
+          description: Credit Classification as specified by customer.
+        highRiskAddressAlert:
+          type: string
+          description: Present Option Indicator.
+        addlNameAddrMatchConditionC:
+          type: string
+          description: Preset Option Indicator. Requested for additional names and
+            addresses associated with input SSN.
+        addlNameAddrMatchConditionD:
+          type: string
+          description: Preset Option Indicator. Requested for additional names and
+            addresses associated with input SSN.
+        addlNameAddrMatchConditionE:
+          type: string
+          description: Preset Option Indicator. Requested for additional names and
+            addresses associated with input SSN.
+        score:
+          type: string
+          description: Score.
+        fullCreditReportDesc:
+          type: string
+          description: Full Credit Report Description.
+        publicRecordAlertBankruptcy:
+          type: string
+          description: Public Record Alert  Bankruptcy.
+        publicRecordAlertJudgment:
+          type: string
+          description: Public Record Alert  Judgment.
+        publicRecordAlertTaxLien:
+          type: string
+          description: Public Record Alert - Tax Lien.
+        publicRecordAlertBankruptcyDismissed:
+          type: string
+          description: Public Record Alert  Bankruptcy (dismissed or discharged).
+        publicRecordAlertJudgmentSatisfied:
+          type: string
+          description: Public Record Alert  Judgment (satisfied or vacated).
+        publicRecordAlertTaxLienReleased:
+          type: string
+          description: Public Record Alert  Tax Lien (released).
+        lengthOriginalInputName:
+          type: string
+          description: Length of Original Input Name.
+        originalInputNameText:
+          type: string
+          description: Original Input Name Text.
+        lengthofSalesMessage:
+          type: string
+          description: Original Input Name Text.
+        customerSalesMessage:
+          type: string
+          description: Customer/Sales Message.
+    trendedTrade:
+      type: object
+      properties:
+        monthNumber:
+          type: string
+          description: The month for which this data applies. For example 0 means
+            it is for the inquiry month, 1 means it is for the a month before the
+            inquiry month and so on.
+        balanceAmount:
+          type: string
+          description: Balance Amount
+        originalLoanAmountOrLimit:
+          type: string
+          description: Original Loan Amount or Limit
+        scheduledPaymentAmount:
+          type: string
+          description: Scheduled Payment Amount
+        actualPaymentAmount:
+          type: string
+          description: Actual Payment Amount
+        lastPaymentDate:
+          type: string
+          description: Last Payment Date
+      description: Trended Data
+    enhancedPaymentDataDaas:
+      type: object
+      properties:
+        actualPaymentAmount:
+          type: string
+          description: Full dollar amount.
+        chargeoffAmount:
+          type: string
+          description: Full dollar amount.
+        ciiCode:
+          type: string
+          description: Consumer Information Indicator.
+        ciiCodeText:
+          type: string
+          description: Verbose mapping for ciiCode
+        complianceCondition:
+          type: string
+          description: Compliance Conditon Code.
+        creditLimitAmount:
+          type: string
+          description: Full dollar amount.
+        enhancedAccountCondition:
+          type: string
+          description: 'Account Condition Code. Codes. '
+        enhancedAccountConditionText:
+          type: string
+          description: Verbose mapping for enhancedAccountCondition
+        enhancedAccountType:
+          type: string
+          description: Indicates Type of Account.
+        enhancedPaymentHistory84:
+          type: string
+          description: '84 Month enhanced payment history. '
+        enhancedPaymentStatus:
+          type: string
+          description: Payment Status Codes.
+        enhancedPaymentStatusText:
+          type: string
+          description: Verbose mapping for enhancedPaymentStatus
+        enhancedSpecialComment:
+          type: string
+          description: Special Comments.
+        enhancedTerms:
+          type: string
+          description: Payment Terms.
+        enhancedTermsText:
+          type: string
+          description: Verbose mapping for enhancedTerms
+        enhancedTermsFrequency:
+          type: string
+          description: Frequency for Payments Due.
+        enhancedTermsFrequencyText:
+          type: string
+          description: Verbose mapping for enhancedTermsFrequency
+        firstDelinquencyDate:
+          type: string
+          description: Most Recent Delinquency Date (MMDDCCYY)
+        highBalanceAmount:
+          type: string
+          description: Full dollar amount.
+        maxDelinquencyCode:
+          type: string
+          description: Highest payment code for maximum delinquency date
+        mortgageId:
+          type: string
+          description: Mortgage ID.
+        originalCreditorClassificationCode:
+          type: string
+          description: 'General type of business of the Original Creditor. '
+        originalLoanAmount:
+          type: string
+          description: Full dollar amount.
+        paymentLevelDate:
+          type: string
+          description: Date the account first reached present status level. Format
+            = MMDDCCYY.
+        purchasedPortfolioFromName:
+          type: string
+          description: Purchased Portfolio Name.
+        secondDelinquencyDate:
+          type: string
+          description: Second Most Recent Delinquency Date(MMDDCCYY)
+        secondaryAgencyCode:
+          type: string
+          description: Secondary Agency Code.
+        secondaryAgencyId:
+          type: string
+          description: Secondary Agency Id
+        specialPaymentAmount:
+          type: string
+          description: Full dollar amount
+        specialPaymentCode:
+          type: string
+          description: Additional Information about the Payment Amount.
+        specialPaymentDate:
+          type: string
+          description: Special Payment Date Format = MMDDCCYY.
+    uniqueConsumerIdentifierDaas:
+      type: object
+      properties:
+        value:
+          type: string
+          description: Present when UniqueConsumerIdentifier is requested on input.
+            This is unique for a company and a consumer.
+        verificationIndicator:
+          type: string
+          description: Verification result When ConsumerIdentifier verification is
+            requested on input.
+        verificationIndicatorText:
+          type: string
+          description: Verbose mapping for verificationIndicator
+    clarityAccountData:
+      type: object
+      properties:
+        clarityAccountId:
+          type: string
+          description: Clarity Account ID
+        clarityLocationId:
+          type: string
+          description: Clarity Location ID
+        clarityControlFileName:
+          type: string
+          description: Clarity Control File Name
+        clarityControlFileVersion:
+          type: string
+          description: Clarity Control File Version
+    creditScoreNoticeDataDaas:
+      type: object
+      properties:
+        noticeType:
+          type: string
+          description: Credit Score Notice Type - Values can be GENERIC or MORTGAGE
+        riskModelIndicator:
+          type: string
+          description: Alpha Numeric field
+      description: Consumer's Credit Score Notice to get the credit score data under
+        700 segment.
+    headerRecordError:
+      type: array
+      description: Header Record - Error Messages.
+      items:
+        $ref: '#/components/schemas/headerRecordErrorResp'
+    headerRecordErrorResp:
+      type: object
+      properties:
+        hostid:
+          type: string
+          description: Denotes which Experian host responded to inquiry.
+        applicationId:
+          type: string
+          description: C = Credit Reporting D = Detect N = NFD
+        reportDate:
+          type: string
+          description: Date inquiry reported to Experian. Format = MMDDYY
+        reportTime:
+          type: string
+          description: Time inquiry reported to Experian. Format = HHMMSS
+        reportType:
+          type: string
+          description: X = ARF Format
+        preamble:
+          type: string
+          description: Consumer Assistance Preamble for area accessed.
+        regionCode:
+          type: string
+          description: Constant 'W'
+        versionNo:
+          type: string
+          description: Experian online ARF version
+        surName:
+          type: string
+          description: Left justified. Unused spaces are blank or nullfilled.
+        firstName:
+          type: string
+          description: Left justified. First three characters only.
+        mKeywordLength:
+          type: string
+          description: Indicates length of text.
+        mKeywordText:
+          type: string
+          description: Information obtained from the M-keyword used on Inquiry. The
+            data is returned in the same format as input.  It is used as a control
+            number for subscribers to link this response to their inquiry.
+        y2kReportedDate:
+          type: string
+          description: Date of report. Format = MMDDCCYY
+    headerRecord:
+      type: array
+      description: Header Record.
+      items:
+        $ref: '#/components/schemas/headerRecordResp'
+    headerRecordResp:
+      type: object
+      properties:
+        reportDate:
+          type: string
+          description: Date inquiry reported to Experian. Format = MMDDYY
+        reportTime:
+          type: string
+          description: Time inquiry reported to Experian. Format = HHMMSS
+        preamble:
+          type: string
+          description: Consumer Assistance Preamble for area accessed.
+        versionNo:
+          type: string
+          description: Experian online ARF version
+        mKeywordLength:
+          type: string
+          description: Indicates length of text.
+        mKeywordText:
+          type: string
+          description: Information obtained from the M-keyword used on Inquiry. The
+            data is returned in the same format as input.  It is used as a control
+            number for subscribers to link this response to their inquiry.
+        y2kReportedDate:
+          type: string
+          description: Date of report. Format = MMDDCCYY
+        inquiringSubcode:
+          type: string
+          description: Subcode from Inquiry
+        reportCode:
+          type: string
+          description: Type of report. C = Credit Profile K = Checkpoint Report
+        applicationCode:
+          type: string
+          description: Reserved for future use
+    endTotalsError:
+      type: array
+      description: Trailer Record - Error Messages.
+      items:
+        $ref: '#/components/schemas/endTotalsErrorResp'
+    endTotalsErrorResp:
+      type: object
+      properties:
+        totalReportSegments:
+          type: string
+          description: Number of report segments.
+        positiveTradeItems:
+          type: string
+          description: Number of positive trade segments.
+        nonEvaluatedTradeItems:
+          type: string
+          description: Number of non-evaluated trade items.
+        negativeTradeItems:
+          type: string
+          description: Number of negative trade items.
+        nonEvaluatedLegalItems:
+          type: string
+          description: Number of non-evaluated legal items.
+        negativeLegalItems:
+          type: string
+          description: Number of negative legal items.
+    endTotals:
+      type: array
+      description: Trailer Record
+      items:
+        $ref: '#/components/schemas/endTotalsResp'
+    arf:
+      type: object
+      properties:
+        arfResponse:
+          type: string
+          description: Raw arf returns
+    ttyResponse:
+      type: object
+      properties:
+        ttyResponse:
+          type: string
+          description: TTY response returns
+    endTotalsResp:
+      type: object
+      properties:
+        totalSegments:
+          type: string
+          description: Total number of segments in report.
+        totalLength:
+          type: string
+          description: Length of report in bytes.
+    modelAttributes:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 00=attribute data present. 90=attribute data not present.
+        modelAttributes:
+          $ref: '#/components/schemas/modelAttributesResp0'
+    modelAttributesResp0:
+      type: array
+      description: Model Attributes.
+      items:
+        $ref: '#/components/schemas/modelAttributesResp1'
+    modelAttributesResp1:
+      type: object
+      properties:
+        modelTypeIndicator:
+          type: string
+          description: Model Type Indicator.
+        variableName:
+          type: string
+          description: Mapped/Translated Variable Name.
+        signofAttribute:
+          type: string
+          description: Model Sign of Attribute.
+        attributeValue:
+          type: string
+          description: Model attribute value data.
+    staggAttributesDaas:
+      type: object
+      properties:
+        id:
+          type: string
+          description: STAGG Attribute Id
+        value:
+          type: string
+          description: STAGG Attribute value
+    dataSourceDaas:
+      type: object
+      properties:
+        dataSourceResponse:
+          type: string
+          description: The third party data will be fetched from APS system in accordance
+            with appropriate solution id and this not applicable to all solution ids.
+      description: Third party data source data from 700 segment
+    ErrorResponseWithHeaderTrailerAndErrorType:
+      type: object
+      properties:
+        headerRecordError:
+          $ref: '#/components/schemas/headerRecordError'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorWithErrorType'
+        endTotalsError:
+          $ref: '#/components/schemas/endTotalsError'
+    ErrorWithErrorType:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          description: Experian generated code for this error
+        errorType:
+          type: string
+          description: To identify the type of error if that is Api Validation or
+            Backend Error.
+        message:
+          type: string
+          description: Client friendly message explaining the error
+      description: Error Response
+  securitySchemes:
+    OauthSecurity:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-us-api.experian.com/oauth2/v1/token
+          scopes:
+            user: user scope

@@ -1,0 +1,560 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Phone Validation",
+    "version": "v2"
+  },
+  "servers": [
+    {
+      "url": "https://api.experianaperture.io/"
+    }
+  ],
+  "paths": {
+    "/phone/validate/v2": {
+      "post": {
+        "tags": [
+          "Phone Validation"
+        ],
+        "summary": "Submits a phone number to the service to be validated and returns the result of the validation.",
+        "parameters": [
+          {
+            "name": "Add-Metadata",
+            "in": "header",
+            "description": "Specify whether the response should return all fields and values, in addition to the main core information.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Reference-Id",
+            "in": "header",
+            "description": "Optional identifier that will be returned in the response to help you track the request.",
+            "schema": {
+              "maxLength": 256,
+              "minLength": 0,
+              "pattern": "^[\\w\\-\\/\\:\\.\\,\\(\\) ]+$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "Timeout-Seconds",
+            "in": "header",
+            "description": "Maximum time you are prepared to wait for a response, expressed in seconds. Acceptable values: 2-15. If a timeout occurs, an HTTP status code of 408 - Request Timeout will be returned.",
+            "schema": {
+              "maximum": 15,
+              "minimum": 2,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The request body.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneValidationV2Request"
+              },
+              "examples": {
+                "Default Behavior, No Optional Fields": {
+                  "value": {
+                    "number": "2016477962",
+                    "output_format": "NATIONAL",
+                    "cache_value_days": 0,
+                    "country_iso": "USA",
+                    "get_disposable_number": true
+                  }
+                },
+                "PV Request with Optional Fields (ported_date & live_status) — Extra Clicks Apply": {
+                  "value": {
+                    "number": "2016477962",
+                    "output_format": "NATIONAL",
+                    "cache_value_days": 0,
+                    "country_iso": "USA",
+                    "get_ported_date": true,
+                    "get_disposable_number": true,
+                    "supplementary_live_status": {
+                      "mobile": [
+                        "USA"
+                      ],
+                      "landline": [
+                        "GBR"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneValidationV2Response"
+                },
+                "examples": {
+                  "Default Behavior, No Optional Fields": {
+                    "value": {
+                      "result": {
+                        "number": "17087694383",
+                        "validated_phone_number": "12016477962",
+                        "formatted_phone_number": "(201) 647-7962",
+                        "phone_type": "Mobile",
+                        "confidence": "Verified",
+                        "disposable_number": "Yes"
+                      },
+                      "metadata": {
+                        "phone_detail": {
+                          "original_operator_name": "T-Mobile",
+                          "original_network_status": "Available",
+                          "original_home_network_identity": "310200",
+                          "original_country_prefix": "1",
+                          "original_country_name": "United States of America",
+                          "original_country_iso": "USA",
+                          "operator_name": "AT&T",
+                          "network_status": "Available",
+                          "home_network_identity": "311480",
+                          "country_prefix": "1",
+                          "country_name": "United States of America",
+                          "country_iso": "USA",
+                          "is_ported": "Yes",
+                          "cache_value_days": 0,
+                          "date_cached": "2020-10-07",
+                          "email_to_sms_address": "2016477962@mms.att.net",
+                          "email_to_mms_address": "2016477962@txt.att.net"
+                        }
+                      }
+                    }
+                  },
+                  "PV Request with Optional Fields (ported_date & live_status) — Extra Clicks Apply": {
+                    "value": {
+                      "result": {
+                        "number": "17087694383",
+                        "validated_phone_number": "12016477962",
+                        "formatted_phone_number": "(201) 647-7962",
+                        "phone_type": "Mobile",
+                        "confidence": "Verified",
+                        "ported_date": "2019-08-21T00:00:00Z",
+                        "disposable_number": "Yes"
+                      },
+                      "metadata": {
+                        "phone_detail": {
+                          "original_operator_name": "T-Mobile",
+                          "original_network_status": "Available",
+                          "original_home_network_identity": "310200",
+                          "original_country_prefix": "1",
+                          "original_country_name": "United States of America",
+                          "original_country_iso": "USA",
+                          "operator_name": "AT&T",
+                          "network_status": "Available",
+                          "home_network_identity": "311480",
+                          "country_prefix": "1",
+                          "country_name": "United States of America",
+                          "country_iso": "USA",
+                          "is_ported": "Yes",
+                          "cache_value_days": 0,
+                          "date_cached": "2020-10-07",
+                          "email_to_sms_address": "2016477962@mms.att.net",
+                          "email_to_mms_address": "2016477962@txt.att.net"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "406": {
+            "description": "Not Acceptable"
+          },
+          "408": {
+            "description": "Request Timeout"
+          },
+          "415": {
+            "description": "Unsupported Media Type"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "OAuth2": []
+          },
+          {
+            "Auth-Token": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PhoneValidationV2Confidence": {
+        "type": "string",
+        "description": "The outcome (confidence level) of the validation."
+      },
+      "PhoneValidationV2Metadata": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Ignore, currently not used.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Ignore, currently not used.",
+            "nullable": true
+          },
+          "phone_detail": {
+            "$ref": "#/components/schemas/PhoneValidationV2PhoneDetail"
+          }
+        },
+        "additionalProperties": false,
+        "description": "The metadata model."
+      },
+      "PhoneValidationV2PhoneDetail": {
+        "type": "object",
+        "properties": {
+          "original_operator_name": {
+            "type": "string",
+            "description": "The name of the MSISDN operator where the phone number was originally registered.",
+            "nullable": true,
+            "example": "T-Mobile"
+          },
+          "original_network_status": {
+            "type": "string",
+            "description": "The status of the network where the phone number was originally registered.",
+            "nullable": true,
+            "example": "Available"
+          },
+          "original_home_network_identity": {
+            "type": "string",
+            "description": "The Mobile Country Code (MCC) and Mobile Network Code (MNC) where the phone number was originally registered.",
+            "nullable": true,
+            "example": "310200"
+          },
+          "original_country_prefix": {
+            "type": "string",
+            "description": "The international calling code of the country where the phone number was originally registered.",
+            "nullable": true,
+            "example": "1"
+          },
+          "original_country_name": {
+            "type": "string",
+            "description": "The name of the country where the phone number was originally registered.",
+            "nullable": true,
+            "example": "United States of America"
+          },
+          "original_country_iso": {
+            "type": "string",
+            "description": "The 3-letter ISO code of the country where the phone number was originally registered.",
+            "nullable": true,
+            "example": "USA"
+          },
+          "operator_name": {
+            "type": "string",
+            "description": "The name of the MSISDN operator where the phone number is currently registered.",
+            "nullable": true,
+            "example": "Verizon"
+          },
+          "network_status": {
+            "type": "string",
+            "description": "The status of the network where the phone number is currently registered.",
+            "nullable": true,
+            "example": "Available"
+          },
+          "home_network_identity": {
+            "type": "string",
+            "description": "The Mobile Country Code (MCC) and Mobile Network Code (MNC) where the phone number is currently registered.",
+            "nullable": true,
+            "example": "311480"
+          },
+          "country_prefix": {
+            "type": "string",
+            "description": "The international calling code of the country where the phone number is currently registered.",
+            "nullable": true,
+            "example": "1"
+          },
+          "country_name": {
+            "type": "string",
+            "description": "The name of the country where the phone number is currently registered.",
+            "nullable": true,
+            "example": "United States of America"
+          },
+          "country_iso": {
+            "type": "string",
+            "description": "The 3-letter ISO code of the country where the phone number is currently registered.",
+            "nullable": true,
+            "example": "USA"
+          },
+          "is_ported": {
+            "type": "string",
+            "description": "Indicates whether the phone number is ported or not.",
+            "nullable": true,
+            "example": "Yes"
+          },
+          "cache_value_days": {
+            "type": "integer",
+            "description": "The requested number of days to look back in the cache for this phone number.",
+            "format": "int32",
+            "nullable": true,
+            "example": 0
+          },
+          "date_cached": {
+            "type": "string",
+            "description": "The last date this phone number was checked.",
+            "nullable": true,
+            "example": "2020-04-22"
+          },
+          "email_to_sms_address": {
+            "type": "string",
+            "description": "Email address which can be used to send SMS messages to this phone number.",
+            "nullable": true,
+            "example": "7087694383@vtext.com"
+          },
+          "email_to_mms_address": {
+            "type": "string",
+            "description": "Email address which can be used to send MMS messages to this phone number.",
+            "nullable": true,
+            "example": "7087694383@vzwpix.com"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Metadata fields and values that can be returned, in addition to the main core information."
+      },
+      "PhoneValidationV2Request": {
+        "required": [
+          "number"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "minLength": 1,
+            "type": "string",
+            "description": "The phone number that is the subject of the validation.",
+            "example": "17087694383"
+          },
+          "output_format": {
+            "maxLength": 10,
+            "minLength": 0,
+            "type": "string",
+            "description": "The desired format of the phone number: E164, PLUS_E164, NATIONAL, any 3-letter ISO country code.\nIf not specified, the default format, E164, will be used.",
+            "nullable": true,
+            "example": "NATIONAL"
+          },
+          "cache_value_days": {
+            "maximum": 30,
+            "minimum": 0,
+            "type": "integer",
+            "description": "The number of days to look back in cache for the validation result for this phone number.\nIf the result is cached, the response will be returned faster. Acceptable values from 0 (no cache)\nto 30. If not specified, the default value, 7, will be used.",
+            "format": "int32",
+            "nullable": true,
+            "example": 0
+          },
+          "country_iso": {
+            "maxLength": 3,
+            "minLength": 0,
+            "type": "string",
+            "description": "You can indicate the 3-letter ISO country code if the phone number that is subject to validation doesn't contain a phone country code.",
+            "nullable": true
+          },
+          "get_ported_date": {
+            "type": "boolean",
+            "description": "The date the phone number was last ported, returned only if the number has been moved to a different network.\nThis is an optional field and is included only when get_ported_date is set to true, which incurs an additional click.",
+            "nullable": true,
+            "example": true
+          },
+          "get_disposable_number": {
+            "type": "boolean",
+            "description": "A boolean indicator to attempt to verify if the number is known to be disposable.\nA disposable number is a shared mobile(or landline) that can be used to receive a text, or phone call.",
+            "nullable": true,
+            "example": true
+          },
+          "supplementary_live_status": {
+            "$ref": "#/components/schemas/PhoneValidationV2SupplementaryLiveStatus"
+          }
+        },
+        "additionalProperties": false,
+        "description": "The request model.",
+        "xml": {
+          "name": "request"
+        }
+      },
+      "PhoneValidationV2Response": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ResponseError"
+          },
+          "result": {
+            "$ref": "#/components/schemas/PhoneValidationV2Result"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/PhoneValidationV2Metadata"
+          }
+        },
+        "additionalProperties": false,
+        "description": "The response model.",
+        "xml": {
+          "name": "response"
+        }
+      },
+      "PhoneValidationV2Result": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "The phone number that is the subject of the validation.",
+            "nullable": true,
+            "example": "17087694383"
+          },
+          "validated_phone_number": {
+            "type": "string",
+            "description": "The validated phone number. Also includes the international country calling code. Note\nthat this field is returned even if the phone number has a confidence status of \"Invalid\".",
+            "nullable": true,
+            "example": "17087694383"
+          },
+          "formatted_phone_number": {
+            "type": "string",
+            "description": "The phone number in the format you specified in \"output_format\".",
+            "nullable": true,
+            "example": "(708) 769-4383"
+          },
+          "phone_type": {
+            "type": "string",
+            "description": "The type of phone number. Note: Landline is only supported in North America.",
+            "nullable": true,
+            "example": "Mobile"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/PhoneValidationV2Confidence"
+          },
+          "ported_date": {
+            "type": "string",
+            "description": "The date the phone number was last ported, returned only if the number has been moved to a different network. \nThis is an optional field and is included only when get_ported_date is set to true, which incurs an additional click.",
+            "nullable": true,
+            "example": "2012-06-27T09:32:09.000Z"
+          },
+          "disposable_number": {
+            "type": "string",
+            "description": "Indicates whether the phone number is a disposable number based on lookup list of disposable numbers.\nIf the number can be found in the lookup list, the value returned will be \"Yes\". Otherwise, the value returned\nwill be \"Unknown\". This value would be returned if the get_disposable_number boolean is set to true.",
+            "nullable": true,
+            "example": "Yes"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Details about the result. Includes the validated data and its confidence level."
+      },
+      "PhoneValidationV2SupplementaryLiveStatus": {
+        "type": "object",
+        "properties": {
+          "mobile": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An indicator to attempt to get supplementary live status for Mobile Phone Number.",
+            "nullable": true,
+            "example": [
+              "USA"
+            ]
+          },
+          "landline": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "An indicator to attempt to get supplementary live status for Landline Phone Number.",
+            "nullable": true,
+            "example": [
+              "GBR"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "The supplementary live status request model. Please note that this feature has additional charge if requested.",
+        "xml": {
+          "name": "supplementarylivestatusrequest"
+        }
+      },
+      "ResponseError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "A link to documentation that provides more details about the error you’ve encountered.",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the error.",
+            "nullable": true,
+            "example": "Bad Request"
+          },
+          "detail": {
+            "type": "string",
+            "description": "A description of the error.",
+            "nullable": true,
+            "example": "The request body was malformed."
+          },
+          "instance": {
+            "type": "string",
+            "description": "The endpoint that returned the error.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Error model containing the error details."
+      }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "http",
+        "description": "Token URL: https://sso.experianaperture.io/oauth2/aust0wkxjeKyT3HRO4x7/v1/token \n\n Flow: clientCredentials",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      },
+      "Auth-Token": {
+        "type": "apiKey",
+        "description": "Your unique key, called a token, that is required to submit an API request.",
+        "name": "Auth-Token",
+        "in": "header"
+      },
+      "x-app-key": {
+        "type": "apiKey",
+        "description": "Alternative Auth Token header.",
+        "name": "x-app-key",
+        "in": "header"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Phone Validation"
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+openapi: 3.0.1
+info:
+  title: EMEA Web Data Insights
+  description: Credit Risk scoring for SMEs based on their digital footprint
+  version: '2'
+servers:
+- url: https://sandbox-eu-api.experian.com/creditrisk/webdata/gdp/v1
+paths:
+  '/webscores/test-score':
+    get:
+      description: Returns a Webdata score of the provided company
+      parameters:
+        - name: date
+          in: query
+          description: Date at which the available webdata will be used for scoring
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: Name of the company
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: query
+          description: Address of the company
+          required: true
+          schema:
+            type: string
+        - name: town
+          in: query
+          description: Town of the company
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: >-
+            Unique ID which could be used for tracing the response by the client
+            system
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Web Score Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Score'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization Failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - OAuth2: []
+components:
+  schemas:
+    Error:
+      title: Error Response Schema
+      required:
+        - errors
+        - success
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              errorType:
+                type: string
+                description: Error type
+              message:
+                type: string
+                description: Error message
+        success:
+          type: boolean
+          description: 'true for success, false for error'
+    Score:
+      title: Success Response Schema
+      required:
+        - score
+        - success
+      type: object
+      properties:
+        score:
+          type: number
+          format: double
+          description: 'Probability for appication to be bad, a number between 0 and 1'
+        success:
+          type: boolean
+          description: 'true for success, false for error'
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-eu-api.experian.com/oauth2/v1
+          scopes: {}

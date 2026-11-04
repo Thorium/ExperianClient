@@ -11,6 +11,10 @@ open Experian.Call
 
 let [<Literal>] private Json = "application/json"
 
+/// A flag for a string parameter: the generated clients would send a boolean as True/False.
+let private flag (value: bool voption) =
+    value |> ValueOption.map (fun b -> if b then "true" else "false") |> ValueOption.toOption
+
 /// Delphi Select: consumer applications, second-phase Identity Authenticate (AuthPlus) and Detect, and stand-alone products.
 module DelphiSelect =
 
@@ -39,10 +43,6 @@ module DelphiSelect =
     /// A new application: bureau search plus the products requested in Options (AuthenticatePlusRequired for AuthPlus).
     let applicationAsync (client: ExperianClient) (input: DelphiSelect.Input) (ct: CancellationToken) =
         attempt ct (client.DelphiSelect.Application(Json, Json, input, ct))
-
-    /// The bundled spec declares the view flags as strings: the generated client would send booleans as True/False.
-    let private flag (value: bool voption) =
-        value |> ValueOption.map (fun b -> if b then "true" else "false") |> ValueOption.toOption
 
     /// A previously submitted application by its Experian reference.
     let getApplicationAsync (client: ExperianClient) (experianReference: string) (view: ApplicationView) (ct: CancellationToken) =
@@ -247,3 +247,404 @@ module PowerCurve =
     let decisionDetailAsync (client: ExperianClient) (powerCurveId: string) (request: PowerCurve.SubmissionDecDetails) (ct: CancellationToken) =
         withSegment application powerCurveId (fun escaped ->
             attempt ct (client.PowerCurve.DecisionDetail(noAuthorization, Json, Json, escaped, request, ct)))
+
+/// Bank Account Verify (consumer), in the UK.
+module BankAccountVerify =
+
+    /// A check of a person's bank details; acceptLanguage goes in the AcceptLanguage header the spec names (no hyphen).
+    let verifyAsync (client: ExperianClient) (request: BankAccountVerify.RequestMessage) (acceptLanguage: string voption) (ct: CancellationToken) =
+        attempt ct (client.BankAccountVerify.PostV1Api(request, ValueOption.toOption acceptLanguage, ct))
+
+/// International Payments Verification, from the UK host.
+module InternationalPayments =
+
+    let verifyAsync (client: ExperianClient) (request: InternationalPayments.RequestMessage) (ct: CancellationToken) =
+        attempt ct (client.InternationalPayments.PostV1Api(request, ct))
+
+/// Know Your Business, in the UK. businessRef is a Companies House number or an Experian non-limited key; regNumber a Companies House number;
+/// ldcId comes from the data sources call. All are escaped as one segment.
+module Kyb =
+
+    /// What to search for; ValueNone leaves it out.
+    type BusinessSearch =
+        { BusinessRef: string voption
+          Name: string voption
+          Postcode: string voption
+          PhoneNumber: string voption
+          SearchCorporates: bool voption
+          ExcludeDissolved: bool voption
+          SearchNonCorps: bool voption }
+
+        static member Default =
+            { BusinessRef = ValueNone
+              Name = ValueNone
+              Postcode = ValueNone
+              PhoneNumber = ValueNone
+              SearchCorporates = ValueNone
+              ExcludeDissolved = ValueNone
+              SearchNonCorps = ValueNone }
+
+    /// Who to search for; ValueNone leaves it out. Experian refuses a name search without Directors and Secretaries.
+    type DirectorSearch =
+        { Forename: string voption
+          MiddleNames: string voption
+          Surname: string voption
+          Postcode: string voption
+          Directors: bool voption
+          Secretaries: bool voption }
+
+        static member Default =
+            { Forename = ValueNone
+              MiddleNames = ValueNone
+              Surname = ValueNone
+              Postcode = ValueNone
+              Directors = ValueSome true
+              Secretaries = ValueSome true }
+
+    let searchBusinessesAsync (client: ExperianClient) (search: BusinessSearch) (ct: CancellationToken) =
+        attempt ct (
+            client.Kyb.BusinessSearch(
+                Json,
+                ValueOption.toOption search.BusinessRef,
+                ValueOption.toOption search.Name,
+                ValueOption.toOption search.Postcode,
+                ValueOption.toOption search.PhoneNumber,
+                flag search.SearchCorporates,
+                flag search.ExcludeDissolved,
+                flag search.SearchNonCorps,
+                ct))
+
+    let searchDirectorsAsync (client: ExperianClient) (search: DirectorSearch) (ct: CancellationToken) =
+        attempt ct (
+            client.Kyb.DirectorSearch(
+                Json,
+                ValueOption.toOption search.Forename,
+                ValueOption.toOption search.MiddleNames,
+                ValueOption.toOption search.Surname,
+                ValueOption.toOption search.Postcode,
+                flag search.Directors,
+                flag search.Secretaries,
+                ct))
+
+    /// A company's profile.
+    let profileAsync (client: ExperianClient) (businessRef: string) (ct: CancellationToken) =
+        withSegment "businessRef" businessRef (fun escaped -> attempt ct (client.Kyb.BusinessProfile(Json, escaped, ct)))
+
+    /// Trading activity.
+    let sectorsAsync (client: ExperianClient) (businessRef: string) (ct: CancellationToken) =
+        withSegment "businessRef" businessRef (fun escaped -> attempt ct (client.Kyb.IndustrySectors(Json, escaped, ct)))
+
+    let locationsAsync (client: ExperianClient) (businessRef: string) (ct: CancellationToken) =
+        withSegment "businessRef" businessRef (fun escaped -> attempt ct (client.Kyb.Locations(Json, escaped, ct)))
+
+    /// The countries it is associated with.
+    let geographiesAsync (client: ExperianClient) (businessRef: string) (ct: CancellationToken) =
+        withSegment "businessRef" businessRef (fun escaped -> attempt ct (client.Kyb.Geographies(Json, escaped, ct)))
+
+    /// Where the data comes from, with the ids the visit calls take.
+    let dataSourcesAsync (client: ExperianClient) (businessRef: string) (ct: CancellationToken) =
+        withSegment "businessRef" businessRef (fun escaped -> attempt ct (client.Kyb.DataSources(Json, escaped, ct)))
+
+    let directorsAsync (client: ExperianClient) (regNumber: string) (ct: CancellationToken) =
+        withSegment "regNumber" regNumber (fun escaped -> attempt ct (client.Kyb.Directors(Json, escaped, ct)))
+
+    let shareholdersAsync (client: ExperianClient) (regNumber: string) (ct: CancellationToken) =
+        withSegment "regNumber" regNumber (fun escaped -> attempt ct (client.Kyb.Shareholders(Json, escaped, ct)))
+
+    /// Its ultimate beneficial owners.
+    let ultimateOwnersAsync (client: ExperianClient) (regNumber: string) (ct: CancellationToken) =
+        withSegment "regNumber" regNumber (fun escaped -> attempt ct (client.Kyb.Ubo(Json, escaped, ct)))
+
+    /// When an agent last visited the location.
+    let lastVisitAsync (client: ExperianClient) (ldcId: string) (ct: CancellationToken) =
+        withSegment "ldcId" ldcId (fun escaped -> attempt ct (client.Kyb.LdcBase(Json, escaped, ct)))
+
+    /// Whether a money service business was found there.
+    let moneyServiceAsync (client: ExperianClient) (ldcId: string) (ct: CancellationToken) =
+        withSegment "ldcId" ldcId (fun escaped -> attempt ct (client.Kyb.Ldcmsb(Json, escaped, ct)))
+
+    /// A link to a picture of the shopfront.
+    let shopfrontAsync (client: ExperianClient) (ldcId: string) (ct: CancellationToken) =
+        withSegment "ldcId" ldcId (fun escaped -> attempt ct (client.Kyb.LdcImage(Json, escaped, ct)))
+
+    /// Screens and authenticates people against PEP, sanctions and adverse media data.
+    let peopleDataAsync (client: ExperianClient) (request: Kyb.KybDataPeopleRequestBody) (ct: CancellationToken) =
+        attempt ct (client.Kyb.PostComplianceBusinessV1PeopleKybdata(Json, request, Some Json, ct))
+
+    /// A summary of a business, matched to third-party sources; DataBlocks chooses what comes back.
+    let companyDataAsync (client: ExperianClient) (request: Kyb.KybDataRequestBody) (ct: CancellationToken) =
+        attempt ct (client.Kyb.PostComplianceBusinessV1CompanyKybdata(Json, request, Some Json, ct))
+
+/// AML Flags, in the UK: a company's adverse markers and cashflow profiles. KYB's company data call: DataBlocks asks for AMLFlags.
+module AmlFlags =
+
+    let companyAsync (client: ExperianClient) (request: Kyb.KybDataRequestBody) (ct: CancellationToken) =
+        Kyb.companyDataAsync client request ct
+
+/// CrossCore age threshold and date of birth checks, in the UK. Experian's delivery team provides the tenant id and request type, which
+/// choose the check; its documents show DoBVerify-Standalone and Standalone-DoBVerify for date of birth, and AgeThreshold-Standalone for age.
+module AgeAndDateOfBirth =
+
+    /// acceptLanguage goes in the AcceptLanguage header the spec names (no hyphen).
+    let checkAsync (client: ExperianClient) (request: AgeAndDateOfBirth.RequestMessage) (acceptLanguage: string voption) (ct: CancellationToken) =
+        attempt ct (client.AgeAndDateOfBirth.PostV1Api(request, ValueOption.toOption acceptLanguage, ct))
+
+/// The United States: eCBSV, whether a Social Security number, name and date of birth match the Social Security Administration's records. It
+/// needs the person's consent, and subcode and companyId from onboarding.
+module SsnVerification =
+
+    /// externalTransactionId comes back to trace the request.
+    let verifyAsync (client: ExperianClient) (subcode: string) (companyId: string) (request: SsnVerification.verifyRequest) (externalTransactionId: string voption) (ct: CancellationToken) =
+        attempt ct (client.SsnVerification.VerifyOperation(Json, Json, subcode, companyId, request, ValueOption.toOption externalTransactionId, ct))
+
+/// The United States: Experian Verify, income and employment reports answered at once. All share one call; reportType in the request and
+/// the subcode from onboarding choose the report, and the answer's fields follow it. It comes in ExpVerifyReport, or IncomeReport from the
+/// sandbox, which answers every report with one fixed example. clientReferenceId identifies the request to Experian.
+module Verify =
+
+    let coreAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: VerifyCore.RequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCore.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let plusAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: VerifyPlus.RequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyPlus.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let premiumAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: VerifyPremium.voieRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyPremium.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let premiumPrequalAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: VerifyPremiumPrequal.voieRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyPremiumPrequal.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let employmentScreeningAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: VerifyEmployment.RequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyEmployment.GetEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let governmentAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: VerifyGovernment.RequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyGovernment.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let reverifyEmploymentAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: ReverifyVoe.RequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyVoe.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+    let reverifyIncomeAndEmploymentAsync (client: ExperianClient) (subcode: string) (clientReferenceId: string) (request: ReverifyVoie.voieRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyVoie.GetIncomeAndEmploymentData(clientReferenceId, Json, Json, subcode, request, ct))
+
+/// The United States: Experian Verify with the person's permission, on a page the client hosts. The widget call gives the page's address and a
+/// report id; the status call says when it is ready; the report call fetches it. Live, this is its own host: Endpoints.productionUs has it.
+module VerifyCpd =
+
+    let coreWidgetAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdCore.CPDRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdCore.GetWidgetUrlTokenExpirationAndReportId(clientReferenceId, Json, Json, request, ct))
+
+    let coreStatusAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdCore.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdCore.GetTheStatusOfTheExperianReportId(clientReferenceId, Json, Json, request, ct))
+
+    let coreReportAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdCore.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdCore.GetTheReportBasedOnGivenReportId(clientReferenceId, Json, Json, request, ct))
+
+    let plusWidgetAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdPlus.CPDRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdPlus.GetWidgetUrlTokenExpirationAndReportId(clientReferenceId, Json, Json, request, ct))
+
+    let plusStatusAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdPlus.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdPlus.GetTheStatusOfTheExperianReportId(clientReferenceId, Json, Json, request, ct))
+
+    let plusReportAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdPlus.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdPlus.GetTheReportBasedOnGivenReportId(clientReferenceId, Json, Json, request, ct))
+
+    let premiumWidgetAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdPremium.CPDRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdPremium.GetWidgetUrlTokenExpirationAndTransactionId(clientReferenceId, Json, Json, request, ct))
+
+    let premiumStatusAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdPremium.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdPremium.GetTheStatusOfTheExperianReportId(clientReferenceId, Json, Json, request, ct))
+
+    let premiumReportAsync (client: ExperianClient) (clientReferenceId: string) (request: VerifyCpdPremium.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.VerifyCpdPremium.GetTheReportBasedOnGivenReportId(clientReferenceId, Json, Json, request, ct))
+
+    let reverifyEmploymentWidgetAsync (client: ExperianClient) (clientReferenceId: string) (request: ReverifyCpdVoe.CPDRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyCpdVoe.GetWidgetUrlTokenExpirationAndReportId(clientReferenceId, Json, Json, request, ct))
+
+    let reverifyEmploymentStatusAsync (client: ExperianClient) (clientReferenceId: string) (request: ReverifyCpdVoe.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyCpdVoe.GetTheStatusOfTheExperianReportId(clientReferenceId, Json, Json, request, ct))
+
+    let reverifyEmploymentReportAsync (client: ExperianClient) (clientReferenceId: string) (request: ReverifyCpdVoe.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyCpdVoe.GetTheReportBasedOnGivenReportId(clientReferenceId, Json, Json, request, ct))
+
+    let reverifyIncomeAndEmploymentWidgetAsync (client: ExperianClient) (clientReferenceId: string) (request: ReverifyCpdVoie.CPDRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyCpdVoie.GetWidgetUrlTokenExpirationAndTransactionId(clientReferenceId, Json, Json, request, ct))
+
+    let reverifyIncomeAndEmploymentStatusAsync (client: ExperianClient) (clientReferenceId: string) (request: ReverifyCpdVoie.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyCpdVoie.GetTheStatusOfTheExperianReportId(clientReferenceId, Json, Json, request, ct))
+
+    let reverifyIncomeAndEmploymentReportAsync (client: ExperianClient) (clientReferenceId: string) (request: ReverifyCpdVoie.CPDStatusRequestParams) (ct: CancellationToken) =
+        attempt ct (client.ReverifyCpdVoie.GetTheReportBasedOnGivenReportId(clientReferenceId, Json, Json, request, ct))
+
+/// The United States: Instant Credit. clientReferenceId identifies the request to Experian; the sandbox takes SBMYSQL.
+module InstantCredit =
+
+    let advancedAsync (client: ExperianClient) (request: InstantCredit.attributesRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.InstantCredit.AdvancedInstantCredit(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+    let customStandaloneAsync (client: ExperianClient) (request: InstantCredit.attributesRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.InstantCredit.CustomStandaloneInstantCredit(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+/// The United States: Credit Profile. clientReferenceId identifies the request to Experian; the sandbox takes SBMYSQL.
+module CreditProfile =
+
+    /// A credit report with the scores and add-ons asked for.
+    let creditReportAsync (client: ExperianClient) (request: CreditProfile.creditProfileRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.CreditProfile.CreditReports(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+    let employmentInsightAsync (client: ExperianClient) (request: CreditProfile.employmentInsightRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.CreditProfile.EmploymentInsightData(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+    let healthcareAsync (client: ExperianClient) (request: CreditProfile.healthcareCreditRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.CreditProfile.HealthcareCreditProfileData(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+    let automotiveAsync (client: ExperianClient) (request: CreditProfile.autoCreditProfileRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.CreditProfile.AutomotiveCreditProfileData(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+    let tecConnectAsync (client: ExperianClient) (request: CreditProfile.tecCreditProfileRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.CreditProfile.TecConnctCreditProfileData(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+    let connectCheckAsync (client: ExperianClient) (request: CreditProfile.ConnectCreditProfileRequest) (clientReferenceId: string voption) (ct: CancellationToken) =
+        attempt ct (client.CreditProfile.ConnctCheckCreditProfileData(Json, request, ValueOption.toOption clientReferenceId, Some Json, ct))
+
+/// The Netherlands and Spain: a small business's credit risk score from its digital footprint, the probability of it going bad
+/// between 0 and 1.
+module WebData =
+
+    /// id comes back to trace the request; date is when the web data is taken from. The spec names only the sandbox's test path.
+    let scoreAsync (client: ExperianClient) (date: DateOnly) (name: string) (address: string) (town: string) (id: string) (ct: CancellationToken) =
+        attempt ct (client.WebData.GetWebscoresTestScore(date.ToString("yyyy-MM-dd", Globalization.CultureInfo.InvariantCulture), name, address, town, id, ct))
+
+/// Brazil, through Serasa Experian: scores and checks of a person's open banking data. Connect with Endpoints.productionBrazil and a
+/// Credentials of the client id and secret. Its sandbox has stopped answering, so these have only run against a stand-in.
+module OpenBanking =
+
+    let scoreAsync (client: ExperianClient) (request: OpenBankingScore.Score) (ct: CancellationToken) =
+        attempt ct (client.OpenBankingScore.Score(request, ct))
+
+    let incomeVerificationAsync (client: ExperianClient) (request: IncomeVerifications.IncomeVerification) (ct: CancellationToken) =
+        attempt ct (client.IncomeVerification.IncomeVerification(request, ct))
+
+    let categorizeAsync (client: ExperianClient) (request: TransactionCategorization.Transaction) (ct: CancellationToken) =
+        attempt ct (client.TransactionCategorization.CategorizeTransactions(request, ct))
+
+    let affordabilityCheckAsync (client: ExperianClient) (request: AffordabilityChecks.AffordabilityCheck) (ct: CancellationToken) =
+        attempt ct (client.AffordabilityCheck.AffordabilityChecks(request, ct))
+
+/// Experian's Address Validation, over an ApertureClient. Keys are escaped as one segment. Layouts, and the older lookup v1, are on
+/// the generated client: client.Address.
+module AddressValidation =
+
+    /// What goes in a call's headers; ValueNone leaves Experian's default. Each call sends only those it takes.
+    type Options =
+        { /// Comes back in the answer, to trace the request.
+          ReferenceId: string voption
+          /// 2 to 15; Experian answers 408 when it runs out.
+          TimeoutSeconds: int voption
+          AddComponents: bool voption
+          AddMetadata: bool voption
+          AddEnrichment: bool voption
+          AddDpid: bool voption
+          AddExtraMatchInfo: bool voption
+          AddAddresses: bool voption
+          AddFinalAddress: bool voption
+          Transliterate: bool voption
+          AddRetention: bool voption }
+
+        static member Default =
+            { ReferenceId = ValueNone
+              TimeoutSeconds = ValueNone
+              AddComponents = ValueNone
+              AddMetadata = ValueNone
+              AddEnrichment = ValueNone
+              AddDpid = ValueNone
+              AddExtraMatchInfo = ValueNone
+              AddAddresses = ValueNone
+              AddFinalAddress = ValueNone
+              Transliterate = ValueNone
+              AddRetention = ValueNone }
+
+    let private reference (options: Options) = ValueOption.toOption options.ReferenceId
+    let private timeout (options: Options) = ValueOption.toOption options.TimeoutSeconds
+
+    /// The datasets the token can use, in one country or all.
+    let datasetsAsync (client: ApertureClient) (countryIso: string voption) (options: Options) (ct: CancellationToken) =
+        attempt ct (client.Address.GetAddressDatasetsV1(reference options, timeout options, ValueOption.toOption countryIso, ct))
+
+    /// Suggestions for what has been typed so far. Takes Transliterate and AddRetention.
+    let searchAsync (client: ApertureClient) (request: AddressValidation.AddressSearchV1Request) (options: Options) (ct: CancellationToken) =
+        attempt ct (client.Address.PostAddressSearchV1(request, reference options, timeout options, flag options.Transliterate, flag options.AddRetention, ct))
+
+    /// The addresses inside a suggestion, such as those in a block of flats.
+    let stepInAsync (client: ApertureClient) (globalAddressKey: string) (options: Options) (ct: CancellationToken) =
+        withSegment "globalAddressKey" globalAddressKey (fun escaped ->
+            attempt ct (client.Address.GetAddressSuggestionsStepinV1(escaped, reference options, timeout options, ct)))
+
+    /// Narrows a suggestion by more text.
+    let refineAsync (client: ApertureClient) (key: string) (request: AddressValidation.AddressSuggestionsV1Request) (options: Options) (ct: CancellationToken) =
+        withSegment "key" key (fun escaped ->
+            attempt ct (client.Address.PostAddressSuggestionsRefineV1(escaped, request, reference options, timeout options, ct)))
+
+    /// Suggestions already formatted. Takes AddComponents and AddMetadata.
+    let formatSuggestionsAsync (client: ApertureClient) (request: AddressValidation.AddressSuggestionsFormatV1Request) (options: Options) (ct: CancellationToken) =
+        attempt ct (client.Address.PostAddressSuggestionsFormatV1(request, reference options, timeout options, flag options.AddComponents, flag options.AddMetadata, ct))
+
+    /// Whether a whole address is real, with its corrected form. Takes AddComponents, AddMetadata, AddEnrichment and AddExtraMatchInfo.
+    let validateAsync (client: ApertureClient) (request: AddressValidation.AddressValidateV1Request) (options: Options) (ct: CancellationToken) =
+        attempt ct (client.Address.PostAddressValidateV1(request, reference options, timeout options, flag options.AddComponents, flag options.AddMetadata, flag options.AddEnrichment, flag options.AddExtraMatchInfo, ct))
+
+    /// The addresses at a key such as a postcode. Takes AddAddresses and AddFinalAddress.
+    let lookupAsync (client: ApertureClient) (request: AddressValidation.AddressLookupV2Request) (options: Options) (ct: CancellationToken) =
+        attempt ct (client.Address.PostAddressLookupV2(request, reference options, timeout options, flag options.AddAddresses, flag options.AddFinalAddress, ct))
+
+    /// The final address behind a key from a search. Takes AddComponents, AddMetadata and AddDpid.
+    let formatAsync (client: ApertureClient) (globalAddressKey: string) (options: Options) (ct: CancellationToken) =
+        withSegment "globalAddressKey" globalAddressKey (fun escaped ->
+            attempt ct (client.Address.GetAddressFormatV1(escaped, reference options, timeout options, flag options.AddComponents, flag options.AddMetadata, flag options.AddDpid, ct)))
+
+    /// The final address in the layouts and with the attributes asked for. Takes AddComponents, AddMetadata, AddEnrichment and AddDpid.
+    let formatWithAsync (client: ApertureClient) (globalAddressKey: string) (request: AddressValidation.AddressFormatV1Request) (options: Options) (ct: CancellationToken) =
+        withSegment "globalAddressKey" globalAddressKey (fun escaped ->
+            attempt ct (client.Address.PostAddressFormatV1(escaped, request, reference options, timeout options, flag options.AddComponents, flag options.AddMetadata, flag options.AddEnrichment, flag options.AddDpid, ct)))
+
+    /// The fields to ask a person for, in a country and dataset.
+    let promptSetsAsync (client: ApertureClient) (request: AddressValidation.AddressPromptSetsV1Request) (options: Options) (ct: CancellationToken) =
+        attempt ct (client.Address.PostAddressPromptsetsV1(request, reference options, timeout options, ct))
+
+/// What goes in the headers of an email or phone validation; ValueNone leaves Experian's default.
+type ValidationOptions =
+    { /// Comes back in the answer, to trace the request.
+      ReferenceId: string voption
+      /// Experian answers 408 when it runs out: 3 to 15 for email, 2 to 15 for phone.
+      TimeoutSeconds: int voption
+      /// Adds the domain or phone details to the answer.
+      AddMetadata: bool voption }
+
+    static member Default =
+        { ReferenceId = ValueNone
+          TimeoutSeconds = ValueNone
+          AddMetadata = ValueNone }
+
+/// Experian's Email Validation v2, over an ApertureClient. The answer's confidence says whether the mailbox can be delivered to, and did_you_mean
+/// suggests a correction.
+module EmailValidation =
+
+    let validateAsync (client: ApertureClient) (email: string) (options: ValidationOptions) (ct: CancellationToken) =
+        attempt ct (
+            client.Email.PostEmailValidateV2(
+                EmailValidation.EmailValidationV2Request(email),
+                ValueOption.toOption options.ReferenceId,
+                ValueOption.toOption options.TimeoutSeconds,
+                flag options.AddMetadata,
+                ct))
+
+/// Experian's Phone Validation, over an ApertureClient. The answer gives whether the number is live, its type and its format.
+module PhoneValidation =
+
+    let validateAsync (client: ApertureClient) (request: PhoneValidation.PhoneValidationV2Request) (options: ValidationOptions) (ct: CancellationToken) =
+        attempt ct (
+            client.Phone.PostPhoneValidateV2(
+                request,
+                flag options.AddMetadata,
+                ValueOption.toOption options.ReferenceId,
+                ValueOption.toOption options.TimeoutSeconds,
+                ct))

@@ -13,6 +13,10 @@
     <Compile Include="DelphiTests.fs" />
     <Compile Include="ReportsTests.fs" />
     <Compile Include="WebhookTests.fs" />
+    <Compile Include="RegionTests.fs" />
+    <Compile Include="ValidationTests.fs" />
+    <Compile Include="BusinessAndVerifyTests.fs" />
+    <Compile Include="TokenSafetyTests.fs" />
     <Compile Include="SandboxTests.fs" />
   </ItemGroup>
 

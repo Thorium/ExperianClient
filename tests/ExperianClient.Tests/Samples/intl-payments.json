@@ -1,0 +1,39 @@
+{
+  "header": {
+    "tenantId": "c7f8f55045884847b993d81ca8cdaf",
+    "clientReferenceId": "Intl-Payments",
+    "expRequestId": "",
+    "messageTime": "2024-06-05T12:00:00Z",
+    "options": {
+      "workflow": "wf1"
+    },
+    "requestType": "Intlpayments"
+  },
+  "payload": {
+    "source": "WEB",
+    "contacts": [
+      {
+        "id": "0",
+        "organization": {
+          "orgName": "CLODAGH KELLY"
+        },
+        "bankAccount": {
+          "IBAN": "IE83AIBK93115200000001",
+          "isoCountry": "IE"
+        }
+      }
+    ],
+    "userDefinedFields": [
+      {},
+      {
+        "userDefinedTableName": "",
+        "userDefinedElements": [
+          {
+            "fieldName": "checkingLevel",
+            "fieldValue": "COMMERCIAL"
+          }
+        ]
+      }
+    ]
+  }
+}

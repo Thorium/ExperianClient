@@ -1,0 +1,45 @@
+{
+  "consumerPii": {
+    "primaryApplicant": {
+      "name": {
+        "lastName": "OLIVARES",
+        "firstName": "KAREN",
+        "middleName": "R"
+      },
+      "ssn": {
+        "ssn": "111111111"
+      },
+      "currentAddress": {
+        "line1": "56 BROWN ST",
+        "city": "ATHOL",
+        "state": "MA",
+        "zipCode": "1331"
+      }
+    }
+  },
+  "requestor": {
+    "subscriberCode": "2222222"
+  },
+  "permissiblePurpose": {
+    "type": "0J"
+  },
+  "vendorData": {
+    "vendorNumber": "072",
+    "vendorVersion": "V1.05"
+  },
+  "addOns": {
+    "clarityEarlyRiskScore": "Y",
+    "clarityData": {
+      "clarityAccountId": "0000000",
+      "clarityLocationId": "000000",
+      "clarityControlFileName": "test_file",
+      "clarityControlFileVersion": "0000000"
+    },
+    "renterRiskScore": "N",
+    "rentBureauData": {
+      "primaryApplRentBureauFreezePin": "1234",
+      "secondaryApplRentBureauFreezePin": "112233"
+    },
+    "returnItin": "Y"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "consumerPii": {
+    "primaryApplicant": {
+      "name": {
+        "lastName": "ARMSTRONG",
+        "firstName": "KARL",
+        "middleName": "E"
+      },
+      "dob": {
+        "dob": "1959"
+      },
+      "ssn": {
+        "ssn": "111111111"
+      },
+      "currentAddress": {
+        "line1": "1073 BUCKINGHAM DR",
+        "city": "CAROL STREAM",
+        "state": "IL",
+        "zipCode": "60188"
+      }
+    },
+    "secondaryApplicant": {
+      "name": {
+        "lastName": "REYNOLDS",
+        "firstName": "ROBERTS"
+      },
+      "dob": {
+        "dob": "10041962"
+      },
+      "ssn": {
+        "ssn": "333333333"
+      },
+      "driverslicense": {
+        "number": "A00000000000",
+        "state": "CT"
+      },
+      "employment": {
+        "employerName": "HOMELAND SECURITY"
+      }
+    }
+  },
+  "requestor": {
+    "subscriberCode": "2222222"
+  },
+  "permissiblePurpose": {
+    "type": "3F",
+    "terms": "",
+    "abbreviatedAmount": ""
+  },
+  "resellerInfo": {
+    "endUserName": "CPAPIV2TC24"
+  },
+  "freezeOverride": {
+    "primaryApplFreezeOverrideCode": "000002522653451",
+    "secondaryApplFreezeOverrideCode": "000002909814012"
+  },
+  "addOns": {
+    "directCheck": "Y",
+    "demographics": "Geocode and Phone",
+    "liftPremium": "Y",
+    "clarityData": {
+      "clarityAccountId": "0000000",
+      "clarityLocationId": "000000",
+      "clarityControlFileName": "test_file",
+      "clarityControlFileVersion": "0000000"
+    },
+    "summaries": {
+      "summaryType": [
+        "Profile Summary"
+      ]
+    },
+    "mla": "Y",
+    "ofacmsg": "Y",
+    "consumerIdentCheck": {
+      "getUniqueConsumerIdentifier": "Y"
+    },
+    "joint": "Y",
+    "sureProfile": "Y",
+    "ssnIndicators": "Y",
+    "newConsumer": "Y"
+  },
+  "customOptions": {
+    "optionId": [
+      "COADEX"
+    ]
+  },
+  "solutionId": "63DXP1",
+  "daasReferenceId": "GOOGLEIC",
+  "infoId1": {
+    "item": [
+      "Credit Card/PreApproved/ContCtr/5/1X11/0000000100.00/0000000020.00/0000000000.00"
+    ]
+  }
+}

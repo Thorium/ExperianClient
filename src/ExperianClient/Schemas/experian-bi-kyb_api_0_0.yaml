@@ -1,0 +1,4463 @@
+swagger: "2.0"
+info:
+  title: Know Your Business API
+  description: >-
+    <p>The Know Your Business (KYB) API provides information to support the risk assessment of 
+    companies across a number of areas:</p>
+    <ul>
+      <li>Key Parties - Directors, Shareholders and UBOs</li>
+      <li>Sectors - trading activity</li>
+      <li>Locations - with coverage of site visits and shop-front imagery where available</li>
+      <li>Geographies - associated countries</li>
+      <li>PEPs, Sanctions and Adverse Media screening - UBOs, PSCs and directors</li>
+      <li>Authentication - UBOs, PSCs and directors</li>
+      <li>Fraud Screening - UBOs and PSCs</li>
+      <li>AML Flags - Adverse Markers and Cashflow Profiles</li>
+    </ul>
+  version: 1.2.0
+schemes:
+  - https
+host: sandbox-uk-api.experian.com
+produces:
+  - application/jsonsecurityDefinitions:
+  OauthSecurity:
+    type: oauth2
+    flow: password
+    tokenUrl: "https://sandbox-uk-api.experian.com/oauth2/v1/token"
+    scopes:
+      admin: admin scope
+      user: user scope
+paths:
+  "/risk/business/v2/businesstargeter":
+    get:
+      summary: Business Search
+      description: >-
+        <div>
+          Search Experian's UK Business database to return either the best matching business or a list of businesses to choose from. 
+          You can then use a returned identifier (company number) to request additional business information from many of Experian's Business Information APIs.
+          <br/><br/>
+          Searches can be made using:
+          <ul>
+            <li>the business name only</li>
+            <li>the business postcode</li>
+            <li>the business identifiers (registration number or Experian non limited key)</li>
+            <li>additional filters to qualify the search scope (registered/non registered, dissolved businesses)</li>
+          </ul>
+          Either business name or business reference must be supplied as part of the input. Geographic targeting can be done by including a name and a postcode in the search. To support more accurate matching, postcode is used rather than targeting by town, where ambiguity in town names can lead to mismatches.
+          <br/><br/>
+          The returned list of businesses will be limited to 25 entities and will be sorted initially on the following groupings:
+          <ul>
+            <li>Limited Companies</li>
+            <li>Non-Limited Businesses</li>
+            <li>Dissolved Limited Companies</li>
+          </ul>
+          Within each of the above groupings the results will be displayed in order of the highest match confidence first.
+          <br/><br/>
+          Where a request is submitted with a “BusinessRef", this is the only search criteria that will be used i.e. it will ignore input business name and/or business postcode.
+          <br/><br/>
+          Sample searches against name=TEST will work in the Sandbox.
+        </div>
+      operationId: BusinessSearch
+      security:
+        - OauthSecurity:
+            - user
+      produces:
+        - application/json      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: businessref
+          in: query
+          description: >-
+            Business reference (registered number or NonLimited URN) to be used
+            in the search. Sample 99999999 or UI88888888
+          required: false
+          type: string
+        - name: name
+          in: query
+          description: >-
+            The name of the business to be targeted.
+
+
+            Valid characters:
+
+            ! “ £ * ( ) _ - + = { } : ; @ ‘ # | \ / ?
+
+
+            Invalid characters that will cause the call to fail:
+
+            $ % ^ [ ] ~ < >
+          required: false
+          type: string
+          default: TEST
+        - name: postcode
+          in: query
+          description: >-
+            The postcode of the business to be targeted. Partial postcodes are supported (e.g. NG80). 
+            Invalid postcodes (e.g. XX1 1XX) will cause no results to be returned
+          required: false
+          type: string
+          maxLength: 8
+          pattern: '([a-zA-Z0-9\ ])*'
+        - name: phonenumber
+          in: query
+          description: The telephone number of the business to be targeted
+          required: false
+          type: string
+        - name: searchcorporates
+          default: "true"
+          in: query
+          description: >-
+            Indicator showing whether to include limited businesses in the
+            search (true = Include, false = Exclude)
+          required: false
+          type: string
+          enum:
+            - "true"
+            - "false"
+        - name: excludedissolved
+          default: "true"
+          in: query
+          description: >-
+            Indicator showing whether to include dissolved limited businesses in
+            the search (true = Include, false = Exclude)
+          required: false
+          type: string
+          enum:
+            - "true"
+            - "false"
+        - name: searchnoncorps
+          default: "false"
+          in: query
+          description: >-
+            Indicator showing whether to include non-limited businesses in the
+            search (true = Include, false = Exclude)
+          required: false
+          type: string
+          enum:
+            - "true"
+            - "false"
+      responses:
+        "200":
+          description: "An array of matching businesses, along with search results metadata"
+          schema:
+            $ref: "#/definitions/BusinessTargeterResponse"
+        "400":
+          description: Bad Request. Incorrect verb or path provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Unauthorized access. Invalid or Expired Token, or product not
+            enabled against the account
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "406":
+          description: Not Acceptable. Invalid headers provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal server error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/company/{BusinessRef}":
+    get:
+      summary: Business Profile
+      description: >-
+        <div>
+          Returns summary information on a business including, identification,
+          address and activity.
+          <br/><br/>
+          Sample searches against BusinessRef=99999999 or BusinessRef=UI88888888
+          will work in the Sandbox.
+        </div>
+      operationId: BusinessProfile
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: BusinessRef
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN) or Experian non limited
+            key (prefixed with UI)
+          required: true
+          type: string
+          minLength: 8
+          maxLength: 10
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KYCProfile"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/registeredcompany/{RegNumber}/directors":
+    get:
+      summary: Directors
+      description: >-
+        <div>
+          Returns a summary list of the directors and secretaries associated to a
+          business.
+          <br/><br/>
+          Sample searches against RegNumber=99999999 will work in the Sandbox.
+        </div>
+      operationId: Directors
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: RegNumber
+          in: path
+          description: UK Companies House Registration Number (CRN)
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/ManagementInfo"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/risk/business/v2/directortargeter":
+    get:
+      summary: Director Search
+      description: >-
+        <div>
+          Search Experian's UK Business database to return a list of Directors and/or Secretaries.
+          <br/><br/>
+          Searches can be made using:
+            <ul>
+            <li>forename, middlenames and surname</li>
+            <li>service address postcode</li>
+            <li>flags qualifying the scope of the search (directors/secretaries).</li>
+          </ul>
+          The input request must contain at least a "forename", a "surname" and either the "directorsflag" or "secretaryflag" set to 'Y'. Geographic targeting can be done by including a postcode in the search. To support more accurate matching, postcode is used rather than targeting by town, where ambiguity in town names can lead to mismatches.
+          <br/><br/>
+          The list of results returned will be limited to 999.
+          <br/><br/>
+          Sample searches using forename=John and surname=Smith will return data in the Sandbox.
+        </div>
+      operationId: DirectorSearch
+      security:
+        - OauthSecurity:
+            - user
+      produces:
+        - application/json      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: forename
+          in: query
+          description: Director's forename returned from the Director search
+          required: false
+          type: string
+          default: John
+        - name: middlenames
+          in: query
+          description: Director's middle names returned from the Director search
+          required: false
+          type: string
+          default: William
+        - name: surname
+          in: query
+          description: Director's surname returned from the Director search
+          required: false
+          type: string
+          default: Smith
+        - name: postcode
+          in: query
+          description: Director's address postcode
+          required: false
+          type: string
+        - name: directorsflag
+          in: query
+          description: >-
+            Indicator showing whether to include Directors in the search (true =
+            Include, false = Exclude)
+          required: false
+          type: string
+          enum:
+            - "true"
+            - "false"
+          default: "true"
+        - name: secretariesflag
+          in: query
+          description: >-
+            Indicator showing whether to include Secretaries in the search (true
+            = Include, false = Exclude)
+          required: false
+          type: string
+          enum:
+            - "true"
+            - "false"
+          default: "false"
+      responses:
+        "200":
+          description: "An array of matching directors, along with search results metadata"
+          schema:
+            $ref: "#/definitions/DirectorTargeterResponse"
+        "400":
+          description: Bad Request. Incorrect verb or path provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Unauthorized access. Invalid or Expired Token, or product not
+            enabled against the account
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "406":
+          description: Not Acceptable. Invalid headers provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal server error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/registeredcompany/{RegNumber}/shareholders":
+    get:
+      summary: Shareholders
+      description: >-
+        <div>
+          The shareholder endpoint returns a list of the company's direct shareholders as filed at Companies House.
+          <br/><br/>
+          Sample searches using RegNumber=99999999 will work in the Sandbox.
+        </div>
+      operationId: Shareholders
+      security:
+        - OauthSecurity:
+            - user
+      produces:
+        - application/json      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: RegNumber
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN); Sample RegNumber is
+            99999999
+          required: true
+          default: "99999999"
+          type: string
+      responses:
+        "200":
+          description: Shareholding information
+          schema:
+            $ref: "#/definitions/Shareholders"
+        "400":
+          description: Bad Request. Incorrect parameters provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Unauthorized access. Invalid or Expired Token, or product not
+            enabled against the account
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: Company not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "406":
+          description: Not Acceptable. Invalid headers provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal server error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/registeredcompany/{RegNumber}/ubo":
+    get:
+      summary: Ultimate Beneficial Owner (UBO)
+      description: >-
+        <div>
+          Provides access to Experian Ultimate Beneficial Owner (UBO) information
+          for UK registered companies. Experian matches shareholder information
+          filed at Companies House with directorship details, and provides a view
+          of ownership across multiple tiers of the corporate targeted.
+          <br/><br/>
+          The UBO endpoint returns information about the company ownership structure (UBO summary information), as well as a list of all beneficial owners of the company with 10% or more holding (list of UBOs).</p>
+          <ul>
+            <li>UBO summary information will provide basic details on the capital structure, number 
+            and complexity of the ownership structure, as well as any flags showing exception in the 
+            ownership tree resolution.</li>
+            <li>The list of UBO details provide information on all the shareholders in the tree. If 
+            they are an individual they will appear if they own more than 10%, either by voting 
+            rights or by value, in the root company. Entities which are not identified as individuals 
+            will appear no matter their percentage holding.</li>
+          </ul>
+          Sample searches using RegNumber=99999999 will work in the Sandbox.
+        </div>
+      operationId: UBO
+      security:
+        - OauthSecurity:
+            - user
+      produces:
+        - application/json      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: RegNumber
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN); Sample RegNumber is
+            99999999
+          required: true
+          default: "99999999"
+          type: string
+      responses:
+        "200":
+          description: Ownership summary and an array of UBOs associated with the business
+          schema:
+            $ref: "#/definitions/UBOResponse"
+        "400":
+          description: Bad Request. Incorrect parameters provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Unauthorized access. Invalid or Expired Token, or product not
+            enabled against the account
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: Company not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "406":
+          description: Not Acceptable. Invalid headers provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal server error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/company/{BusinessRef}/sectors":
+    get:
+      summary: Sectors
+      description: >-
+        <div>
+          Returns information on the trading activity of the business from a number
+          of difference sources.
+          <br/><br/>
+          Sample searches against BusinessRef=99999999 or BusinessRef=UI88888888
+          work in the Sandbox.
+        </div>
+      operationId: IndustrySectors
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: BusinessRef
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN) or Experian non limited
+            key (prefixed with UI)
+          required: true
+          type: string
+          minLength: 8
+          maxLength: 10
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KYCSectors"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/company/{BusinessRef}/locations":
+    get:
+      summary: Locations
+      description: >-
+        <div>
+          Collates and identifies information on all the sites related to a
+          business e.g. head office, branch, warehousing.
+          <br/><br/>
+          Sample searches against BusinessRef=99999999 will work in the Sandbox.
+        </div>
+      operationId: Locations
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: BusinessRef
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN). Experian non limited
+            key (prefixed with UI) are not supported at this stage
+          required: true
+          type: string
+          minLength: 8
+          maxLength: 10
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KYCLocations"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/company/{BusinessRef}/geographies":
+    get:
+      summary: Geographies
+      description: >-
+        <div>
+          Returns a list of countries that are associated with the business and
+          key stakeholders.
+          <br/><br/>
+          Sample searches against BusinessRef=99999999 will work in the Sandbox.
+        </div>
+      operationId: Geographies
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: BusinessRef
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN). Experian non limited
+            key (prefixed with UI) are not supported at this stage
+          required: true
+          type: string
+          minLength: 8
+          maxLength: 10
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KYCGeographies"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/company/{BusinessRef}/datasources":
+    get:
+      summary: Data Sources
+      description: >-
+        <div>
+          Returns a list of data sources that have contributed to the business
+          data.
+          <br/><br/>
+          Sample searches against BusinessRef=99999999 will work in the Sandbox.
+        </div>
+      operationId: DataSources
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: BusinessRef
+          in: path
+          description: >-
+            UK Companies House Registration Number (CRN). Experian non limited
+            key (prefixed with UI) are not supported at this stage
+          required: true
+          type: string
+          minLength: 8
+          maxLength: 10
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KYCDataSources"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/ldc/{LDCID}":
+    get:
+      summary: LDC Last Visit Date
+      description: >-
+        <div>
+          Using the LDC ID obtained from the data sources endpoint, this returns the date the location was last visited by an LDC agent. Endpoint name was previously known as LDC but the URL has not changed.
+          <br/><br/>
+          Sample searches against LDCID=1234 will work in the Sandbox.
+        </div>
+      operationId: LDCBase
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: LDCID
+          in: path
+          description: LDC Identifier, obtained from the datasources endpoint
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/LDCBase"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/ldc/{LDCID}/msb":
+    get:
+      summary: Money Service Bureau (MSB)
+      description: >-
+        <div>
+          Using the LDC ID obtained from the data sources endpoint, this returns a flag indicating if a Money Service Business (MSB) was identified.
+          <br/><br/>
+          Sample searches against LDCID=1234 will work in the Sandbox.
+        </div>
+      operationId: LDCMSB
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: LDCID
+          in: path
+          description: LDC Identifier, obtained from the datasources endpoint
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/LDCMSB"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/ldc/{LDCID}/imageurl":
+    get:
+      summary: Shopfront Picture
+      description: >-
+        <div>
+          Using the LDC ID obtained from the data sources endpoint, this returns a URL of an image of the business's shopfront showing the trading address in jpeg format.
+          <br/><br/>
+          Sample searches against LDCID=1234 will work in the Sandbox.
+        </div>
+      operationId: LDCImage
+      security:
+        - OauthSecurity:
+            - user
+      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json          required: true
+          type: string
+        - name: LDCID
+          in: path
+          description: LDC Identifier, obtained from the datasources endpoint
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/LDCImage"
+        "400":
+          description: Request has bad syntax
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Basic or token authentication failed. The user does not have
+            sufficient permission
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: CRN not found, it does not exist or is invalid
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: The server encountered an unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        default:
+          description: Unexpected error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/people/kybdata":
+    post:
+      summary: KYB Data People
+      description: >-
+        <div>
+          This endpoint allows you to pass in details of individuals and to screen and authenticate them. Screening is done against Lexis Nexis datasets and will return any potential PEPs, Sanctions or Adverse Media matches found for that person; authentication uses Experian’s CrossCore platform and will return an authentication score.
+          <br/><br/>
+          Additional licensing is needed for both screening and authentication elements, with clients able to take either service or both together. Individual configuration on a per client basis is required before this endpoint can be used.
+          <br/><br/>
+          The data included in the API response will depend on the client configuration. 
+        </div>
+      security:
+        - OauthSecurity:
+            - user
+      produces:
+        - application/json      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json
+          required: true
+          type: string
+        - name: Content-Type
+          in: header
+          description: Format expected for the response
+          type: string
+          enum:
+            - application/json
+        - name: body
+          in: body
+          description: Details of business to query
+          required: true
+          schema:
+            $ref: "#/definitions/KybDataPeopleRequestBody"
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KybDataPeopleResponse"
+        "400":
+          description: Bad Request. Incorrect parameters provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Unauthorized access. Invalid or Expired Token, or product not
+            enabled against the account
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: Company not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "406":
+          description: Not Acceptable. Invalid headers provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal server error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  "/compliance/business/v1/company/kybdata":
+    post:
+      summary: KYB Data Company
+      description: >-
+        <div>
+          Provides a summary of a business and matching to third party data sources to verify business existence. AML flags can also be requested which returns Adverse Markers and Cashflow Profile hits associated to the business. Business key parties (UBO, PSC and Directors) will be retrieved for the specified business, which can be screened against Lexis Nexis datasets and will return any potential PEPs, Sanctions or Adverse Media matches found for that person; authentication and fraud checks using Experian’s CrossCore platform can be carried out returning scoring and fraud flags.
+          <br/><br/>
+          Individual configuration on a per client basis is required to use this endpoint. The data included in the API response will depend on this configuration.
+          <br/><br/>
+          Additional licensing is needed for Lexis Nexis, CrossCore and Hunter usage.
+        </div>
+      security:
+        - OauthSecurity:
+            - user
+      produces:
+        - application/json      parameters:
+        - name: Accept
+          in: header
+          description: Format expected for the response
+          enum:
+            - application/json
+          required: true
+          type: string
+        - name: Content-Type
+          in: header
+          description: Format expected for the response
+          type: string
+          enum:
+            - application/json
+        - name: body
+          in: body
+          description: Details of business to query
+          required: true
+          schema:
+            $ref: "#/definitions/KybDataRequestBody"
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/KybDataResponse"
+        "400":
+          description: Bad Request. Incorrect parameters provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "401":
+          description: >-
+            Unauthorized access. Invalid or Expired Token, or product not
+            enabled against the account
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "404":
+          description: Company not found
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "406":
+          description: Not Acceptable. Invalid headers provided
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+        "500":
+          description: Internal server error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+definitions:
+  KYCProfile:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        description: >-
+          Registration Number for registered businesses, and Experian non
+          limited Key (prefixed with UI + 8 digits) for non registered
+          businesses
+        type: string
+      LegalStatus:
+        description: "L for registered businesses, N for non registered businesses"
+        type: string
+      Name:
+        description: Business name
+        type: string
+      RegisteredOffice:
+        description: "Registered office address, for limited companies only"
+        $ref: "#/definitions/KYCProfileAddress"
+      TradingLocation:
+        description: "Trading address, for both registered and non-registered companies"
+        $ref: "#/definitions/KYCProfileAddress"
+      PrincipalActivities:
+        description: Text description of the Principal Activities of the limited company
+        type: string
+      IncorporationDate:
+        description: Incorporation Date (yyyy-mm-dd)
+        type: string
+      EarliestKnownDate:
+        description: >-
+          The earliest date when this associated non-limited business became
+          known to Experian (yyyy-mm-dd)
+        type: string
+      DissolutionDate:
+        description: Dissolution Date (yyyy-mm-dd)
+        type: string
+      URL:
+        description: URL for the website of the business
+        type: string
+      TradingStatus:
+        description: A (Active) or D (Dissolved)
+        type: string
+      LegalEntityType:
+        description: Indicator showing the legal status of the limited company
+        type: string
+      TelephoneNumber:
+        description: Business telephone number
+        type: string
+  KYCSectors:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        description: Registration Number for registered businesses
+        type: string
+      LegalStatus:
+        description: "L for registered businesses [Non registered are not supported yet]"
+        type: string
+      Sectors:
+        description: List of Sectors of the company
+        type: array
+        items:
+          $ref: "#/definitions/KYCSectorsItems"
+  KYCDataSources:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        description: Registration Number for registered businesses
+        type: string
+      LegalStatus:
+        description: "L for registered businesses [Non registered are not supported yet]"
+        type: string
+      DataSources:
+        description: List of data sources providing the company information
+        type: array
+        items:
+          $ref: "#/definitions/KYCDataSourcesItems"
+  KYCGeographies:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        description: Registration Number for registered businesses
+        type: string
+      LegalStatus:
+        description: "L for registered businesses [Non registered are not supported yet]"
+        type: string
+      Geographies:
+        description: List of countries linked to the company
+        type: array
+        items:
+          $ref: "#/definitions/KYCGeographiesItems"
+  KYCLocations:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        description: Registration Number for registered businesses
+        type: string
+      LegalStatus:
+        description: "L for registered businesses [Non registered are not supported yet]"
+        type: string
+      Locations:
+        description: List of trading locations
+        type: array
+        items:
+          $ref: "#/definitions/KYCLocationsItems"
+  BusinessTargeterResponse:
+    type: object
+    additionalProperties: false
+    properties:
+      SearchSummary:
+        $ref: "#/definitions/SearchSummary"
+      SearchResults:
+        items:
+          $ref: "#/definitions/SearchResults"
+        type: array
+  ErrorResponse:
+    additionalProperties: false
+    type: object
+    properties:
+      Error:
+        type: object
+        properties:
+          Code:
+            type: integer
+            description: API error response code
+          Message:
+            type: string
+            description: API error message
+          InternalError:
+            type: string
+            description: Additional information to support Experian investigation of issues
+          MoreInfo:
+            type: string
+            description: Additional information to support developers
+  SICInfo:
+    type: object
+    additionalProperties: false
+    properties:
+      CodeType:
+        type: string
+        description: >-
+          Indicator showing which SIC Code is used in the following fields -
+          A=1980; B=1992
+      SICCode:
+        type: string
+        description: The SIC code for the business returned from the Business search
+      Description:
+        type: string
+        description: The SIC description for the business returned from the Business search
+  SearchResults:
+    type: object
+    additionalProperties: false
+    properties:
+      LegalStatus:
+        type: string
+        description: >-
+          Legal status of business returned from the Business search (L =
+          Limited; N = Non Limited)
+      BusinessRef:
+        type: string
+        description: >-
+          Business reference (Registerd number / URN) of the business returned
+          from the Business search
+      CommercialName:
+        type: string
+        description: Commercial name of the business returned from the Business search
+      BusinessLocation:
+        $ref: "#/definitions/BusinessLocation"
+      SICInformation:
+        $ref: "#/definitions/SICInfo"
+      BusinessStatus:
+        type: string
+        description: >-
+          Status of the business returned from the Business search. 'A' =
+          Active; 'D' = Dissolved; ' ' = unknown
+      BusinessActivities:
+        type: string
+        description: >-
+          Main Activities derived from Thomson category code of the business
+          returned from the Business search (Non Limited businesses only)
+      Name:
+        type: string
+        description: >-
+          Business name returned from the Business search where a name other
+          than the current registered name contributed to the matching
+      NameType:
+        type: string
+        description: >-
+          Name type for result returned from the Business search. 'RC' =
+          Registered name (current); 'RP' = Previous registered name; 'TC' =
+          Trading name (limited); 'NL' = Trading name (non-limited)
+      MatchedPhoneNumber:
+        type: string
+        description: >-
+          Matched telephone number of the business returned from the Business
+          search
+      MatchedPostcode:
+        type: string
+        description: Matched post code of the business returned from the Business search
+  SearchSummary:
+    type: object
+    additionalProperties: false
+    properties:
+      NumberMatches:
+        type: integer
+        description: Number of matches returned from the Business search
+      BusinessRef:
+        type: string
+        description: Business reference returned from the Business search
+      BusinessName:
+        type: string
+        description: Business name returned from the Business search
+      PhoneNumber:
+        type: string
+        description: Business telephone number returned from the Business search
+      Town:
+        type: string
+        description: Business post town returned from the Business search
+      Postcode:
+        type: string
+        description: Business post code returned from the Business search
+  BusinessLocation:
+    type: object
+    additionalProperties: false
+    properties:
+      LocationLine1:
+        type: string
+        description: Address line 1 of the business returned from the Business search
+      LocationLine2:
+        type: string
+        description: Address line 2 of the business returned from the Business search
+      LocationLine3:
+        type: string
+        description: Address line 3 of the business returned from the Business search
+      LocationLine4:
+        type: string
+        description: Address line 4 of the business returned from the Business search
+      LocationLine5:
+        type: string
+        description: Address line 5 of the business returned from the Business search
+      Postcode:
+        type: string
+        description: Post code of the business returned from the Business search
+  Business_Search_response_example:
+    type: object
+    description: >-
+      <div>
+        <p>
+          This is an example of a JSON response provided for a business search.
+        </p>
+
+        <div class="row">
+          The response is split in 2 sections:
+          <li>A Search summary section which plays back the search terms</li>
+          <li>A Search results section which provides an array of the matching search results</li>
+        </div>
+
+        <div class='row'>
+          <pre>
+      {
+        "SearchSummary": {
+          "NumberMatches": 0,
+          "BusinessRef": "string",
+          "BusinessName": "string",
+          "PhoneNumber": "string",
+          "Town": "string",
+          "Postcode": "string"
+        },
+        "SearchResults": [
+          {
+            "LegalStatus": "string",
+            "BusinessRef": "string",
+            "CommercialName": "string",
+            "BusinessLocation": {
+              "LocationLine1": "string",
+              "LocationLine2": "string",
+              "LocationLine3": "string",
+              "LocationLine4": "string",
+              "LocationLine5": "string",
+              "Postcode": "string"
+            },
+            "SICInformation": {
+              "CodeType": "string",
+              "SICCode": "string",
+              "Description": "string"
+            },
+            "BusinessStatus": "string",
+            "BusinessActivities": "string",
+            "Name": "string",
+            "NameType": "string",
+            "MatchedPhoneNumber": "string",
+            "MatchedPostcode": "string"
+          }
+        ]
+      }
+          </pre>
+        </div>
+      </div>
+  Business_Search_error_example:
+    type: object
+    description: >-
+      <div>
+         <p>This is a 400 error example; other errors follow the same structure.</p>
+         <pre>
+         {
+             "Error": {
+                  "Code": 400,
+                  "Message": "Extra request parameters unknown. Mandatory parameters [], Optional [name, searchcorporates, excludedissolved, searchnoncorps, businessref, town, postcode, phonenumber, rmc]",
+                  "MoreInfo": "Please see https://developer.experian.co.uk"
+             }
+         }
+         </pre>
+      </div>
+  UBOResponse:
+    type: object
+    additionalProperties: false
+    properties:
+      RegNumber:
+        type: string
+        description: Registration number of the root company
+      AnnualReturnsDate:
+        type: string
+        description: Annual returns date for the root company
+      LatestReturnsInTreeDate:
+        type: string
+        description: >-
+          Latest annual returns date for any company in the ownernship tree.
+          This will be the same or more recent than AnnualReturnsDate
+      TotIndValPercAccounted:
+        type: number
+        format: double
+        description: Total value percentage held by individuals in the corporate tree
+      TotValPercAccountedExcCos:
+        type: number
+        format: double
+        description: >-
+          Total value percentage held by entities at the end of the corporate
+          tree
+      TotIndVotPercAccounted:
+        type: number
+        format: double
+        description: Total voting percentage held by individuals in the corporate tree
+      TotVotPercAccountedExcCos:
+        type: number
+        format: double
+        description: >-
+          Total voting percentage held by entities at the end of the corporate
+          tree
+      ForeignCompany:
+        type: string
+        description: Y/N flag if the corporate tree contains a foreign company
+      UnregisteredCompany:
+        type: string
+        description: Y/N flag if the corporate tree contains an unregistered company
+      NoOfTiers:
+        type: number
+        format: double
+        description: number of tiers in the corporate tree
+      CircularOwnership:
+        type: string
+        description: >-
+          Y/N flag if the corporate tree contains a circular reference i.e. a
+          company in the tree owns itself at another point in the tree
+      PLCDetected:
+        type: string
+        description: >-
+          Y/N flag if the corporate tree contains a PLC based on the legal
+          status code of any of the registration numbers in the tree
+      NumberOfShareholders:
+        type: number
+        format: double
+        description: Total number of distinct shareholders in the corporate tree
+      MultipleCurrencies:
+        type: string
+        description: >-
+          Y/N flag if any of the companies in the corporate tree have shares in
+          multiple currencies
+      MultipleShareClasses:
+        type: string
+        description: >-
+          Y/N flag if any of the companies in the corporate tree have multiple
+          share issues
+      NomineesDetected:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains Nominees in
+          the first name middle name or surname fields
+      BulkListDetected:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains Bulk list
+          in the first name middle name or surname fields
+      PendingDetected:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains Pending in
+          the first name middle name or surname fields
+      SurnameContainsPending:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains Nominees
+          Pending in the surname field
+      SurnameContainsNominees:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains Nominees in
+          the surname field
+      SurnameContainsBulkList:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains  Bulk list
+          in the surname field
+      TrustPartCharityInName:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree contains Trust
+          Partnership or Charity in the surname field
+      MissingFirstname:
+        type: string
+        description: Y/N flag if an individual shareholder has a missing first name
+      JointShareholders:
+        type: string
+        description: >-
+          Y/N flag if any shareholder in the corporate tree has a joint
+          shareholding
+      ValueCalculationImpossible:
+        type: string
+        description: >-
+          Y/N flag if the value calculation cannot be made (Value percentage
+          owned is not known for a shareholder in the tree There is circular
+          ownership A registration number in the tree has no known shareholders
+          Total value percentage held by individuals in the corporate tree is
+          not between 99 and 101%)
+      VotingCalculationImpossible:
+        type: string
+        description: >-
+          Y/N flag if the voting calculation cannot be made (similar reasons as
+          above)
+      DissolvedCompanyInTree:
+        type: string
+        description: Y/N flag if any of the companies in the corporate tree are dissolved
+      UBOs:
+        type: array
+        items:
+          $ref: "#/definitions/ubo"
+  ubo:
+    type: object
+    additionalProperties: false
+    properties:
+      Tstamp:
+        type: string
+        format: date
+        description: System date when the record was created
+      AnnualReturnsDate:
+        type: string
+        description: Annual returns date associated with the shareholder
+      ShareholderType:
+        type: string
+        description: >-
+          C - Company with valid registration number / O - Foreign company where
+          known / X - Company without a registration number or with an invalid
+          registration number / I - Individual
+      DirectorURN:
+        type: string
+        description: >-
+          Unique reference number identifying the individual if they are a
+          director
+      ShareholderID:
+        type: string
+        description: >-
+          Unique reference number identifying the shareholder. Either a
+          registration number (for companies) a Director unique reference number
+          (for directors) or a generated ID (other shareholders)
+      Title:
+        type: string
+        description: Title of the shareholder
+      Forename:
+        type: string
+        description: First name of the shareholder
+      MiddleName:
+        type: string
+        description: Middle name of the shareholder
+      Surname:
+        type: string
+        description: Surname of the shareholder
+      NameSuffix:
+        type: string
+        description: Name suffix of the shareholder
+      DateOfBirth:
+        type: string
+        description: Date of birth where the shareholder is a director
+      ForeignAddressIndicator:
+        type: string
+        description: Foreign address flag where the shareholder is a director
+      Nationality:
+        type: string
+        description: Nationality of the director
+      JobTitle:
+        type: string
+        description: Job title of the director
+      ServiceAddress:
+        $ref: "#/definitions/ServiceAddress"
+      CompanyNumber:
+        type: string
+        description: Registration number of the shareholder
+      CompanyName:
+        type: string
+        description: Name of the shareholder if it is a company
+      RegisteredAddress:
+        $ref: "#/definitions/RegisteredAddress"
+      ShLegalStatus:
+        type: string
+        description: Legal status of the shareholder if it is a company
+      JointPercentOfValue:
+        type: number
+        format: double
+        description: >-
+          Percent of value held by the shareholder; in the case of joint
+          shareholders each is assigned the full percent of value of the joint
+          shareholding
+      JointPercentOfVotes:
+        type: number
+        format: double
+        description: >-
+          Percent of voting held by the shareholder; in the case of joint
+          shareholders each is assigned the full percent of voting rights of the
+          joint shareholding
+      JointShareholderFlag:
+        type: string
+        description: >-
+          Y/N flag indicating if the this UBO has join ownership with another
+          shareholder
+      SIC1992_1:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_2:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_3:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_4:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_5:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_6:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_7:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_8:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_9:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      SIC1992_10:
+        type: string
+        description: SIC code of the shareholder if it is a company
+      IndividualPercentOfValue:
+        type: number
+        format: double
+        description: >-
+          Percent of value held by the shareholder; in the case of joint
+          shareholders the percent of value is divided equally between the joint
+          shareholders
+      IndividualPercentOfVotes:
+        type: number
+        format: double
+        description: >-
+          Percent of voting held by the shareholder; in the case of joint
+          shareholders the percent of voting rights is divided equally between
+          the joint shareholders
+  RegisteredAddress:
+    type: object
+    properties:
+      LocationLine1:
+        type: string
+        description: Registered address of the root company
+      LocationLine2:
+        type: string
+        description: Registered address of the root company
+      LocationLine3:
+        type: string
+        description: Registered address of the root company
+      LocationLine4:
+        type: string
+        description: Registered address of the root company
+      LocationLine5:
+        type: string
+        description: Registered address of the root company
+      Town:
+        type: string
+        description: Registered address of the root company
+      County:
+        type: string
+        description: Registered address of the root company
+      Postcode:
+        type: string
+        description: Registered address of the root company
+  ServiceAddress:
+    type: object
+    properties:
+      HouseName:
+        type: string
+        description: Service address of the director
+      HouseNumber:
+        type: string
+        description: Service address of the director
+      Street:
+        type: string
+        description: Service address of the director
+      District:
+        type: string
+        description: Service address of the director
+      County:
+        type: string
+        description: Service address of the director
+      Postcode:
+        type: string
+        description: Service address of the director
+      Town:
+        type: string
+        description: Service address of the director
+  Ultimate_Beneficial_Owners_response_example:
+    type: object
+    description: >-
+      <div>
+        <p>
+          This is an example of a JSON response provided for a the Ultimate Beneficial Owners data.
+        </p>
+
+        <div class="row">
+          The response is split in 2 sections:
+          <li>A summary section which provides information about the capital structure of the business and any exception found in resolving the ownership structure.</li>
+          <li>A list of beneficial owners (which could be individuals or businesses) and their holding in the subject company.</li>
+        </div>
+        <br/>
+        <div class='row'>
+          <pre>
+      {
+        "RegNumber": "string",
+        "AnnualReturnsDate": "string",
+        "LatestReturnsInTreeDate": "string",
+        "TotIndValPercAccounted": 0,
+        "TotValPercAccountedExcCos": 0,
+        "TotIndVotPercAccounted": 0,
+        "TotVotPercAccountedExcCos": 0,
+        "ForeignCompany": "Y",
+        "UnregisteredCompany": "Y",
+        "NoOfTiers": 0,
+        "CircularOwnership": "Y",
+        "PLCDetected": "Y",
+        "NumberOfShareholders": 0,
+        "MultipleCurrencies": "Y",
+        "MultipleShareClasses": "Y",
+        "NomineesDetected": "Y",
+        "BulkListDetected": "Y",
+        "PendingDetected": "Y",
+        "SurnameContainsPending": "Y",
+        "SurnameContainsNominees": "Y",
+        "SurnameContainsBulkList": "Y",
+        "TrustPartCharityInName": "Y",
+        "MissingFirstname": "Y",
+        "JointShareholders": "Y",
+        "ValueCalculationImpossible": "Y",
+        "VotingCalculationImpossible": "Y",
+        "DissolvedCompanyInTree": "Y",
+        "UBOs": [
+          {
+            "Tstamp": "2018-12-13",
+            "AnnualReturnsDate": "string",
+            "ShareholderType": "I",
+            "DirectorURN": "string",
+            "ShareholderID": "string",
+            "Title": "string",
+            "Forename": "string",
+            "MiddleName": "string",
+            "Surname": "string",
+            "NameSuffix": "string",
+            "DateOfBirth": "string",
+            "ForeignAddressIndicator": "string",
+            "Nationality": "string",
+            "JobTitle": "string",
+            "ServiceAddress": {
+              "HouseName": "string",
+              "HouseNumber": "string",
+              "Street": "string",
+              "District": "string",
+              "County": "string",
+              "Postcode": "string",
+              "Town": "string"
+            },
+            "CompanyNumber": "string",
+            "CompanyName": "string",
+            "RegisteredAddress": {
+              "LocationLine1": "string",
+              "LocationLine2": "string",
+              "LocationLine3": "string",
+              "LocationLine4": "string",
+              "LocationLine5": "string",
+              "Town": "string",
+              "County": "string",
+              "Postcode": "string"
+            },
+            "ShLegalStatus": "string",
+            "JointPercentOfValue": 0,
+            "JointPercentOfVotes": 0,
+            "JointShareholderFlag": "string",
+            "SIC1992_1": "string",
+            "SIC1992_2": "string",
+            "SIC1992_3": "string",
+            "SIC1992_4": "string",
+            "SIC1992_5": "string",
+            "SIC1992_6": "string",
+            "SIC1992_7": "string",
+            "SIC1992_8": "string",
+            "SIC1992_9": "string",
+            "SIC1992_10": "string",
+            "IndividualPercentOfValue": 0,
+            "IndividualPercentOfVotes": 0
+          }
+        ]
+      }
+          </pre>
+        </div>
+      </div>
+  Ultimate_Beneficial_Owners_error_example:
+    type: object
+    description: >-
+      <div>
+         <p>This is a 400 error example when we've provided a Registration Number that has an invalid format; other errors follow the same structure.</p>
+         <pre>
+         {
+             "Error": {
+                  "Code": 400,
+                  "Message": "Invalid URL or Verb specifed.",
+                  "MoreInfo": "Please see documentation at https://developer.experian.co.uk."
+             }
+         }
+         </pre>
+      </div>
+  KybDataPeopleRequestBody:
+    type: object
+    properties:
+      Firstname:
+        type: string
+        description: The first name of the person to be screened
+        example: "Bob"
+      MiddleName:
+        type: string
+        description: The middle name of the person to be screened
+        example: null
+      Surname:
+        type: string
+        description: The last name of the person to be screened
+        example: "Smith"
+      DateOfBirth:
+        type: string
+        description: The date of birth of the person to be screened
+        example: "01/01/2021"
+      AddressLine_1:
+        type: string
+        description: First line of address for the person to be screened
+        example: "1a Church Lane"
+      AddressLine_2:
+        type: string
+        description: Second line of address for the person to be screened
+        example: null
+      AddressLine_3:
+        type: string
+        description: Third line of address for the person to be screened
+        example: null
+      AddressLine_4:
+        type: string
+        description: Fourth line of address for the person to be screened
+        example: null
+      AddressLine_5:
+        type: string
+        description: Fifth line of address for the person to be screened
+        example: null
+      AddressLine_6:
+        type: string
+        description: Sixth line of address for the person to be screened
+        example: null
+      Town:
+        type: string
+        example: "Nottingham"
+      County:
+        type: string
+        example: "Nottinghamshire"
+      Country:
+        type: string
+        example: "United Kingdom"
+      Postcode:
+        type: string
+        example: "NG80 1ZZ"
+      LnScreeningSuppress:
+        type: string
+        description: Optional flag to suppress Lexis Nexis screening
+        example: "true"
+      IdVerificationSuppress:
+        type: string
+        description: Optional flag to suppress Id verification screening
+        example: "true"
+  KybDataPeopleResponse:
+    type: object
+    additionalProperties: false
+    properties:
+      Results:
+        $ref: "#/definitions/KybDataPeopleResults"
+  KybDataPeopleResults:
+    type: object
+    additionalProperties: false
+    properties:
+      ClientPeopleScreeningLexisNexis:
+        $ref: "#/definitions/KybDataSummaryLNFields"
+      ClientPeopleScreeningCrosscore:
+        $ref: "#/definitions/KybDataCCDetails"
+      LexisNexisDetails:
+        $ref: "#/definitions/KybDataLexisNexisDetails"
+      LnScreeningSuppress:
+        type: string
+        description: Flag to suppress Lexis Nexis screening
+        example: "true"
+      IdVerificationSuppress:
+        type: string
+        description: Flag to suppress Id Verification screening
+        example: "true"
+      ErrorCodes:
+        type: array
+        items:
+          type: string
+          description: Category of error that occurred during processing
+          example: "ORCHESTRATOR_API_TIMEOUT"
+  KybDataRequestBody:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        type: string
+        description: Registration number of the company
+        example: "99999999"
+      LegalStatus:
+        type: string
+        description: Limited (L) or non limited (N), optional
+        example: "L"
+      HunterId:
+        type: string
+        description: ID of record from Hunter to be updated, optional - for use with specific Hunter feature
+        example: ABC123
+      DataBlocks:
+        type: array
+        items:
+          type: string
+          description: Name of requested DataBlock
+        description: List of subscribed datablocks requested in the response, optional e.g. ["CompanyInformation","KeyParties"]
+        example: ["CompanyInformation", "KeyParties"]
+      CompanyName:
+        type: string
+        description: Name of company to be matched
+        example: "ABC Ltd"
+      AddressLine_1:
+        type: string
+        description: First line of address to be matched, optional
+        example: "1 Church Lane"
+      AddressLine_2:
+        type: string
+        description: Second line of address to be matched, optional
+        example: null
+      AddressLine_3:
+        type: string
+        description: Third line of address to be matched, optional
+        example: null
+      AddressLine_4:
+        type: string
+        description: Fourth line of address to be matched, optional
+        example: null
+      AddressLine_5:
+        type: string
+        description: Fifth line of address to be matched, optional
+        example: null
+      AddressLine_6:
+        type: string
+        description: Sixth line of address to be matched, optional
+        example: null
+      Town:
+        type: string
+        description: Town of address to be matched, optional
+        example: "London"
+      County:
+        type: string
+        description: County of address to be matched, optional
+        example: "Greater London"
+      Postcode:
+        type: string
+        description: Postcode of address to be matched, optional
+        example: "AB1 2XY"
+      Country:
+        type: string
+        description: Country of address to be matched, optional
+        example: "United Kingdom"
+      OwnershipPercentageOverride:
+        type: string
+        description: Clients can optionally set the UBO threshold at the request level to override the Config level's minOwnershipPercentageRequired, allowing the system to determine UBOs based on this threshold.
+        example: "99.0990"
+      LnScreeningSuppress:
+        type: string
+        description: Optional flag to suppress Lexis Nexis screening
+        example: "true"
+      IdVerificationSuppress:
+        type: string
+        description: Optional flag to suppress Id verification screening
+        example: "true"
+  KybDataResponse:
+    type: object
+    additionalProperties: false
+    properties:
+      Results:
+        $ref: "#/definitions/KybDataResults"
+  KybDataResults:
+    type: object
+    additionalProperties: false
+    properties:
+      BusinessRef:
+        type: string
+        description: Registration number of the company, not present in a matching result
+        example: "99999999"
+      LegalStatus:
+        type: string
+        description: L for limited businesses N for non-limted
+        example: "L"
+      HunterId:
+        type: string
+        description: Hunter ID of record which will be updated in Hunter with results - only with specific Hunter feature
+        example: "ABC123"
+      LnScreeningSuppress:
+        type: string
+        description: Flag to suppress Lexis Nexis screening
+        example: "true"
+      IdVerificationSuppress:
+        type: string
+        description: Flag to suppress ID verification
+        example: "true"
+      Matching:
+        $ref: "#/definitions/KybDataMatching"
+      CompanyInformation:
+        $ref: "#/definitions/KybDataCompanyInformation"
+      KeyParties:
+        $ref: "#/definitions/KybDataKeyParties"
+      LexisNexisDetails:
+        $ref: "#/definitions/KybDataLexisNexisDetails"
+      ErrorCodes:
+        type: array
+        items:
+          type: string
+          description: Category of error that occurred during processing
+          example: "ORCHESTRATOR_API_TIMEOUT"
+  KybDataMatching:
+    type: object
+    properties:
+      Matched:
+        type: string
+        description: Whether or not the details sent matched to a record
+        example: "yes"
+      NumberOfMatches:
+        type: number
+        format: double
+        description: Number of matches the details sent made
+        example: 2
+      ListOfMatches:
+        type: string
+        description: List of the source codes to which the details have matched
+        example: "64,4"
+      BestMatchedId:
+        type: string
+        description: Best matched ID that will be used for remaining process
+        example: "12345678"
+      BestMatchedLegalStatus:
+        type: string
+        description: Best matched legal status that will be used for remaining process
+        example: "L"
+      MatchingDetails:
+        $ref: "#/definitions/KybDataMatchingDetails"
+  KybDataMatchingDetails:
+    type: array
+    items:
+      properties:
+        MatchType:
+          type: string
+          description: Type of match that was made
+          example: "Full Match"
+        SourceCode:
+          type: number
+          format: double
+          description: Code for the source to which we have matched
+          example: 64
+        SourceIdentifier:
+          type: string
+          description: Identifier on that source to which we have matched e.g. CRN (companies house record number), Edubase ID etc.
+          example: "12345678"
+        Score:
+          type: number
+          format: double
+          description: Match score
+          example: 83
+        TradingName:
+          type: string
+          description: Registered name of the company, business or charity
+          example: "The Brace"
+        TradingAddress1:
+          type: string
+          description: First segment of the company's or charity's registered address
+          example: "15 Artillery Passage"
+        TradingAddress2:
+          type: string
+          description: Second segment of the company's or charity's registered address
+          example: "Whitechapel"
+        TradingAddress3:
+          type: string
+          description: Third segment of the company's or charity's registered address
+          example: "London"
+        TradingAddress4:
+          type: string
+          description: Fourth segment of the company's or charity's registered address
+          example: "Greater London"
+        TradingPostcode:
+          type: string
+          description: Zip code of the registered address
+          example: "E1 7LJ"
+        IndustrySector:
+          type: string
+          description: The category of the registered company. Refers to activities when dealing with scottish charity extra source details
+          example: "1104 Health & Beauty 1826 Cosmetic Dentistry"
+        MoneyserviceBusinessFlag:
+          type: string
+          description: Flags to inform if any of the money services are being provided at the business location
+          example: "NO"
+        ImageEvidence:
+          type: string
+          description: Location of the image of the registered company
+          example: "http://phgroup.localdataimages.com/RAW_WM/2473/24735848.jpg"
+        ImageEvidenceTimestamp:
+          type: string
+          description: Timestamp of the uploaded image of the company
+          example: "24/06/2022 12:00:33"
+        IncorporationDate:
+          type: string
+          description: Date the company or charity was incorporated or first seen on the official business registry
+          example: "16/02/2022"
+        MandatoryLicences:
+          type: string
+          description: Flag denoting where business or charity can be found on a register that requires licence to operate
+          example: "1040696"
+        RatingDate:
+          type: string
+          description: The date on which the rating of the business was assigned or updated
+          example: "2/1/2022"
+        LegalRegisteredNumber:
+          type: string
+          description: The unique registration number assigned to the parent charity or obtained from the offical business registry
+          example: "SC011353"
+        LatestFinancialReport:
+          type: string
+          description: The most recent financial report that specifically includes income information
+          example: "13690"
+        PaymentServiceProviderFlag:
+          type: string
+          description: Flag representing a company providing payment services, showcasing the type of services, permission activities, and authority to hold client money
+          example: "Not hold and not control client money"
+        LdcCode:
+          type: string
+          description: Local Data Company Code
+          example: "1195"
+        LdcCodeDesc:
+          type: string
+          description: Local Data Company Code Description
+          example: "Fashion Shops"
+        LdcBureauDeChange:
+          type: string
+          description: Indicates if the company operates as a foreign currency exchange
+          example: "0"
+        LdcMoneyTransfer:
+          type: string
+          description: Indicates if the company provides money transfer services
+          example: "0"
+        LdcMoneyGram:
+          type: string
+          description: Indicates if the company is affiliated with MoneyGram services
+          example: "0"
+        LdcPawnbrokers:
+          type: string
+          description: Indicates if the company operates as a pawnbroker
+          example: "0"
+        LdcPaydayLender:
+          type: string
+          description: Indicates if the company offers payday lending services
+          example: "1"
+        LdcRia:
+          type: string
+          description: Indicates if the company is affiliated with RIA Money Transfer services
+          example: "0"
+        LdcWesternUnion:
+          type: string
+          description: Indicates if the company is affiliated with Western Union services
+          example: "1"
+        LdcCredit:
+          type: string
+          description: Indicates if the company provides credit-related services
+          example: "0"
+        LdcOtherMsb:
+          type: string
+          description: Indicates if the company is engaged in other money service business activities not specifically listed above
+          example: "1"
+        AlternativeNames:
+          type: string
+          description: Other designations or aliases used to identify the Financial Conduct Authority or Financial Conduct Authority under Payment Services Directive aside from its official name
+          example: "Barclays Bank Trust Company Limited,Barclays Personal Investment Management"
+        FcaAuthorisationStatus:
+          type: string
+          description: Current FCA authorisation status of the business
+          example: "Authorised"
+        FcaDateFirstAuthorised:
+          type: string
+          description: Date the business was first authorised by the FCA
+          example: "08/05/2020"
+        FcaSubStatus:
+          type: string
+          description: Additional status detail provided by the FCA
+          example: "Former"
+        FcaLegalStatus:
+          type: string
+          description: Legal status of the firm as recognised by the FCA
+          example: "Limited"
+        FcaFirmType:
+          type: string
+          description: Type of firm as classified by the FCA
+          example: "Regulated"
+        FcaAuthorityToHoldClientMoney:
+          type: string
+          description: Indicates if the firm is authorised to hold client money
+          example: "Hold and control client money"
+        FcaMlrStatus:
+          type: string
+          description: Money Laundering Regulations (MLR) compliance status of the FCA
+          example: "MLRs Registered"
+        FcaMlrStatusEffectiveDate:
+          type: string
+          description: Date when the current MLR status became effective
+          example: "12/10/2020"
+        FcaPsdStatus:
+          type: string
+          description: Payment Services Directive (PSD) status of the business
+          example: "Authorised Payment Institution"
+        FcaPsdAgentStatus:
+          type: string
+          description: PSD agent status if applicable
+          example: "PSD Agent Former"
+        FcaPsdActivityCategory:
+          type: array
+          items:
+            type: string
+            description: Category of PSD activities the business is authorised for
+            example: "Payment Services Directive"
+        FcaPsdActivityName:
+          type: array
+          items:
+            type: string
+            description: Name of the specific PSD activity
+            example: "6. Money remittance"
+        FcaRegulatedByFca:
+          type: string
+          description: Indicates if the regulator is a Financial Conduct Authority
+          example: "Y"
+        FcaRegulatedByPra:
+          type: string
+          description: Indicates if the business is regulated by a Prudential Regulation Authority (PRA)
+          example: "N"
+        FcaDisciplinaryActionTaken:
+          type: string
+          description: Indicates if any disciplinary action has been taken by the FCA
+          example: "Y"
+        FcaCountOfDisciplinaryActions:
+          type: string
+          description: Total count of disciplinary actions that has been taken up
+          example: "1"
+        FcaDisciplinaryActions:
+          type: array
+          items:
+            type: object
+            properties:
+              ActionDate:
+                type: string
+                description: Date of the disciplinary action
+                example: "15/02/2007"
+              EnforcementType:
+                type: string
+                description: Type of enforcement action taken
+                example: "FSMA"
+              TypeOfAction:
+                type: string
+                description: Description of the disciplinary action
+                example: "Fines"
+          description: List of disciplinary actions taken by FCA
+          example:
+            - ActionDate: "15/02/2007"
+              EnforcementType: "FSMA"
+              TypeOfAction: "Fines"
+        FsaFirstSeenDate:
+          type: string
+          description: Date when the business was first recorded by the Food Standards Agency
+          example: "10/10/2016"
+        FsaDateOfInspection:
+          type: string
+          description: Date of the most recent inspection by the Food Standards Agency
+          example: "17/10/2023"
+        FsaBusinessTypeId:
+          type: string
+          description: Identifier for the business type as classified by the Food Standards Agency
+          example: "1.0000000000"
+        FsaBusinessTypeDesc:
+          type: string
+          description: Description of the business type according to the Food Standards Agency
+          example: "Restaurant/Cafe/Canteen"
+        FsaBusinessType:
+          type: string
+          description: Name of the business type as registered with the Food Standards Agency
+          example: "Restaurant/Cafe/Canteen"
+        SourceOfCharitiesCommission:
+          type: string
+          description: Source or jurisdiction of the charity's regulatory authority is either 'Scotland' or 'England & Wales'
+          example: "England & Wales"
+        CharityNumber:
+          type: string
+          description: Unique registration number assigned to the charity by the regulatory authority
+          example: "327517"
+        CharityRegistrationDate:
+          type: string
+          description: Date when the charity was officially registered
+          example: "04/08/1987"
+        CharityStatus:
+          type: string
+          description: Current registration status of the charity
+          example: "Registered"
+        CharityConstitutionalForm:
+          type: string
+          description: Legal or constitutional form under which the charity is established
+          example: "Trust"
+        CharityIncome:
+          type: string
+          description: Total reported income of the charity
+          example: "5400.9000000000"
+        CharityExpenditure:
+          type: string
+          description: Total reported expenditure of the charity
+          example: "3500.0000000000"
+        GeographicalSpread:
+          type: string
+          description: Geographical area where the charity operates
+          example: "Local point"
+        MainOperatingLocation:
+          type: string
+          description: Main location where the charity operates
+          example: "Highland"
+        CharityAreasOfOperation:
+          type: array
+          items:
+            type: object
+            properties:
+              AreaType:
+                type: string
+                description: Type of area where the charity operates
+                example: "Country"
+              AreaDescription:
+                type: string
+                description: Description or name of the area where the charity operates
+                example: "Tanzania"
+              IsoCode:
+                type: string
+                description: ISO country code if the AreaType is a Country
+                example: "TZA"
+          description: List of areas where the charity operates
+          example:
+            - AreaType: "Country"
+              AreaDescription: "Tanzania"
+              IsoCode: "TZA"
+            - AreaType: "Local Authority"
+              AreaDescription: "City Of London"
+        GoverningDocumentDescription:
+          type: string
+          description: Description of the main governing document for the charity
+          example: "CONSTITUTION ADOPTED 5 OCTOBER 2000."
+        CharityAreaOfBenefit:
+          type: string
+          description: Areas or communities that benefit from the charity's activities
+          example: "NOT DEFINED. IN PRACTICE KIDDERMINSTER, WORCESTERSHIRE."
+        GamblingCommissionActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              Activity:
+                type: string
+                description: Name of the gambling activity
+                example: "Bingo"
+              Status:
+                type: string
+                description: Current status of the activity
+                example: "Active"
+              From:
+                type: string
+                description: Start date of the activity
+                example: "30/05/2022"
+              To:
+                type: string
+                description: End date of the activity, if applicable
+                example: "13/10/2020"
+          description: List of gambling commission activities
+          example:
+            - Activity: "Bingo"
+              Status: "Active"
+              From: "30/05/2022"
+            - Activity: "Gaming Machine General Adult Gaming Centre"
+              Status: "Active"
+              From: "01/01/2009"
+              To: "13/10/2020"
+        GamblingCommissionTradingNames:
+          type: array
+          items:
+            type: object
+            properties:
+              Status:
+                type: string
+                description: Status of the trading name
+                example: "Active"
+              TradingName:
+                type: string
+                description: Name under which the business trades
+                example: "lings amusements"
+          description: List of gambling commission trading names
+          example:
+            - Status: "Active"
+              TradingName: "lings amusements"
+        VosaTypeOfLicence:
+          type: string
+          description: Type of vehicle operator licence issued by VOSA
+          example: "Standard National"
+        VosaNumberOfVehicles:
+          type: string
+          description: Number of vehicles covered under the VOSA licence
+          example: "1"
+  KybDataBusinessConfidence:
+    type: object
+    properties:
+      BusinessConfidenceScore:
+        type: number
+        format: double
+        description: Confidence score that the business exists based on the volume and quality of the sources where the business exists
+        example: 50
+      PrimarySourceCount:
+        type: number
+        format: double
+        description: Number of primary sources to which the business has matched
+        example: 1
+      SecondarySourceCount:
+        type: number
+        format: double
+        description: Number of secondary sources to which the business has matched
+        example: 1
+  KybDataCompanyInformation:
+    type: object
+    properties:
+      DataQualityFlag:
+        type: string
+        description: Indicates whether the supplied RegNumber has been found, either null or "Company not found"
+        example: null
+      BusinessName:
+        type: string
+        description: Name of the business
+        example: "ABC Ltd"
+      RegisteredAddressLine1:
+        type: string
+        description: Registered address of the business
+        example: "1 Church Lane"
+      RegisteredAddressLine2:
+        type: string
+        description: Registered address of the business
+        example: null
+      RegisteredAddressLine3:
+        type: string
+        description: Registered address of the business
+        example: null
+      RegisteredAddressLine4:
+        type: string
+        description: Registered address of the business
+        example: null
+      RegisteredAddressLine5:
+        type: string
+        description: Registered address of the business
+        example: null
+      RegisteredTown:
+        type: string
+        description: Registered town of the business
+        example: "London"
+      RegisteredCounty:
+        type: string
+        description: Registered county of the business
+        example: "Greater London"
+      RegisteredPostcode:
+        type: string
+        description: Registered address of the business
+        example: "AB1 2XY"
+      DissolvedFlag:
+        type: string
+        description: Y/N flag indicates whether the business is dissolved
+        example: "N"
+      PartialOwnershipFlag:
+        type: string
+        description: Y/N flag indicates whether the business has partial ownership
+        example: "N"
+      ExceptionFlag:
+        type: string
+        description: Y/N flag indicates whether the business UBO structure has an exception
+        example: "Y"
+      ExceptionDescription:
+        type: string
+        description: Summarises the exception(s) in the business UBO structure
+        example: "Foreign company;Unregistered company;Circular ownership;PLC detected;Multiple share classes;Nominees detected;Bulk list detected;Pending detected;Surname contains pending;Surname contains nominees;Surname contains bulk list;Trust, partnership or charity in name;Missing firstname;Joint shareholders;Value calculation impossible;Voting calculation impossible;Multiple currencies"
+      CountryOfOrigin:
+        type: string
+        description: Country of Origin of the business
+        example: "United Kingdom"
+      IsoCode:
+        type: string
+        description: ISO Code of the country of origin of the business
+        example: "GBR"
+      IncorporationDate:
+        type: string
+        description: Incorporation date of the business in yyyy-mm-dd format
+        example: "2001-05-15"
+      DissolutionDate:
+        type: string
+        description: Dissolution date of the business in yyyy-mm-dd format
+        example: "2020-12-31"
+      EarliestKnownDate:
+        type: string
+        description: The earliest date when this associated non-limited business became known to Experian (yyyy-mm-dd)
+        example: null
+      Url:
+        type: string
+        description: URL for the website of the business
+        example: "www.juliashouse.org"
+      LegalEntityType:
+        type: string
+        description: Legal entity type of the business
+        example: "Private Limited Company Without Share Capital"
+      CompanyLegalStatus:
+        type: string
+        description: L for registered businesses, N for non registered businesses
+        example: "L"
+      CrnPrefix:
+        type: string
+        description: The company registration number prefix
+        example: "SC"
+      CrnPrefixDescription:
+        type: string
+        description: The company registration number prefix description
+        example: "England & Wales Company"
+      UltimateParentCompanyId:
+        type: string
+        description: Company Registration Number, if the country exposure is linked to a company like ultimate parent
+        example: "05506995"
+      UltimateParentCompanyName:
+        type: string
+        description: Company Name, if the country exposure is linked to a company, like ultimate parent
+        example: "Global Holdings Ltd"
+      UltimateParentCompanyCountry:
+        type: string
+        description: Ultimate Parent Company's Country name
+        example: "United Kingdom"
+      UltimateParentCompanyIso:
+        type: string
+        description: ISO3 Country Code of the country linked to the customer
+        example: "GBR"
+      UboTotIndValPercAccounted:
+        type: string
+        description: Total value percentage held by individuals in the corporate tree
+        example: "100"
+      UboTotValPercAccountedExcCos:
+        type: string
+        description: Total value percentage held by entities at the end of the corporate tree
+        example: "100"
+      UboTotIndVotPercAccounted:
+        type: string
+        description: Total voting percentage held by individuals in the corporate tree
+        example: "100"
+      UboTotVotPercAccountedExcCos:
+        type: string
+        description: Total voting percentage held by entities at the end of the corporate tree
+        example: "100"
+      UboNumberOfTiers:
+        type: number
+        format: double
+        description: Number of tiers in the corporate tree
+        example: 2
+      UboNumberOfShareholders:
+        type: number
+        format: double
+        description: Total number of distinct shareholders in the corporate tree
+        example: 3
+      DirectorAnnualReturnsDate:
+        type: string
+        description: Annual returns date associated with the shareholder
+        example: "2024-06-30"
+      DirectorNumCurrDirs:
+        type: number
+        format: double
+        description: Number of Directors recorded for the company that are current
+        example: 5
+      DirectorNumPrevDirs:
+        type: number
+        format: double
+        description: Number of previous Directors recorded for the company
+        example: 2
+      DirectorAvgAge:
+        type: number
+        format: double
+        description: Average age of Directors in years
+        example: 52
+      DirectorAvgLength:
+        type: number
+        format: double
+        description: Average length of Directorship in months
+        example: 36
+      DirectorNumCurrDirectorLast12:
+        type: number
+        format: double
+        description: Number of Current Directors of the limited company who were appointed in the last 12 months
+        example: 1
+      DirectorNumAppointmentsLast12:
+        type: number
+        format: double
+        description: Number of director appointments for the limited company during the last 12 months
+        example: 3
+      DirectorNumResignationsLast12:
+        type: number
+        format: double
+        description: Number of director resignations for the limited company during the last 12 months
+        example: 1
+      DirectorNumDisqualifications:
+        type: number
+        format: double
+        description: Number of disqualifications against any of the Current Directors of the limited company
+        example: 0
+      FormationAgent:
+        type: string
+        description: At least 1 director has been recognised as a formation agent by Companies House
+        example: "Y"
+      SlpLlpOwned:
+        type: string
+        description: The parent, ultimate parent, UBO or PSC is an LLP or SLP
+        example: "N"
+      NoPsc:
+        type: string
+        description: No PSC has been declared but there is at least 1 shareholder with more than 25% ownership
+        example: "Y"
+      PscDodging:
+        type: string
+        description: The business has 4 shareholders, each with exactly 25% ownership
+        example: "N"
+      Phoenix:
+        type: string
+        description: A company is defined as a phoenix if one of its founding directors closes one of their existing companies within 6 months before or after creating the new company
+        example: "Y"
+      CHDefaultAddress:
+        type: string
+        description: The registered address has been defaulted to the Companies House registered address
+        example: "N"
+      ResidentialAddress:
+        type: string
+        description: The registered address of the business is a UK residential address
+        example: "Y"
+      ResidentialAddressHighVol:
+        type: string
+        description: Over 100 businesses have been registered to a residential address
+        example: "N"
+      MailboxAddress:
+        type: string
+        description: The registered address is a PO Box
+        example: "Y"
+      RegisteredAddressChanges:
+        type: string
+        description: The registered address of the business has changed more than 3 times in the past 12 months
+        example: "N"
+      DirectorNationalityChanges:
+        type: string
+        description: At least one director has changed their nationality in the past 12 months
+        example: "Y"
+      NoUKDirIncorp:
+        type: string
+        description: All directors were of non-UK nationality and residency at the point of incorporation
+        example: "N"
+      HighRiskDirIncorp:
+        type: string
+        description: All directors were nationals and residents of a high risk jurisdiction at the point of incorporation
+        example: "Y"
+      NoUKDir:
+        type: string
+        description: All current directors are of non-UK nationality and residency
+        example: "N"
+      HighRiskDir:
+        type: string
+        description: All current directors are nationals and residents of a high risk jurisdiction
+        example: "Y"
+      NoUKPsc:
+        type: string
+        description: All current PSCs are of non-UK nationality and residency
+        example: "N"
+      HighRiskPsc:
+        type: string
+        description: All current PSCs are nationals and residents of a high risk jurisdiction
+        example: "Y"
+      NoUKUbo:
+        type: string
+        description: All current UBOs are of non-UK nationality and residency
+        example: "N"
+      HighRiskUbo:
+        type: string
+        description: All current UBOs are nationals and residents of a high risk jurisdiction
+        example: "Y"
+      NoUKKp:
+        type: string
+        description: All key parties (directors, UBOs, PSCs) are of non-UK nationality and residency
+        example: "N"
+      HighRiskKp:
+        type: string
+        description: All key parties (directors, UBOs, PSCs) are of high-risk nationality and residency
+        example: "Y"
+      MultiJurDirIncorp:
+        type: string
+        description: There were 3 or more directors at incorporation, across which at least 3 countries were represented based on nationality and country of residence
+        example: "N"
+      MultiJurDir:
+        type: string
+        description: There are 3 or more current directors and across these, at least 3 countries are represented based on nationality and country of residence
+        example: "Y"
+      DirHighVolCos:
+        type: string
+        description: At least 1 director has over 100 directorships
+        example: "N"
+      ConflictingDirCoR:
+        type: string
+        description: At least 1 director has a conflicting country of residence across their active directorships
+        example: "Y"
+      ConflictingDirNat:
+        type: string
+        description: At least 1 director has a conflicting nationality across their active directorships
+        example: "N"
+      ConflictingDirDoB:
+        type: string
+        description: At least 1 director has a conflicting date of birth across their active directorships
+        example: "Y"
+      ConsistentOverPerformance:
+        type: string
+        description: The company’s credit turnover (monthly inflows) is consistently higher than expected for a company in its peer group (3 standard deviations or higher from the peer group average, over a 6 month period)
+        example: "N"
+      FastMoneyMovement:
+        type: string
+        description: The company’s credit and debit turnover (monthly inflows and outflows respectively) are closely aligned, implying that funds go into the account and subsequently leave the account in a short time period
+        example: "Y"
+      LowAverageBalance:
+        type: string
+        description: The company’s average balance for a given month is lower than expected for a company in the same peer group
+        example: "N"
+      RoundTransactionsLatestMonth:
+        type: string
+        description: Flag indicating that a current account associated with the company has a round value for credit turnover in the most recent reporting month ( i.e. £100,000, £1,000,000)
+        example: "Y"
+      RoundTransactionsLatestYear:
+        type: string
+        description: Percentage of months in the past year for which round values have been reported for credit turnover for at least 1 current account associated with the company
+        example: "N"
+      RoundTransactionsFull:
+        type: string
+        description: Percentage of months across all months available for the company for which round values have been reported for credit turnover for at least 1 current account associated with the company
+        example: "Y"
+      MisalignedInflows:
+        type: string
+        description: The annual inflows for a given accounting period are misaligned with the turnover reported in the filed accounts for the same period
+        example: "N"
+      MultipleCurrentAccounts:
+        type: string
+        description: Flag indicating that the business has more than 1 active current account
+        example: "Y"
+      MultipleBanks:
+        type: string
+        description: Flag indicating that the business has active current accounts with more than 1 bank
+        example: "N"
+      MultipleBanksNewIncorp:
+        type: string
+        description: Flag indicating that the business incorporated in the past 3 months and has active current accounts with more than 1 bank
+        example: "Y"
+      TradingWhilstDormant:
+        type: string
+        description: Transaction activity has been observed in CATO data whilst the company has been reported to be dormant
+        example: "N"
+      BusinessActivities:
+        type: object
+        properties:
+          Sic07:
+            type: string
+            description: Code of the sector provided by the UK Standard Industrial Classification of Economic Activities of the revised classification system 2007
+            example: "12345"
+          Sic07Description:
+            type: string
+            description: Description of the SIC07 code
+            example: "Other human health activities"
+          Sic92:
+            type: string
+            description: Code of the sector provided by the UK Standard Industrial Classification of Economic Activities of the classification system 1992
+            example: "7415"
+          Sic92Description:
+            type: string
+            description: Description of the SIC92 code
+            example: "Other human health activities"
+          ThomsonCode:
+            type: string
+            description: Code of the sector provided by Thomson Reuters Business Classification system
+            example: "17020"
+          ThomsonCodeDescription:
+            type: string
+            description: Description of the Thomson code
+            example: "Charities & Voluntary Organisations"
+          MarketLocationCode:
+            type: string
+            description: Code of the sector with respect to the specific Market it belongs to
+            example: "0328"
+          MarketLocationCodeDescription:
+            type: string
+            description: Description of the Market Location Code
+            example: "Charities and Charitable Organisations"
+      Lexisnexis:
+        $ref: "#/definitions/KybDataSummaryLNFields"
+  KybDataSummaryLNFields:
+    type: object
+    properties:
+      LNPep:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis PEP hit
+        example: "Yes"
+      LNPepRisk:
+        type: string
+        description: Indicates whether the PEP hit is High or Standard risk based on the users config
+        example: "High"
+      LNSanction:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis sanction hit
+        example: "Yes"
+      LNEnforcement:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis enforcement hit
+        example: "Yes"
+      LNEnforcementRisk:
+        type: string
+        description: Indicates whether the enforcement hit is High or Standard risk based on the users config
+        example: "Standard"
+      LNSoe:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis SOE hit
+        example: "Yes"
+      LNRca:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis RCA hit
+        example: "Yes"
+      LNRcaRisk:
+        type: string
+        description: Indicates whether the RCA hit is High or Standard risk based on the users config
+        example: "High"
+      LNAdverseMedia:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis adverse media hit
+        example: "Yes"
+      LNAdverseMediaRisk:
+        type: string
+        description: Indicates whether the adverse media hit is High or Standard risk based on the users config
+        example: "High"
+      LNUncategorisedHit:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis hit that wasn't categorised
+        example: "No"
+  KybDataKeyParties:
+    type: array
+    description: The data fields returned within the response are dependent on key parties' configuration
+    items:
+      properties:
+        ShareholderType:
+          type: string
+          description: Indicates the type of Key Party, I -> Individual, C -> Company, O -> Overseas company, X -> Unknown
+          example: "I"
+        LegalName:
+          type: string
+          description: Name of Key Party if a company
+          example: null
+        Title:
+          type: string
+          description: Title of Key Party if an individual
+          example: "Sir"
+        Forename:
+          type: string
+          description: Forename of Key Party if an individual
+          example: "Bob"
+        MiddleName:
+          type: string
+          description: MiddleName of Key Party if an individual
+          example: null
+        Surname:
+          type: string
+          description: Surname of Key Party if an individual
+          example: "Smith"
+        Nationality:
+          type: string
+          description: Nationality of Key Party if an individual
+          example: "British"
+        DateOfBirth:
+          type: string
+          description: Full Date of Birth of Key Party if an individual and only a UBO (not PSC)
+          example: "2022-04-25T00:00:00"
+        PartialDateOfBirth:
+          type: string
+          description: Partial Date of Birth of Key Party if an individual
+          example: "202204"
+        KpAddressLine_1:
+          type: string
+          description: Address of Key Party
+          example: "1a Church Lane"
+        KpAddressLine_2:
+          type: string
+          description: Address of Key Party
+          example: null
+        KpAddressLine_3:
+          type: string
+          description: Address of Key Party
+          example: null
+        KpAddressLine_4:
+          type: string
+          description: Address of Key Party
+          example: null
+        KpAddressLine_5:
+          type: string
+          description: Address of Key Party
+          example: null
+        KpTown:
+          type: string
+          description: Town of Key Party
+          example: "London"
+        KpCounty:
+          type: string
+          description: County of Key Party
+          example: "Greater London"
+        KpPostcode:
+          type: string
+          description: PostCode of Key Party
+          example: "AB1 2XY"
+        KpCountry:
+          type: string
+          description: Country of Key Party
+          example: "United Kingdom"
+        KpCountryOfResidence:
+          type: string
+          description: Country of Residence of Key Party
+          example: "United Kingdom"
+        KpCountryIsoCode:
+          type: string
+          description: Country of service address ISO code
+          example: "GBR"
+        KpCountryOfResidenceIsoCode:
+          type: string
+          description: Country of residential address ISO code
+          example: "GBR"
+        UBOShareholderID:
+          type: string
+          description: Ultimate beneficial owner unique identifier
+          example: "A123"
+        UBOPercentOfValue:
+          type: number
+          format: double
+          description: Percentage value of ownership from UBO calculation
+          example: 50
+        UBOPercentOfVotes:
+          type: number
+          format: double
+          description: Percentage value of voting rights from UBO calculation
+          example: 50
+        UBOCompanyNumber:
+          type: string
+          description: Companies House number of UBO if available
+          example: "B123"
+        ForeignAddressIndicator:
+          type: string
+          description: Foreign address flag where the shareholder is a director.
+          example: "Y"
+        Occupation:
+          type: string
+          description: Job title of the director
+          example: "Organizer"
+        LegalStatusOfTheShareholder:
+          type: string
+          description: Legal status of the shareholder if it is a company
+          example: "PLC"
+        JointPercentOfValue:
+          type: string
+          description: Percent of value held by the shareholder; in the case of joint shareholders each is assigned the full percent of value of the joint shareholding
+          example: "45"
+        JointPercentOfVotes:
+          type: string
+          description: Percent of voting held by the shareholder; in the case of joint shareholders each is assigned the full percent of voting rights of the joint shareholding
+          example: "27"
+        JointShareholderFlag:
+          type: string
+          description: Y/N flag indicating if the UBO has join ownership with another shareholder
+          example: "Y"
+        PSCID:
+          type: string
+          description: Person of Significant Control unique identifier
+          example: "C123"
+        PSCOwnership:
+          type: number
+          format: double
+          description: Percentage value of ownership from PSC data
+          example: 50
+        PSCVoting:
+          type: number
+          format: double
+          description: Percentage value of voting rights from PSC data
+          example: 50
+        PSCNatureOfControl:
+          type: string
+          description: List of numbers indicating the nature of control of the PSC
+          example: "1,2"
+        DirectorURN:
+          type: string
+          description: Director unique reference number; if no URN available then return "Unknown"
+          example: "D12345678"
+        DirectorAppointmentDate:
+          type: string
+          description: Appointment date of a director (YYYYMMDD)
+          example: "20210328"
+        DirectorOccupation:
+          type: string
+          description: Director occupation
+          example: "Managing Director"
+        TotalNoDirectorships:
+          type: string
+          description: Total number of active directorships; is blank if unknown
+          example: 3
+        DirectorshipsCrns:
+          type: string
+          description: List of comma separated CRNs; "Too many to return" if the list size is greater than 11; "Unknown" if number is unknown
+          example: "00000001, 00000002, 00000003"
+        DirectorshipLength:
+          type: number
+          format: double
+          description: Length of Current Directorship in months
+          example: 13
+        DirectorForeignAddressFlag:
+          type: string
+          description: Current Director address location indicator - Y = Foreign; N = Not foreign; M = Unknown
+          example: "Not Foreign"
+        DirectorNumberConvictions:
+          type: number
+          format: double
+          description: Number of convictions against the Current Director
+          example: 0
+        UBOFlag:
+          type: string
+          description: Y/null flag to indicate if the Key Party is a UBO
+          example: "Y"
+        PSCFlag:
+          type: string
+          description: Y/null flag to indicate if the Key Party is a PSC
+          example: "Y"
+        DirectorFlag:
+          type: string
+          description: Y/null flag to indicate if the Key Party is a director
+          example: "Y"
+        Lexisnexis:
+          $ref: "#/definitions/KybDataLNDetails"
+        Crosscore:
+          $ref: "#/definitions/KybDataCCDetails"
+  KybDataLNDetails:
+    type: object
+    additionalProperties: false
+    properties:
+      LNPep:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis PEP hit
+        example: "Yes"
+      LNPepRisk:
+        type: string
+        description: Indicates whether the PEP hit is High or Standard risk based on the users config
+        example: "High"
+      LNSanction:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis sanction hit
+        example: "Yes"
+      LNEnforcement:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis enforcement hit
+        example: "Yes"
+      LNEnforcementRisk:
+        type: string
+        description: Indicates whether the enforcement hit is High or Standard risk based on the users config
+        example: "Standard"
+      LNSoe:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis SOE hit
+        example: "Yes"
+      LNRca:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis RCA hit
+        example: "Yes"
+      LNRcaRisk:
+        type: string
+        description: Indicates whether the RCA hit is High or Standard risk based on the users config
+        example: "High"
+      LNAdverseMedia:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis adverse media hit
+        example: "Yes"
+      LNAdverseMediaRisk:
+        type: string
+        description: Indicates whether the adverse media hit is High or Standard risk based on the users config
+        example: "High"
+      LNUncategorisedHit:
+        type: string
+        description: Yes/No flag indicates if the business triggered a Lexis Nexis hit that wasn't categorised
+        example: "No"
+  KybDataCCDetails:
+    type: object
+    additionalProperties: false
+    properties:
+      CCRuleID:
+        type: string
+        description: Crosscore Rule ID
+        example: "U000"
+      CCDecision:
+        type: string
+        description: Crosscore decision
+        example: "NA00"
+      CCScore:
+        type: number
+        format: double
+        description: Crosscore confidence score between 0-90
+        example: 90
+      CCDecisionReason:
+        type: string
+        description: Reason for the authentiate decision
+        example: "The Applicant has been Authenticated to your required 'Level 1'"
+      CCAppReference:
+        type: string
+        description: Unique reference returned by Crosscore
+        example: "4HLABCDEFG"
+      CCAuthenticationAttempted:
+        type: string
+        description: TRUE/FALSE/ERROR, indicates whether or not the record was sent to Authenticate (e.g. business records are not sent)
+        example: "TRUE"
+      CCPrimaryDataSourceCount:
+        type: integer
+        description: Return number of primary data sources
+        example: 0
+      CCPrimaryDataItemCount:
+        type: integer
+        description: Return number of primary data items
+        example: 0
+      CCSecondaryDataSourceCount:
+        type: integer
+        description: Return number of secondary data sources
+        example: 0
+      CCSecondaryDataItemCount:
+        type: integer
+        description: Return number of secondary data items
+        example: 0
+      CCTriggeredRules:
+        $ref: "#/definitions/KybDataCCRules"
+      CrosscoreAttempted:
+        type: string
+        description: Whether crosscore call was made. True/Error/Timeout
+        example: "True"
+  KybDataCCAuthenticate:
+    type: object
+    additionalProperties: false
+    properties:
+      Decision:
+        type: string
+        description: >-
+          <div>
+              Will be one of:
+            <ul>
+              <li>AU01 --- Authenticated - Level 1</li>
+              <li>AU02 --- Authenticated - Level 2</li>
+              <li>NA00 --- Not Authenticated</li>
+              <li>RA00 --- Refer</li>
+            </ul>
+          </div>
+        example: "AU01"
+      DecisionReason:
+        type: string
+        description: >-
+          Text explaining the decision
+          Note: This text cannot be more than 90 characters. Therefore, some messages may be truncated
+        example: "Caution. One or more high-risk conditions applies to this request"
+      Score:
+        type: number
+        format: double
+        description: >-
+          Between 0 and 90. Shows the confidence that the identity exists, with 90 being the highest confidence. 
+          Values below 40 typically mean the identity cannot be authenticated
+        example: 90
+      Appreference:
+        type: string
+        description: Unique reference returned by Identity Authenticate
+        example: "YMQLSTJ5JX"
+      Rules:
+        $ref: "#/definitions/KybDataCCRules"
+      Matches:
+        $ref: "#/definitions/KybDataCCMatches"
+      Scores:
+        $ref: "#/definitions/KybDataCCScores"
+      Datacounts:
+        $ref: "#/definitions/KybDataCCDatacounts"
+      Warnings:
+        $ref: "#/definitions/KybDataCCWarnings"
+  KybDataCCGhostHunter:
+    type: object
+    additionalProperties: false
+    properties:
+      Score:
+        type: number
+        format: double
+        description: Ghost hunter score
+        example: 760
+      Appreference:
+        type: string
+        description: Ghost hunter app reference, UUID
+        example: "3843fced-8414-46f3-8d9f-472d09bdadf5"
+      Rules:
+        $ref: "#/definitions/KybDataCCRules"
+      Matches:
+        $ref: "#/definitions/KybDataCCMatches"
+      Scores:
+        $ref: "#/definitions/KybDataCCScores"
+      Warnings:
+        $ref: "#/definitions/KybDataCCWarnings"
+  KybDataCCRules:
+    type: array
+    items:
+      type: object
+      properties:
+        RuleId:
+          type: string
+          description: Rule ID
+          example: "U155"
+        RuleName:
+          type: string
+          description: Name of the Rule item
+          example: "AUTP_IDCONFLEVEL"
+        RuleScore:
+          type: number
+          format: double
+          description: Rule score
+          example: 1
+        RuleText:
+          type: string
+          description: Text of the rule
+          example: "The identity supplied has been confirmed at the required 'Level 1'"
+    description: "Return all rules that have been hit"
+    example:
+      - RuleId: "U155"
+        RuleName: "AUTP_IDCONFLEVEL"
+        RuleScore: 1
+        RuleText: "The identity supplied has been confirmed at the required 'Level 1'"
+  KybDataCCMatches:
+    type: array
+    items:
+      properties:
+        Name:
+          type: string
+          description: Name of the match item
+          example: "NewAuthScorecard"
+        Value:
+          type: string
+          description: Result - this is Y (Yes), N (No) or the number of matches
+          example: "Y"
+  KybDataCCScores:
+    type: array
+    items:
+      properties:
+        Name:
+          type: string
+          description: Name of the score item
+          example: "VerificationScore"
+        Type:
+          type: string
+          description: Score type
+          example: "SCORE"
+        Score:
+          type: number
+          format: double
+          description: Result of the score
+          example: 858
+  KybDataCCDatacounts:
+    type: array
+    items:
+      properties:
+        Name:
+          type: string
+          description: Name of the match item
+          example: "IDandLocDataAtCL_NumPrimDataItems"
+        Value:
+          type: number
+          format: double
+          description: Result of the data count
+          example: 7
+  KybDataCCWarnings:
+    type: array
+    items:
+      properties:
+        Responsecode:
+          type: string
+          description: Message number
+          example: null
+        Responsetype:
+          type: string
+          description: will always be "ERROR"
+          example: "ERROR"
+        Responsemessage:
+          type: string
+          description: Message returned
+          example: "request is null"
+  KybDataLexisNexisDetails:
+    type: array
+    items:
+      properties:
+        IndividualId:
+          type: string
+          description: Identifier for individuals
+          example: "A123"
+        UBOShareholderId:
+          type: string
+          description: UBO ID for linking Lexis Nexis hit to the correct key party
+          example: "B123"
+        PSCID:
+          type: string
+          description: PSC ID for linking Lexis Nexis hit to the correct key party
+          example: "C123"
+        DirectorURN:
+          type: string
+          description: Director URN for linking Lexis Nexis hit to the correct key party
+          example: "D12345678"
+        Pep:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis PEP hit
+          example: "Yes"
+        PepRisk:
+          type: string
+          description: Indicates whether the PEP hit is High or Standard risk based on the users config
+          example: "High"
+        Sanction:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis sanction hit
+          example: "No"
+        Enforcement:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis enforcement hit
+          example: "Yes"
+        EnforcementRisk:
+          type: string
+          description: Indicates whether the enforcement hit is High or Standard risk based on the users config
+          example: "High"
+        Soe:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis SOE hit
+          example: "No"
+        Rca:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis RCA hit
+          example: "Yes"
+        RcaRisk:
+          type: string
+          description: Indicates whether the RCA hit is High or Standard risk based on the users config
+          example: "High"
+        AdverseMedia:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis adverse media hit
+          example: "Yes"
+        AdverseMediaRisk:
+          type: string
+          description: Indicates whether the adverse media hit is High or Standard risk based on the users config
+          example: "High"
+        UncategorisedHit:
+          type: string
+          description: Yes/No flag indicates if the business triggered a Lexis Nexis hit that wasn't categorised
+          example: "No"
+        InputName:
+          type: string
+          description: Name that was sent in the request to Lexis Nexis
+          example: "Bob Smith"
+        MatchedAddress:
+          type: string
+          description: Address of returned Lexis Nexis match
+          example: "1a Church Lane"
+        MatchedAddressScore:
+          type: string
+          description: Match score of the address
+          example: "98"
+        MatchedName:
+          type: string
+          description: Name of the match returned from Lexis Nexis
+          example: "Robert Smith"
+        MatchedDob:
+          type: string
+          description: Date of birth of the match returned from Lexis Nexis
+          example: "1950"
+        MatchScore:
+          type: string
+          description: Overall score of the match
+          example: "90"
+        Notes:
+          type: string
+          description: Full description of the Lexis Nexis hit
+          example: "Source: International,Website || Level: State || Category: PEP | Subcategory: Former PEP || Last updated: 2022-04-25"
+        EntityTypeIds:
+          type: string
+          description: Individual or Business
+          example: "Individual"
+        Aka:
+          type: string
+          description: Any "also known as" of the match from Lexis Nexis
+          example: "Smithy"
+        LastUpdated:
+          type: string
+          description: Last time the Lexis Nexis matched record was updated on the Lexis Nexis side
+          example: "01/01/2020"
+        EntityUniqueIdMatch:
+          type: string
+          description: The unique ID of the Lexis Nexis hit
+          example: "WX0000000001"
+        Sources:
+          type: string
+          description: The original sources of Lexis Nexis hit
+          example: "https://awebsite.com"
+        ListHitFrom:
+          type: string
+          description: Describes the sources of the Lexis Nexis hit
+          example: "International,Website"
+        ReasonListed:
+          type: string
+          description: Summary of the hit
+          example: "PEP:Former PEP"
+        Subcategory:
+          type: string
+          description: Subcategory of the hit type
+          example: "Former PEP"
+  Shareholders:
+    additionalProperties: false
+    properties:
+      HeaderInfo:
+        items:
+          $ref: "#/definitions/HeaderInfo"
+        type: array
+      ShareCapital:
+        items:
+          $ref: "#/definitions/ShareCapital"
+        type: array
+      Shareholdings:
+        items:
+          $ref: "#/definitions/Shareholdings"
+        type: array
+      Shareholder:
+        items:
+          $ref: "#/definitions/Shareholder"
+        type: array
+  ShareCapital:
+    additionalProperties: false
+    properties:
+      RecordType:
+        type: string
+      IssuingCompany:
+        type: string
+        description: Registration Number of company issuing the shares
+      CurrentPreviousFlag:
+        type: string
+        description: >-
+          Indicator showing whether this is a current (C) or previous (P)
+          shareholding
+      EffectiveDate:
+        description: Effective date (yyyy-mm-dd)
+        type: string
+      ShareClassNo:
+        type: string
+        description: >-
+          Sequential number within the limited company to identify the Share
+          Class
+      Currency:
+        type: string
+        description: >-
+          Currency under which the Share Capital has been created - ISO currency
+          code
+      ShareClassCode:
+        type: string
+        description: Code identifying the Share Class
+      ShareClassDesc:
+        type: string
+        description: Description of the Share Class
+      VotingRights:
+        type: string
+        description: Indicator showing whether this Share Capital has voting rights
+      TotalNominalCapital:
+        type: string
+        description: Total Nominal Capital for the Share Capital
+      NumShares:
+        type: number
+        format: double
+        description: Number of shares for the Share Capital
+      NominalValue:
+        type: string
+        description: Nominal value of each share for the Share Capital
+      Percentage:
+        type: number
+        format: double
+      LatestUpdate:
+        description: >-
+          Date that the limited company data for this block was last updated
+          (yyyy-mm-dd)
+        type: string
+    required:
+      - Percentage
+  ShareHolderNameDetls:
+    additionalProperties: false
+    properties:
+      FirstName:
+        type: string
+        description: Shareholder's forename
+      MiddleNames:
+        type: string
+        description: Shareholder's middle names
+      Prefix:
+        type: string
+        description: "Shareholder's name prefix (Mr, Mrs, Dr, Sir, Professor etc.)"
+      Suffix:
+        type: string
+        description: Shareholder's name suffix (Jnr. etc.)
+      Surname:
+        type: string
+    description: Shareholder's surname
+  ShareHoldersLocation:
+    additionalProperties: false
+    properties:
+      LocationLine1:
+        type: string
+        description: Shareholder's address line 1
+      LocationLine2:
+        type: string
+        description: Shareholder's address line 2
+      LocationLine3:
+        type: string
+        description: Shareholder's address line 3
+      County:
+        type: string
+        description: Shareholder's address line 5
+      Town:
+        type: string
+        description: Shareholder's address line 4
+      Postcode:
+        type: string
+        description: Shareholder's address postcode
+      Country:
+        type: string
+        description: Shareholder's address country
+      RMC:
+        type: string
+        description: Shareholder's Rebate Mailing Code
+      PunaPostcode:
+        type: string
+  SharehldrsDetails:
+    additionalProperties: false
+    properties:
+      ShareholderType:
+        type: string
+        description: >-
+          Indicator showing whether this shareholder is an Individual (I) or
+          Corporate (C)
+      Name:
+        $ref: "#/definitions/ShareHolderNameDetls"
+      ShareholderQualifications:
+        type: string
+        description: "Shareholder's qualifications (BSC, etc)"
+      ShareholderTitle:
+        type: string
+        description: "Shareholder's title (Lord, Dame, etc.)"
+      CommercialDetail:
+        $ref: "#/definitions/CommercialDetail"
+      ShareholderLocation:
+        $ref: "#/definitions/ShareHoldersLocation"
+      SuppressionFlag:
+        type: string
+        description: >-
+          Indicator showing whether this data is suppressed from client
+          applications - Y = Suppress from client applications
+  Shareholder:
+    additionalProperties: false
+    properties:
+      RecordType:
+        type: string
+        description: >-
+          Indicator showing the type of record within share information for the
+          limited company - Shareholder (U)
+      IssuingCompany:
+        type: string
+        description: Registration Number of company issuing the shares
+      CurrentPreviousFlag:
+        type: string
+        description: >-
+          Indicator showing whether this is a current (C) or previous (P)
+          shareholding
+      EffectiveDate:
+        description: Effective date (yyyy-mm-dd)
+        type: string
+      ShareClassNo:
+        type: string
+        description: >-
+          Sequential number within the limited company to identify the Share
+          Class
+      ShareholdingNo:
+        type: string
+        description: >-
+          Sequential number within the limited company to identify the
+          Shareholding of the associated Shareholding
+      ShareholderNo:
+        type: string
+        description: >-
+          Sequential number within the limited company to identify the
+          Shareholder of the associated Share Class
+      ShareholderDetails:
+        $ref: "#/definitions/SharehldrsDetails"
+      NOCRef:
+        type: string
+        description: Notice of Correction reference relating to the Shareholder
+      LatestUpdate:
+        description: >-
+          Date that the limited company data for this block was last updated
+          (yyyy-mm-dd)
+        type: string
+  Shareholdings:
+    additionalProperties: false
+    properties:
+      RecordType:
+        type: string
+        description: >-
+          Indicator showing the type of record within share information for the
+          limited company - Shareholding (S)
+      IssuingCompany:
+        type: string
+        description: Registration Number of company issuing the shares
+      CurrentPreviousFlag:
+        type: string
+        description: >-
+          Indicator showing whether this is a current (C) or previous (P)
+          shareholding
+      EffectiveDate:
+        description: Effective date (yyyy-mm-dd)
+        type: string
+      ShareClassNo:
+        type: string
+        description: >-
+          Sequential number within the limited company to identify the Share
+          Class
+      ShareholdingNo:
+        type: string
+        description: >-
+          Sequential number within the limited company to identify the
+          Shareholding of the associated Share Class
+      NumShares:
+        type: number
+        format: double
+      TotalNominalCapital:
+        type: string
+        description: Calculated Total Nominal Capital for Shareholding
+      Percentage:
+        type: number
+        format: double
+      PercentageTotalCapital:
+        type: number
+        format: double
+        description: Calculated Percentage Total Capital for Shareholding
+      Approximation:
+        type: string
+      LatestUpdate:
+        description: >-
+          Date that the limited company data for this block was last updated
+          (yyyy-mm-dd)
+        type: string
+  HeaderInfo:
+    additionalProperties: false
+    properties:
+      RecordType:
+        type: string
+        description: >-
+          Indicator showing the type of record within share information for the
+          limited company - Header (H)
+      IssuingCompany:
+        type: string
+        description: Registration Number of company issuing the shares
+      CurrentPreviousFlag:
+        type: string
+        description: >-
+          Indicator showing whether this is a current (C) or previous (P)
+          shareholding
+      EffectiveDate:
+        description: Date of annual returns (yyyy-mm-dd)
+        type: string
+      BulkList:
+        type: string
+        description: Indicator showing whether this is a Bulk List
+      IssuedCapital:
+        type: string
+        description: >-
+          Indicator showing whether there is data available in addition to the
+          Header - 0 = Only header available, 1 = More data available
+      LegalStatus:
+        type: string
+        description: >-
+          Indicator summarising the legal status of the limited company - 1 =
+          Limited Liability Partnership; 2 = Limited by Guarantee; default =
+          Limited by Share
+      LastList:
+        description: >-
+          Last Confirmation Statement Date that includes shareholder details
+          (yyyy-mm-dd)
+        type: string
+      DocumentType:
+        type: string
+        description: >-
+          Indicator showing the document type for the shareholder data source -
+          R = Confirmation Statement (Annual Return) 8 = 88(2); A = Accounts;
+          space = unknown
+      SuppressedInfo:
+        type: string
+        description: >-
+          Indicator showing whether this data is suppressed from client
+          applications - Y = Suppress from client applications
+      LatestCurrent:
+        description: >-
+          Filing date for the limited company accounts previous to the latest
+          accounts (yyyy-mm-dd)
+        type: string
+      LatestPrevious:
+        description: >-
+          Filing date for the limited company accounts previous to the latest
+          accounts (yyyy-mm-dd)
+        type: string
+      LatestUpdate:
+        description: >-
+          Date that the limited company data for this block was last updated
+          (yyyy-mm-dd)
+        type: string
+      DateLoaded:
+        description: Date that the limited company latest accounts were loaded (yyyy-mm-dd)
+        type: string
+  CommercialDetail:
+    additionalProperties: false
+    properties:
+      Name:
+        type: string
+        description: Name of shareholder where this is a limited company
+      KGENName:
+        type: string
+        description: KGENName of shareholder where this is a limited company
+      RegNumber:
+        type: string
+        description: Registration Number of shareholder where this is a limited company
+  CurrentDirectors:
+    additionalProperties: false
+    properties:
+      ForeignAddressFlag:
+        type: string
+        description: >-
+          Current Director address location indicator - Y = Foreign; N = Not
+          foreign; M = Unknown
+      DirectorCompanyFlag:
+        type: string
+        description: >-
+          Current Director company indicator - Y = Director is a company; N =
+          Director is not a company
+      DirectorNumber:
+        type: string
+        description: Experian Director reference number
+      AppointmentDate:
+        description: Director appointment date (yyyy-mm-dd)
+        type: string
+      AppointmentIndicator:
+        type: string
+        description: >-
+          The date of Current Director's appointment qualifier - P=prior to
+          Appointment The date; E=exact date
+      DirectorshipLength:
+        type: integer
+        description: Length of Current Directorship in months
+      LatestReturns:
+        description: Date of last returns (yyyy-mm-dd)
+        type: string
+      NOCRef:
+        type: string
+        description: Notice of Correction reference
+      NumberConvictions:
+        type: integer
+        description: Number of convictions against the Current Director
+      ConvictionDetails:
+        items:
+          $ref: "#/definitions/ConvictionDetails"
+        type: array
+      DirectorDetails:
+        $ref: "#/definitions/DirectorDetails"
+  CurrentSecretary:
+    additionalProperties: false
+    properties:
+      ForeignAddressFlag:
+        type: string
+        description: >-
+          Current Secretary address location indicator - Y = Foreign; N = Not
+          foreign; M = Unknown
+      SecretaryCompanyFlag:
+        type: string
+        description: >-
+          Current Secretary company indicator - Y = Secretary is a company; N =
+          Secretary is not a company
+      DirectorNumber:
+        type: string
+        description: Experian Director reference number
+      AppointmentDate:
+        description: Secretary appointment date (yyyy-mm-dd)
+        type: string
+      AppointmentIndicator:
+        type: string
+        description: >-
+          The date of Current Secretary's appointment qualifier - P=prior to
+          Appointment The date; E=exact date
+      NOCRef:
+        type: string
+        description: Notice of Correction reference
+      SecretaryDetails:
+        $ref: "#/definitions/SecretaryDetails"
+  DirectorDetails:
+    additionalProperties: false
+    properties:
+      Name:
+        $ref: "#/definitions/NameDetls"
+      DateOfBirth:
+        description: Date of birth (yyyy-mm-dd or yyyy-mm)
+        type: string
+      DirectorAge:
+        type: string
+        description: Director's age in years
+      Qualifications:
+        type: string
+        description: Current Director's qualifications
+      Title:
+        type: string
+        description: Current Director's title
+      CommercialDetail:
+        $ref: "#/definitions/SecCommercialDetail"
+      Location:
+        $ref: "#/definitions/Location"
+      Position:
+        type: string
+        description: Current Director's position as textual description
+      Occupation:
+        type: string
+        description: Current Director's occupation as textual description
+      Nationality:
+        type: string
+        description: Current Director's nationality as textual description
+      ShareInformation:
+        type: string
+        description: Current Director's share information as textual description
+  Directors:
+    additionalProperties: false
+    properties:
+      CurrentDirector:
+        items:
+          $ref: "#/definitions/CurrentDirectors"
+        type: array
+      PreviousDirector:
+        items:
+          $ref: "#/definitions/PreviousDirectors"
+        type: array
+  Location:
+    additionalProperties: false
+    properties:
+      HouseName:
+        type: string
+        description: Director's address house name
+      HouseNumber:
+        type: string
+        description: Director's address house number
+      Street:
+        type: string
+        description: Director's address line 1
+      District:
+        type: string
+        description: Director's address line 2
+      Town:
+        type: string
+        description: Director's address line 3
+      County:
+        type: string
+        description: Director's address line 4
+      Postcode:
+        type: string
+        description: Director's address postcode
+      RMC:
+        type: string
+        description: Director's Rebate Mailing Code
+  Secretaries:
+    additionalProperties: false
+    properties:
+      CurrentSecretary:
+        items:
+          $ref: "#/definitions/CurrentSecretary"
+        type: array
+      PreviousSecretary:
+        items:
+          $ref: "#/definitions/PreviousSecretary"
+        type: array
+  SecretaryDetails:
+    additionalProperties: false
+    properties:
+      Name:
+        $ref: "#/definitions/NameDetls"
+      Qualifications:
+        type: string
+        description: "Secretary's qualifications (BSC, etc)"
+      Title:
+        type: string
+        description: "Secretary's title (Lord, Dame, etc.)"
+      CommercialDetail:
+        $ref: "#/definitions/SecCommercialDetail"
+      Location:
+        $ref: "#/definitions/Location"
+  ManagementInfo:
+    additionalProperties: false
+    properties:
+      LatestReturns:
+        description: >-
+          Filing date for the limited company latest Confirmation Statement
+          accepted and loaded by Experian (yyyy-mm-dd)
+        type: string
+      NumDirs:
+        type: integer
+        description: Number of Directors recorded for the company
+      NumSecs:
+        type: integer
+        description: Number of Secretaries recorded for the company
+      NumCurrDirs:
+        type: integer
+        description: Number of Directors recorded for the company that are current
+      NumPrevDirs:
+        type: integer
+        description: Number of previous Directors recorded for the company
+      DirectorAvgAge:
+        type: integer
+        description: Average length of Directorship in months
+      DirectorAvgLength:
+        type: integer
+        description: Average age of Directors in years
+      NumCurrDirectorLast12:
+        type: integer
+        description: >-
+          Number of Current Directors of the limited company who were appointed
+          in the last 12 months
+      NumAppointmentsLast12:
+        type: integer
+        description: >-
+          Number of director appointments for the limited company during the
+          last 12 months
+      NumResignationsLast12:
+        type: integer
+        description: >-
+          Number of director resignations for the limited company during the
+          last 12 months
+      NumDisqualifications:
+        type: integer
+        description: >-
+          Number of disqualifications against any of the Current Directors of
+          the limited company
+      Directors:
+        $ref: "#/definitions/Directors"
+      Secretaries:
+        $ref: "#/definitions/Secretaries"
+  NameDetls:
+    additionalProperties: false
+    properties:
+      Forename:
+        type: string
+        description: Forename
+      MiddleNames:
+        type: string
+        description: Middle names
+      Prefix:
+        type: string
+        description: "Name prefix (Mr, Mrs, Dr, Sir, Professor etc.)"
+      Suffix:
+        type: string
+        description: Name suffix (Jnr. etc.)
+      Surname:
+        type: string
+        description: Surname
+  PrevDirectorDetails:
+    additionalProperties: false
+    properties:
+      Name:
+        $ref: "#/definitions/NameDetls"
+      DateOfBirth:
+        description: Date of birth (yyyy-mm-dd or yyyy-mm)
+        type: string
+      DirectorAge:
+        type: string
+        description: Previous Director's age in years
+      Qualifications:
+        type: string
+        description: "Previous Director's qualifications (BSC, etc)"
+      Title:
+        type: string
+        description: "Previous Director's title (Lord, Dame, etc.)"
+      CommercialDetail:
+        $ref: "#/definitions/SecCommercialDetail"
+      Location:
+        $ref: "#/definitions/Location"
+      Position:
+        type: string
+        description: Previous Director's position as textual description
+      Occupation:
+        type: string
+        description: Previous Director's occupation as textual description
+      Nationality:
+        type: string
+        description: Previous Director's nationality as textual description
+      ShareInformation:
+        type: string
+        description: >-
+          Previous Director's share information as textual description e.g. "50
+          ORD &pound;1"
+  PreviousDirectors:
+    additionalProperties: false
+    properties:
+      ForeignAddressFlag:
+        type: string
+        description: >-
+          Previous Director address location indicator - Y = Foreign; N = Not
+          foreign; M = Unknown
+      DirectorCompanyFlag:
+        type: string
+        description: >-
+          Previous Director company indicator - Y = Director is a company; N =
+          Director is not a company
+      DirectorNumber:
+        type: string
+        description: Experian Director reference number
+      AppointmentDate:
+        description: Previous director appointment date (yyyy-mm-dd)
+        type: string
+      AppointmentIndicator:
+        type: string
+        description: >-
+          The date of Previous Director's appointment qualifier - P=prior to
+          Appointment The date; E=exact date
+      ResignationDate:
+        description: Previous director resignation date (yyyy-mm-dd)
+        type: string
+      ResignationIndicator:
+        type: string
+        description: >-
+          The date of Previous Director's Resignation qualifier - P=prior to
+          Resignation The date; E=exact date
+      DirectorshipLength:
+        type: integer
+        description: Length of Previous Directorship in months
+      LatestReturns:
+        description: Date of latest returns (yyyy-mm-dd)
+        type: string
+      NOCRef:
+        type: string
+        description: Notice of Correction reference
+      NumberConvictions:
+        type: integer
+        description: Number of convictions against the Previous Director
+      ConvictionDetails:
+        items:
+          $ref: "#/definitions/ConvictionDetails"
+        type: array
+      DirectorDetails:
+        $ref: "#/definitions/PrevDirectorDetails"
+  PreviousSecretary:
+    additionalProperties: false
+    properties:
+      ForeignAddressFlag:
+        type: string
+        description: >-
+          Previous Secretary address location indicator - Y = Foreign; N = Not
+          foreign; M = Unknown
+      SecretaryCompanyFlag:
+        type: string
+        description: >-
+          Previous Secretary company indicator - Y = Secretary is a company; N =
+          Secretary is not a company
+      DirectorNumber:
+        type: string
+        description: Experian Director reference number
+      AppointmentDate:
+        description: Previous secretary appointment date (yyyy-mm-dd)
+        type: string
+      AppointmentIndicator:
+        type: string
+        description: >-
+          The date of Previous Secretary's appointment qualifier - P=prior to
+          Appointment The date; E=exact date
+      ResignationDate:
+        description: Previous secretary resignation date (yyyy-mm-dd)
+        type: string
+      ResignationIndicator:
+        type: string
+        description: >-
+          The date of Previous Secretary's Resignation qualifier - P=prior to
+          Resignation The date; E=exact date
+      NOCRef:
+        type: string
+        description: Notice of Correction reference
+      SecretaryDetails:
+        $ref: "#/definitions/SecretaryDetails"
+  ConvictionDetails:
+    additionalProperties: false
+    properties:
+      Date:
+        description: The date of Current Director's conviction (yyyy-mm-dd)
+        type: string
+      Reason:
+        type: string
+        description: Conviction Reason code - A = Accounts; R = Returns; B = Both
+      Fine:
+        type: string
+        description: Value of fine associated with conviction
+      Costs:
+        type: string
+        description: Value of costs associated with conviction
+  SecCommercialDetail:
+    additionalProperties: false
+    properties:
+      Name:
+        type: string
+        description: Contains company name if current Director is a company
+      RegNumber:
+        type: string
+        description: Contains company registration number if current Director is a company
+  LDCBase:
+    type: object
+    additionalProperties: false
+    properties:
+      LDCID:
+        description: LDC Identifier
+        type: string
+      LastVisitDate:
+        description: Last date when the premise was visited by LDC - yyyy-mm-dd format
+        type: string
+  LDCMSB:
+    type: object
+    additionalProperties: false
+    properties:
+      LDCID:
+        description: LDC Identifier
+        type: string
+      MSBFlags:
+        type: array
+        items:
+          type: string
+          description: MSB Name
+  LDCImage:
+    type: object
+    additionalProperties: false
+    properties:
+      LDCID:
+        description: LDC Identifier
+        type: string
+      ImageURL:
+        description: URL to a picture of hte premise / shop front
+        type: string
+  DirSearchSummary:
+    additionalProperties: false
+    properties:
+      NumberMatches:
+        type: integer
+        description: Number of matches returned from the Director search
+      Forename:
+        type: string
+        description: Forename used as input in the Director search
+      Surname:
+        type: string
+        description: Surname used as input in the Director search
+      Town:
+        type: string
+        description: Town used as input in the Director search
+      Postcode:
+        type: string
+        description: Postcode used as input in the Director search
+  DirectorTargeterResponse:
+    additionalProperties: false
+    properties:
+      SearchSummary:
+        $ref: "#/definitions/DirSearchSummary"
+      SearchResults:
+        items:
+          $ref: "#/definitions/DirectrSelectionList"
+        type: array
+  DirectrSelectionList:
+    additionalProperties: false
+    properties:
+      DirectorNumber:
+        type: string
+        description: >-
+          Director number identifying the person returned from the Director
+          search
+      DirectorFlag:
+        type: string
+        description: >-
+          Indicator showing whether the person returned from the Director search
+          is a Director. 'Y' = Director, 'N' = Not a director
+      SecretaryFlag:
+        type: string
+        description: >-
+          Indicator showing whether the person returned from the Director search
+          is a Secretary.'Y' = Secretary, 'N' = Not a secretary
+      CurrPrevName:
+        type: string
+        description: >-
+          Indicator showing whether the name returned from the Director search
+          is current or previous. 'C' = Current, 'P' = Previous
+      CurrPrevAddress:
+        type: string
+        description: >-
+          Indicator showing whether the address returned from the Director
+          search is current or previous - 'C' = Current, 'P' = Previous
+      DirectorDetails:
+        $ref: "#/definitions/DirSelectDetail"
+  DirSelectDetail:
+    additionalProperties: false
+    properties:
+      Name:
+        $ref: "#/definitions/FullNameDetail"
+      DateOfBirth:
+        description: Date of birth (yyyy-mm-dd)
+        type: string
+      Qualification:
+        type: string
+        description: "Director's qualifications (BSC, etc) returned from the Director search"
+      Location:
+        $ref: "#/definitions/DirSelectOutLocationDetail"
+  DirSelectOutLocationDetail:
+    additionalProperties: false
+    properties:
+      HouseName:
+        type: string
+        description: Director's address house name returned from the Director search
+      HouseNumber:
+        type: string
+        description: Director's address house number returned from the Director search
+      Town:
+        type: string
+        description: Director's address town returned from the Director search
+      Postcode:
+        type: string
+        description: Director's address postcode returned from the Director search
+      Street:
+        type: string
+        description: Director's street returned from the Director search
+      County:
+        type: string
+        description: Director's county returned from the Director search
+      District:
+        type: string
+        description: Director's district returned from the Director search
+  FullNameDetail:
+    additionalProperties: false
+    properties:
+      Title:
+        type: string
+        description: "Director's title (Lord, Dame, etc.) returned from the Director search"
+      Prefix:
+        type: string
+        description: >-
+          Director's name prefix (Mr, Mrs, Dr, Sir, Professor etc.) returned
+          from the Director search
+      Forename:
+        type: string
+        description: Director's forename returned from the Director search
+      MiddleNames:
+        type: string
+        description: Director's middle names returned from the Director search
+      Surname:
+        type: string
+        description: Director's surname returned from the Director search
+      Suffix:
+        type: string
+        description: Director's name suffix (Jnr. etc.) returned from the Director search
+  BusinessSearch_response_example:
+    type: object
+    description: >-
+      <div>
+        <p>
+          This is an example of a JSON response provided for a business search.
+        </p>
+
+        <div class="row">
+          The response is split in 2 sections:
+          <li>A Search summary section which plays back the search terms</li>
+          <li>A Search results section which provides an array of the matching search results</li>
+        </div>
+
+        <div class='row'>
+          <pre>
+      {
+        "SearchSummary": {
+          "NumberMatches": 0,
+          "BusinessRef": "string",
+          "BusinessName": "string",
+          "PhoneNumber": "string",
+          "Town": "string",
+          "Postcode": "string"
+        },
+        "SearchResults": [
+          {
+            "LegalStatus": "string",
+            "BusinessRef": "string",
+            "CommercialName": "string",
+            "BusinessLocation": {
+              "LocationLine1": "string",
+              "LocationLine2": "string",
+              "LocationLine3": "string",
+              "LocationLine4": "string",
+              "LocationLine5": "string",
+              "Postcode": "string"
+            },
+            "SICInformation": {
+              "CodeType": "string",
+              "SICCode": "string",
+              "Description": "string"
+            },
+            "BusinessStatus": "string",
+            "BusinessActivities": "string",
+            "Name": "string",
+            "NameType": "string",
+            "MatchedPhoneNumber": "string",
+            "MatchedPostcode": "string"
+          }
+        ]
+      }
+          </pre>
+        </div>
+      </div>
+  BusinessSearch_error_example:
+    type: object
+    description: >-
+      <div>
+         <p>This is a 400 error example; other errors follow the same structure.</p>
+         <pre>
+         {
+             "Error": {
+                  "Code": 400,
+                  "Message": "Extra request parameters unknown. Mandatory parameters [], Optional [name, searchcorporates, excludedissolved, searchnoncorps, businessref, postcode, phonenumber]",
+                  "MoreInfo": "Please see https://developer.experian.co.uk"
+             }
+         }
+         </pre>
+      </div>
+  KYCProfileAddress:
+    type: object
+    additionalProperties: false
+    properties:
+      LocationLine1:
+        description: Address Line 1
+        type: string
+      LocationLine2:
+        description: Address Line 2
+        type: string
+      LocationLine3:
+        description: Address Line 3
+        type: string
+      LocationLine4:
+        description: Address Line 4
+        type: string
+      LocationLine5:
+        description: Address Line 5
+        type: string
+      Postcode:
+        description: Postcode
+        type: string
+  KYCSectorsItems:
+    type: object
+    additionalProperties: false
+    properties:
+      SourceID:
+        description: ID of the data source for the sector information
+        type: integer
+      SourceName:
+        description: Name of the data source for the sector information
+        type: string
+      DataTypeID:
+        description: Id of the data type/Type of sector
+        type: integer
+      DataType:
+        description: Data type/Type of sector
+        type: string
+      SectorCode:
+        description: Sector code (e.g. UK SIC code)
+        type: string
+      SectorDescription:
+        description: Sector description
+        type: string
+  KYCGeographiesItems:
+    type: object
+    additionalProperties: false
+    properties:
+      SourceID:
+        description: ID of the data source for the country exposure
+        type: integer
+      SourceName:
+        description: Name of the data source for the country exposure
+        type: string
+      DataTypeID:
+        description: Id of the Data type/Type of country exposure
+        type: integer
+      DataType:
+        description: Data type/Type of country exposure
+        type: string
+      LocationLine1:
+        description: Address Line 1
+        type: string
+      LocationLine2:
+        description: Address Line 2
+        type: string
+      LocationLine3:
+        description: Address Line 3
+        type: string
+      LocationLine4:
+        description: Address Line 4
+        type: string
+      Town:
+        description: Town
+        type: string
+      County:
+        description: County
+        type: string
+      Postcode:
+        description: Postcode
+        type: string
+      DirectorURN:
+        description: Director URN if the country exposure is linked to a director
+        type: string
+      ShareholderId:
+        description: Shareholder Id if the country exposure is linked to a shareholder
+        type: string
+      CompanyRegNumber:
+        description: >-
+          CompanyRegNumber if the country exposure is linked to a company (e.g.
+          ultimate parent)
+        type: string
+      CountryCode:
+        description: ISO3 Country Code of the country linked to the customer
+        type: string
+      PercentOwned:
+        description: Percent Owned if the country exposure is linked to a beneficial owner
+        type: integer
+  KYCDataSourcesItems:
+    type: object
+    additionalProperties: false
+    properties:
+      SourceID:
+        description: ID of the data source
+        type: integer
+      SourceName:
+        description: Name of the data source
+        type: string
+      Identifier:
+        description: Identifier provided by the data supplier
+        type: string
+  KYCLocationsItems:
+    type: object
+    additionalProperties: false
+    properties:
+      SiteId:
+        description: Site Identifier
+        type: string
+      BranchFlag:
+        description: >-
+          Branch type flag (Head Office, Branch Office, Single Site Company,
+          Dead/Not prospectabe site)
+        type: string
+      Name:
+        description: Site trading name
+        type: string
+      LocationLine1:
+        description: Address Line 1
+        type: string
+      LocationLine2:
+        description: Address Line 2
+        type: string
+      LocationLine3:
+        description: Address Line 3
+        type: string
+      LocationLine4:
+        description: Address Line 4
+        type: string
+      Town:
+        description: Town
+        type: string
+      Postcode:
+        description: Postcode
+        type: string
+      Region:
+        description: 3 letter code for the government region
+        type: string
+      County:
+        description: County
+        type: string
+      TelephoneNumber:
+        description: Site Telephone Number
+        type: string
+      URL:
+        description: URL associated with the site
+        type: string
+      FaxNumber:
+        description: Site Fax Number
+        type: string
+      TradingFlag:
+        description: Y/N flag indicating if the location is a trading site
+        type: string
+      RegisteredSiteFlag:
+        description: Y/N flag indicating if the location is the registered address
+        type: string

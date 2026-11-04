@@ -1,0 +1,1713 @@
+openapi: 3.0.1
+info:
+  title: Bank Account Verify (Consumer) Demo
+  description: Dummy endpoint serving example responses from Crosscore Identity Services' Bank Account Verify (Consumer)
+  contact:
+    name: Crosscore Identity Onboarding Support
+    email: idfnikeonboardingsupport@experian.com
+  version: '3.0'
+servers:
+  - url: https://sandbox-uk-api.experian.com/da/ccis-devportalapis/
+paths:
+  /v1/api:
+    post:
+      tags:
+        - BAVConsumer
+      summary: CrossCore Submit
+      description: CrossCore API Submit Request
+      parameters:
+        - name: AcceptLanguage
+          in: header
+          schema:
+            type: string
+      requestBody:
+        description: CrossCore Request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+            examples:
+              BlankAccountNumber:
+                description: 'This response shows the Decision you will see from the service today, if a validation error occurs. The service error message should be ignored and the information that follows it will provide context for the issue. We are working to improve this message and will update this response once available'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MISS
+                              firstName: MICHELLE
+                              middleNames: ''
+                              surName: BOYNTON
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '76'
+                            street: TAMNAHERIN ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDONDERRY
+                            county: ''
+                            postal: BT47 3AN
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '070116'
+                          clearAccountNumber: ''
+              BlankClientReferenceId:
+                description: 'Error scenario: A request with a blank client reference ID returns an error.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: ''
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MISS
+                              firstName: MICHELLE
+                              middleNames: ''
+                              surName: BOYNTON
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '76'
+                            street: TAMNAHERIN ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDONDERRY
+                            county: ''
+                            postal: BT47 3AN
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '070116'
+                          clearAccountNumber: '99990086'
+              BlankRequestType:
+                description: 'Error scenario: A request with a blank request type returns an error.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: ''
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MISS
+                              firstName: MICHELLE
+                              middleNames: ''
+                              surName: BOYNTON
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '76'
+                            street: TAMNAHERIN ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDONDERRY
+                            county: ''
+                            postal: BT47 3AN
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '070116'
+                          clearAccountNumber: '99990086'
+              BlankSortCodeAndAccountNumber:
+                description: 'This response shows the Decision you will see from the service today, if a validation error occurs. The service error message should be ignored and the information that follows it will provide context for the issue. We are working to improve this message and will update this response once available'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MISS
+                              firstName: MICHELLE
+                              middleNames: ''
+                              surName: BOYNTON
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '76'
+                            street: TAMNAHERIN ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDONDERRY
+                            county: ''
+                            postal: BT47 3AN
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: ''
+                          clearAccountNumber: ''
+              BlankSortCode:
+                description: 'This response shows the Decision you will see from the service today, if a validation error occurs. The service error message should be ignored and the information that follows it will provide context for the issue. We are working to improve this message and will update this response once available'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: MISS
+                              firstName: MICHELLE
+                              middleNames: ''
+                              surName: BOYNTON
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '76'
+                            street: TAMNAHERIN ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDONDERRY
+                            county: ''
+                            postal: BT47 3AN
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: ''
+                          clearAccountNumber: '99990086'
+              Continue:
+                description: Miss Michelle Boynton returns CONTINUE indicating valid bank account details.
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              title: MISS
+                              firstName: MICHELLE
+                              middleNames: ''
+                              surName: BOYNTON
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: '76'
+                            street: TAMNAHERIN ROAD
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: LONDONDERRY
+                            county: ''
+                            postal: BT47 3AN
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '070116'
+                          clearAccountNumber: '99990086'
+              NoDecision:
+                description: 'This response shows the Decision you will see from the service today, if a validation error occurs. The service error message should be ignored and the information that follows it will provide context for the issue. We are working to improve this message and will update this response once available'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: ''
+                              firstName: Frances
+                              middleNames: ''
+                              surName: Cooke
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '070116'
+                          clearAccountNumber: '66666668'
+              Refer:
+                description: Frances Cooke returns REFER indicating further investigation required.
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard-Sandbox
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: ''
+                              firstName: Frances
+                              middleNames: ''
+                              surName: Cooke
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '000004'
+                          clearAccountNumber: '66666668'
+              Stop:
+                description: Frances Cooke returns STOP indicating bank details may not be valid with further investigation required.
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: ''
+                              firstName: Frances
+                              middleNames: ''
+                              surName: Cooke
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '020202'
+                          clearAccountNumber: '11111116'
+              UndefinedRequestType:
+                description: 'Error Scenario: A request with an invalid request type returns an error.'
+                value:
+                  header:
+                    tenantId: c7f8f55045884847b993d81ca8cdaf
+                    clientReferenceId: TEST-123-124
+                    requestType: BAVConsumer-Standard-test
+                    expRequestId: ''
+                    messageTime: '2022-05-19T16:01:53Z'
+                    txnId: ''
+                    time: ''
+                    options: { }
+                  payload:
+                    application:
+                      applicants:
+                        - id: APPLICANT_1
+                          contactId: MainContact_1
+                    source: WEB
+                    contacts:
+                      - id: MainContact_1
+                        person:
+                          typeOfPerson: APPLICANT
+                          personDetails:
+                            dateOfBirth: 
+                          names:
+                            - id: MAINPERSONNAME_1
+                              type: CURRENT
+                              title: ''
+                              firstName: Frances
+                              middleNames: ''
+                              surName: Cooke
+                              nameSuffix: ''
+                        addresses:
+                          - id: MAINAPPADDRESS_1
+                            addressIdentifier: ADDRESS_1
+                            indicator: RESIDENTIAL
+                            addressType: CURRENT
+                            poBoxNumber: ''
+                            subBuilding: ''
+                            buildingName: ''
+                            buildingNumber: 1A
+                            street: GEORGE SQUARE
+                            street2: ''
+                            subLocality: ''
+                            locality: ''
+                            postTown: INVERURIE
+                            county: ABERDEENSHIRE
+                            postal: AB51 3XX
+                            countryCode: GBR
+                            residentFrom:
+                              fullDateFrom: '2011-04-28'
+                              yearFrom: '2011'
+                              monthFrom: '04'
+                              dayFrom: '28'
+                            residentTo:
+                              fullDateTo: '2021-04-28'
+                              yearTo: '2021'
+                              monthTo: '04'
+                              dayTo: '28'
+                        bankAccount:
+                          sortCode: '070116'
+                          clearAccountNumber: '66666668'
+          text/json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+          application/*+json:
+            schema:
+              $ref: '#/components/schemas/RequestMessage'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+            text/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+        '500':
+          description: Server Error
+          content:
+            text/plain:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+            text/json:
+              schema:
+                type: string
+components:
+  schemas:
+    Address:
+      type: object
+      properties:
+        subLocality:
+          type: string
+        residentTo:
+          type: object
+          properties:
+            fullDateTo:
+              type: string
+            yearTo:
+              type: string
+            monthTo:
+              type: string
+            dayTo:
+              type: string
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINADDRESS_1
+        addressType:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - PRIMARY
+            - SECONDARY
+            - REGISTERED_OFFICE
+            - TRADING
+            - CORRESPONDANCE
+            - LINKED
+            - RISK
+            - GARAGE
+            - INSPECTION_ADDRESS
+            - INCIDENT_LOCATION
+            - INSURED_ADDRESS
+            - BILLING
+            - DELIVERY
+            - COLLATERAL
+            - FINANCED
+            - SERVICE
+            - SUPPLY
+            - STORE_ADDRESS
+          type: string
+          description: A type for this Address - Only the first occurrence of an Address having AddressType of CURRENT will be considered. Failure to include an Address of such a type will likely cause an error as not Address information will be used at all
+          example: CURRENT
+        addressIdentifier:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: A1234
+        indicator:
+          enum:
+            - RESIDENTIAL
+            - COMMERCIAL
+            - NON_RESIDENTIAL
+            - OTHER
+            - UNKNOWN
+            - RURAL
+            - URBAN
+            - DELIVERY_SERVICE
+          type: string
+          description: Types of Address Indicator
+          example: RESIDENTIAL
+        poBoxNumber:
+          type: string
+          nullable: true
+          example: PO BOX 1234
+        subBuilding:
+          maxLength: 40
+          pattern: "^[-a-zA-Z0-9 '/.&!(),]*$"
+          type: string
+          description: One of buildingName or buildingNumber or subBuilding is required if one of street or postal is supplied
+          nullable: true
+          example: The Barn
+        buildingName:
+          maxLength: 40
+          pattern: "^[-a-zA-Z0-9 '/.&!(),üéöáíäóßÜÉÖÁÍÄÓŒœæÆ]*$"
+          type: string
+          description: One of buildingName or buildingNumber or subBuilding is required if one of street or postal is supplied
+          nullable: true
+          example: Sycamore Farm
+        buildingNumber:
+          maxLength: 10
+          pattern: "^[-a-zA-Z0-9 '/.&!(),]*$"
+          type: string
+          description: One of buildingName or buildingNumber or subBuilding is required if one of street or postal is supplied
+          nullable: true
+          example: '78'
+        street:
+          maxLength: 50
+          pattern: "^[-a-zA-Z0-9 '.&!(),]*$"
+          type: string
+          description: One of street or postal is required if one of buildingName or buildingNumber or subBuilding is supplied
+          nullable: true
+          example: Acacia Avenue
+        street2:
+          maxLength: 50
+          pattern: '^[-a-zA-Z0-9 ''.,/#]*$'
+          type: string
+          nullable: true
+          example: Honeysuckle Lane
+        county:
+          maxLength: 40
+          pattern: "^[-a-zA-Z0-9 '.&!,]*$"
+          type: string
+          nullable: true
+          example: Greater London
+        postTown:
+          maxLength: 40
+          pattern: "^[-a-zA-Z0-9 '.&!,àáâäèéêëìíîïòóôöùúûüÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜŒœæÆ]*$"
+          type: string
+          nullable: true
+          example: London
+        postal:
+          maxLength: 10
+          pattern: '^[a-zA-Z0-9 ]*$'
+          type: string
+          description: One of street or postal is required if one of buildingName or buildingNumber or subBuilding is supplied
+          nullable: true
+          example: SE1 8EZ
+        countryCode:
+          maxLength: 3
+          pattern: '^[a-zA-Z]+$'
+          type: string
+          description: CountryCode must either be "GBR" or left empty
+          nullable: true
+          example: GBR
+        locality:
+          maxLength: 40
+          pattern: "^[-a-zA-Z0-9 '.&!,àáâäèéêëìíîïòóôöùúûüÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜŒœæÆ]*$"
+          type: string
+          nullable: true
+          example: South London
+        residentFrom:
+          $ref: '#/components/schemas/ResidentFrom'
+        timeAtAddress:
+          $ref: '#/components/schemas/TimeAtAddress'
+      additionalProperties: false
+    Applicant:
+      required:
+        - contactId
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINAPPLICANT_1
+        type:
+          enum:
+            - INDIVIDUAL
+            - JOINT
+            - COMMERCIAL
+            - POLICY_HOLDER
+            - MAIN_DRIVER
+            - ADD_DRIVER
+            - CLAIMANT
+          type: string
+          description: Types of Application
+          example: INDIVIDUAL
+        applicantType:
+          enum:
+            - APPLICANT
+            - CO_APPLICANT
+            - GUARANTOR
+            - MAIN_APPLICANT
+            - JOINT_APPLICANT
+            - ADDITIONAL_CARDHOLDER
+            - APPLYING_ORGANIZATION
+            - DIRECTOR
+            - COMPANY_SECRETARY
+            - POLICY_HOLDER
+            - ADDITIONAL_DRIVER
+            - CLAIMANT
+            - POLICY_HOLDER_ORGANIZATION
+            - CLAIMANT_ORGANIZATION
+            - CO_APPLICANT_ORGANIZATION
+            - GUARANTOR_ORGANIZATION
+            - OWNER_PERSON
+            - OWNER_ORGANIZATION
+            - REFERENCE
+            - SHAREHOLDER
+            - GUARANTOR_FULL
+          type: string
+          description: One applicant of type MAIN_APPLICANT or APPLICANT is preferred but not required
+          example: APPLICANT
+        consent:
+          type: boolean
+          nullable: true
+          example: true
+        consentId:
+          maxLength: 128
+          pattern: '^[-a-zA-Z0-9 _]*$'
+          type: string
+          nullable: true
+          example: uyciydfoudqwg912863017
+        consentTimeStamp:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2016-11-30T14:20:04Z'
+        contactId:
+          maxLength: 40
+          type: string
+          example: MAINCONTACT_1
+        knownCustomer:
+          type: boolean
+          nullable: true
+          example: true
+      additionalProperties: false
+    Application:
+      required:
+        - applicants
+      type: object
+      properties:
+        applicants:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Applicant'
+      additionalProperties: false
+    AuditLog:
+      type: object
+      properties:
+        eventType:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: JourneyStart
+        eventDate:
+          type: string
+          format: date-time
+          example: '2015-11-30T14:20:04Z'
+        eventDateTime:
+          type: string
+          format: date-time
+          example: '2015-11-30T14:20:04Z'
+        eventOutcome:
+          type: string
+          nullable: true
+      additionalProperties: false
+    BankAccount:
+      required:
+        - clearAccountNumber
+        - sortCode
+      type: object
+      properties:
+        sortCode:
+          maxLength: 10
+          pattern: '^[-0-9 ]*'
+          type: string
+          description: Sortcode field of bank account
+          example: 12-34-56
+        clearAccountNumber:
+          maxLength: 20
+          pattern: '^[0-9]*'
+          type: string
+          description: Cleartext account number for bank account
+          example: '12345678'
+      additionalProperties: false
+      description: Bank account model for BAV Consumer requests and responses
+    BranchData:
+      type: object
+      properties:
+        institutionName:
+          type: string
+          nullable: true
+          example: Example institution
+        branchName:
+          type: string
+          nullable: true
+          example: Example branch
+        address:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+          description: 'List of branch data addresses. A branch data address has a variable number of address lines presented as a numbered dictionary. For example: {"1": "Address Line 1", "2": "Address Line 2", "3": "Address Line 3", "4": "Town", "5": "County"}'
+          nullable: true
+        telephoneNumber:
+          type: string
+          nullable: true
+          example: 01234 567890
+        subBranchNumber:
+          type: number
+          example: 0
+      additionalProperties: false
+    ClientResponsePayload:
+      type: object
+      properties:
+        orchestrationDecisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrchestrationDecision'
+          nullable: true
+        decisionElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecisionElements'
+          nullable: true
+      additionalProperties: false
+    Contact:
+      required:
+        - bankAccount
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINCONTACT_1
+        person:
+          $ref: '#/components/schemas/Person'
+        addresses:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          nullable: true
+        bankAccount:
+          $ref: '#/components/schemas/BankAccount'
+      additionalProperties: false
+    ControlOption:
+      type: object
+      properties:
+        option:
+          type: string
+          description: Any string value is accepted.
+          nullable: true
+        value:
+          maxLength: 20
+          type: string
+          nullable: true
+      additionalProperties: false
+    DataCount:
+      type: object
+      properties:
+        name:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: NoOfMatches
+        value:
+          type: number
+          example: 3
+      additionalProperties: false
+    Decision:
+      type: object
+      properties:
+        element:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: Element Name
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ACCEPT
+        reason:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: No Risk Detected
+      additionalProperties: false
+    DecisionElements:
+      type: object
+      properties:
+        serviceName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: UK-AgeVerify
+        applicantId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: APPLICANT_1
+        decision:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          example: 999
+        appReference:
+          maxLength: 100
+          type: string
+          nullable: true
+          example: REF123456
+        rules:
+          maxItems: 399
+          type: array
+          items:
+            $ref: '#/components/schemas/Rule'
+          nullable: true
+        warningsErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarningOrError'
+          nullable: true
+        otherData:
+          $ref: '#/components/schemas/OtherData'
+        decisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Decision'
+          nullable: true
+        dataCounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataCount'
+          nullable: true
+        auditLogs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+          nullable: true
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+          nullable: true
+        scores:
+          type: array
+          items:
+            $ref: '#/components/schemas/Score'
+          nullable: true
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/Record'
+          nullable: true
+      additionalProperties: false
+    ExternalDataElement1:
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldName_1
+        fieldValue:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldValue_1
+        externalDataName:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Detect
+        externalDataElements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalDataElement2'
+          nullable: true
+      additionalProperties: false
+    ExternalDataElement2:
+      type: object
+      properties:
+        fieldName:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldName_1
+        fieldValue:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: FieldValue_1
+        externalDataName:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Detect
+      additionalProperties: false
+    ExternalLookup:
+      type: object
+      properties:
+        source:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: Experian
+        parameter:
+          maxLength: 50
+          type: string
+          nullable: true
+          example: Entire Application
+        externalData:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalDataElement1'
+          nullable: true
+        contactId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: reference to the payload contact.id details that belong to the ExternalLookup.
+        addressId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: ADDRESS_1
+      additionalProperties: false
+    Match:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Name and Address Match
+        value:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MATCH
+      additionalProperties: false
+    Name:
+      type: object
+      properties:
+        id:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: MAINPERSONNAME_1
+        type:
+          enum:
+            - CURRENT
+            - PREVIOUS
+            - MAIDEN
+            - ALIAS
+            - OTHER
+            - FATHER
+            - HUSBAND
+            - NAME
+            - NAME_NATIVE
+          type: string
+          description: 'The first occurrence of a name of type CURRENT will be considered if present. As this is not required, if not populated then the first name will be considered.'
+          example: CURRENT
+        title:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          nullable: true
+          example: MR
+        firstName:
+          maxLength: 40
+          minLength: 0
+          pattern: "^[-a-zA-Z0-9 '.,;:üéöáíäóßÜÉÖÁÍÄÓŒœæÆ]+$"
+          type: string
+          description: A firstname is required if a surname or date of birth is supplied
+          nullable: true
+          example: FRANK
+        middleNames:
+          maxLength: 100
+          pattern: "^[-a-zA-Z0-9 '.,;:üéöáíäóßÜÉÖÁÍÄÓŒœæÆ]+$"
+          type: string
+          nullable: true
+          example: SIMON
+        surName:
+          maxLength: 40
+          minLength: 0
+          pattern: "^[-a-zA-Z0-9 '.,;:üéöáíäóßÜÉÖÁÍÄÓŒœæÆ]+$"
+          type: string
+          description: A surname is required if a firstname or date of birth is supplied
+          nullable: true
+          example: SMITH
+        namePrefix:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: PROFESSOR
+        nameSuffix:
+          maxLength: 20
+          pattern: '^[-a-zA-Z0-9 '',]*$'
+          type: string
+          nullable: true
+          example: JR
+        initials:
+          maxLength: 15
+          pattern: '^[-a-zA-Z0-9 \'',]*$'
+          type: string
+          nullable: true
+          example: F S
+        nameCode:
+          enum:
+            - P
+            - E
+            - T
+            - O
+          type: string
+          description: Types of Person Name Codes for Aliases
+          example: E
+      additionalProperties: false
+    Options:
+      type: object
+      properties:
+        version:
+          maxLength: 90
+          type: string
+          nullable: true
+      additionalProperties: false
+    OrchestrationDecision:
+      type: object
+      properties:
+        sequenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- Strategy sequenceId --'
+        decisionSource:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- serviceName of the strategy decision point --'
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: '-- Outcome from strategy for service --'
+        decisionReasons:
+          maxItems: 90
+          type: array
+          items:
+            type: string
+          nullable: true
+        score:
+          type: number
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- text defined in strategy --'
+        nextAction:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- defined in strategy --'
+        appReference:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: REF1234567
+        decisionTime:
+          type: string
+          format: date-time
+          example: '2016-09-09T04:06:53Z'
+      additionalProperties: false
+    OtherData:
+      type: object
+      properties:
+        branchData:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchData'
+          nullable: true
+      additionalProperties: false
+    OverallResponse:
+      type: object
+      properties:
+        decision:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: ACCEPT
+        score:
+          type: number
+          example: 9999
+        decisionText:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: NO FRAUD
+        decisionReasons:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[DECISION_1,DECISION_2]'
+        recommendedNextActions:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Action_1,Action_2]'
+        spareObjects:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: '[Spare_1,Spare_2]'
+      additionalProperties: false
+    Person:
+      type: object
+      properties:
+        typeOfPerson:
+          enum:
+            - APPLICANT
+            - CO_APPLICANT
+            - EMPLOYER
+            - WITNESS
+            - GUARANTOR
+            - RELATIVE
+            - PRINCIPAL
+            - ACCOUNTANT
+            - SALES_AGENT
+            - POLICY_HOLDER
+            - MAIN_DRIVER
+            - ADD_DRIVER
+            - CLAIMANT
+            - REFERENCE
+            - BROKER
+            - BUILDER
+            - CONVEYANCER
+            - CO_OWNER
+            - INTRODUCER
+            - NEXT_OF_KIN
+            - REFEREE
+            - SOLICITOR
+            - SUPPLIER
+            - VALUER
+            - VENDOR
+            - VENDOR_AGENT
+            - VENDOR_SOLICITOR
+            - OTHER
+            - INITIATING_AGENT
+            - PROCESSING_AGENT
+            - CONTACT
+          type: string
+          description: Types of Person
+        personIdentifier:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: P12345
+        personDetails:
+          $ref: '#/components/schemas/PersonDetails'
+        names:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Name'
+          nullable: true
+      additionalProperties: false
+    PersonDetails:
+      type: object
+      properties:
+        dateOfBirth:
+          type: string
+          description: 'A valid date of birth, that must not be a future date'
+          format: date
+          nullable: true
+          example: '1978-01-10T00:00:00.0000000'
+      additionalProperties: false
+    Record:
+      type: object
+      properties:
+        contacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+          nullable: true
+        externalLookups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalLookup'
+          nullable: true
+      additionalProperties: false
+    RequestHeader:
+      required:
+        - clientReferenceId
+        - messageTime
+        - requestType
+        - tenantId
+      type: object
+      properties:
+        txnId:
+          type: string
+        time:
+          type: string
+        requestType:
+          maxLength: 40
+          type: string
+          example: '--Your Request Type provided by Delivery--'
+        clientReferenceId:
+          maxLength: 90
+          pattern: .*
+          type: string
+          example: '-- Your unique Client reference --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          description: Needs to be present but not populated; it will be replaced by the system
+          nullable: true
+          example: 
+        messageTime:
+          type: string
+          description: Must be populated with a valid DateTime
+          format: date-time
+          example: '2018-11-30T14:20:04Z'
+        tenantId:
+          type: string
+          example: '-- Your Tenant ID provided by delivery --'
+        options:
+          $ref: '#/components/schemas/Options'
+      additionalProperties: false
+    RequestMessage:
+      required:
+        - header
+        - payload
+      type: object
+      properties:
+        header:
+          $ref: '#/components/schemas/RequestHeader'
+        payload:
+          $ref: '#/components/schemas/RequestPayload'
+      additionalProperties: false
+    RequestPayload:
+      required:
+        - application
+        - contacts
+      type: object
+      properties:
+        control:
+          type: array
+          items:
+            $ref: '#/components/schemas/ControlOption'
+          nullable: true
+        source:
+          enum:
+            - WEB
+            - FAX
+            - KIOSK
+            - MOBILE
+            - PHONE
+            - UNKNOWN
+            - POSTAL
+            - BRANCH
+            - DIRECT
+            - STORE
+            - STORE_INSTANT_CREDIT
+          type: string
+          example: WEB
+        contacts:
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Contact'
+        application:
+          $ref: '#/components/schemas/Application'
+      additionalProperties: false
+    ResidentFrom:
+      type: object
+      properties:
+        fullDateFrom:
+          type: string
+          format: date
+          example: '2018-01-01T00:00:00.0000000'
+        yearFrom:
+          maxLength: 4
+          type: string
+          nullable: true
+          example: '2018'
+        monthFrom:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+        dayFrom:
+          maxLength: 2
+          type: string
+          nullable: true
+          example: '01'
+      additionalProperties: false
+    ResponseHeader:
+      type: object
+      properties:
+        requestType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- requestType supplied in request --'
+        clientReferenceId:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: '-- clientReferenceId supplied in request --'
+        expRequestId:
+          maxLength: 90
+          type: string
+          nullable: true
+          example: '-- Experian generated unique reference --'
+        messageTime:
+          type: string
+          format: date-time
+          example: '-- dateTime of message --'
+        overallResponse:
+          $ref: '#/components/schemas/OverallResponse'
+        responseCode:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response code --'
+        responseType:
+          maxLength: 20
+          type: string
+          nullable: true
+          example: '-- Response type --'
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: '-- Response message --'
+        tenantID:
+          maxLength: 30
+          type: string
+          nullable: true
+          example: '-- tenantId supplied in request --'
+      additionalProperties: false
+    ResponseMessage:
+      type: object
+      properties:
+        responseHeader:
+          $ref: '#/components/schemas/ResponseHeader'
+        originalRequestData:
+          $ref: '#/components/schemas/RequestPayload'
+        clientResponsePayload:
+          $ref: '#/components/schemas/ClientResponsePayload'
+      additionalProperties: false
+    Rule:
+      type: object
+      properties:
+        ruleId:
+          maxLength: 200
+          type: string
+          description: 'The total combined length of the ''ruleId'', ''ruleName'', and ''ruleText'' must not exceed 250 chars'
+          nullable: true
+          example: SAFEIP
+        ruleName:
+          maxLength: 200
+          type: string
+          description: 'The total combined length of the ''ruleId'', ''ruleName'', and ''ruleText'' must not exceed 250 chars'
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        ruleScore:
+          type: number
+          example: 999
+        ruleText:
+          maxLength: 90
+          type: string
+          description: 'The total combined length of the ''ruleId'', ''ruleName'', and ''ruleText'' must not exceed 250 chars'
+          nullable: true
+          example: SUSPECT UP ADDRESS FOUND
+        rule:
+          type: string
+          nullable: true
+          example: SUSPECT IP ADDRESS
+        value:
+          type: string
+          nullable: true
+          example: Rule Value 1234
+      additionalProperties: false
+    Score:
+      type: object
+      properties:
+        name:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: SCORE NAME
+        score:
+          type: number
+          example: 999
+        type:
+          maxLength: 10
+          type: string
+          nullable: true
+          example: SCORE
+      additionalProperties: false
+    TimeAtAddress:
+      type: object
+      properties:
+        value:
+          type: number
+          example: 24
+        unit:
+          enum:
+            - MONTH
+            - YEAR
+            - DAY
+            - HOUR
+          type: string
+          description: 'unit type for the TimeAtAddress - if ommitted, will default to MONTH'
+          example: MONTH
+      additionalProperties: false
+    WarningOrError:
+      type: object
+      properties:
+        responseType:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: Info
+        responseCode:
+          maxLength: 40
+          type: string
+          nullable: true
+          example: INF001
+        responseMessage:
+          maxLength: 300
+          type: string
+          nullable: true
+          example: date of birth not provide
+      additionalProperties: false
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://sandbox-uk-api.experian.com/oauth2/v1/token
+          scopes:
+            user: user scope
+security:
+  - OauthSecurity:
+      - user

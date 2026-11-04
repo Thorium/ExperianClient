@@ -1,0 +1,17 @@
+{
+  "ein": "324658978",
+  "cvsRequestList": [
+    {
+      "ssn": "258886506",
+      "dateOfBirth": "06161951",
+      "lastName": "MOUSE",
+      "firstName": "MICKEY",
+      "middleName": "DISNEY",
+      "additionalParams": {
+        "signatureType": "E",
+        "dateOfConsent": "01012020"
+      },
+      "externalSeqNumber": "12345"
+    }
+  ]
+}
