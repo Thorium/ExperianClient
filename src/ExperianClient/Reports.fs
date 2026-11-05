@@ -11,7 +11,7 @@ type AuthPlusDecision =
     | NoDecision
     | OtherAuthPlusDecision of code: string
 
-[<RequireQualifiedAccess>]
+[<Struct; RequireQualifiedAccess>]
 type AuthenticationIndex =
     /// 00-90.
     | Index of int

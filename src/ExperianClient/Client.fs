@@ -137,6 +137,16 @@ type ExperianFailure =
 
 module ExperianFailure =
 
+    /// Whether a token endpoint's status refuses the credentials, as opposed to a busy or failing server.
+    let refusesCredentials (httpStatus: int) =
+        httpStatus >= 400 && httpStatus < 500 && httpStatus <> 408 && httpStatus <> 429
+
+    /// Whether this is a sign-in Experian refused. Sending the same credentials again counts as another failed sign-in.
+    let isCredentialRefusal failure =
+        match failure with
+        | TokenRefused(status, _) -> refusesCredentials status
+        | _ -> false
+
     /// One line saying what went wrong, for logs and exception messages.
     let describe failure =
         match failure with
@@ -282,6 +292,10 @@ module internal Token =
     /// Tokens are renewed this long before Experian's expiry, so a request never carries one that expires in flight.
     let renewBefore = TimeSpan.FromMinutes 1.
 
+    /// How long refused credentials are not sent again by one client. Failed sign-ins can lock the account, and Experian doesn't
+    /// publish how many. A client made with new credentials starts afresh.
+    let refusedPause = TimeSpan.FromHours 1.
+
     /// Experian documents 30-minute tokens; used when expires_in is missing or unreadable.
     let defaultLifetime = TimeSpan.FromMinutes 30.
 
@@ -344,13 +358,17 @@ module internal Token =
             | _ -> ValueNone
         with :? JsonException -> ValueNone
 
-/// Fetches the bearer token and keeps it until a minute before it expires; concurrent callers share one fetch.
+/// Fetches the bearer token and keeps it until a minute before it expires; concurrent callers share one fetch. Credentials Experian
+/// refused are not sent again for an hour: until then a call fails with TokenRefused, without a request.
 [<Sealed>]
 type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: HttpMessageInvoker, now: unit -> DateTimeOffset, ?signIn: SignIn) =
     let gate = new SemaphoreSlim(1, 1)
 
     /// A reference cell, not a voption: it is read outside the gate, and a struct read could be torn.
     let mutable current: AccessToken option = None
+
+    /// The status that refused the credentials and when they may be sent again. Read and written inside the gate.
+    let mutable refused: (int * DateTimeOffset) option = None
 
     let usable () =
         match current with
@@ -368,10 +386,15 @@ type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: Htt
             let status = int response.StatusCode
             return
                 if not response.IsSuccessStatusCode then
+                    if ExperianFailure.refusesCredentials status then
+                        refused <- Some(status, now () + Token.refusedPause)
+
                     raise (TokenRefusedException(status, text))
                 else
                     match Token.parse (now ()) text with
-                    | ValueSome token -> token
+                    | ValueSome token ->
+                        refused <- None
+                        token
                     | ValueNone -> raise (TokenRefusedException(status, text))
         }
 
@@ -386,9 +409,13 @@ type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: Htt
                     match usable () with
                     | ValueSome token -> return token
                     | ValueNone ->
-                        let! token = fetch ct
-                        current <- Some token
-                        return token
+                        match refused with
+                        | Some(status, until) when now () < until ->
+                            return raise (TokenRefusedException(status, "Not sent: Experian refused these credentials within the last hour."))
+                        | _ ->
+                            let! token = fetch ct
+                            current <- Some token
+                            return token
                 finally
                     gate.Release() |> ignore
             }

@@ -199,6 +199,13 @@ minute before `expires_in` runs out; concurrent callers share one fetch. A 401 d
 sent once more with a new one. The token only goes to the hosts in the client's `Endpoints`: a request for any other
 host, such as a path value on a generated client that points elsewhere, is `InvalidRequest` and not sent.
 
+**Refused credentials.** Developer-portal passwords expire 90 days after they are set, and failed sign-ins can lock the
+account. After a refusal (a 4xx other than 408 and 429), one client doesn't send those credentials again for an hour: calls
+return `TokenRefused` without a request. `ExperianFailure.isCredentialRefusal` tells this apart from an outage. To use a new
+password, make a new client. Clients don't share this memory, so several processes on one account each get their own
+attempts: share the refusal between them, take a shared lock around `client.Tokens.GetAsync`, and stop calling while the
+credentials stand refused.
+
 ## Lenient reading
 
 Experian's answers don't always match the specs, so responses are read leniently. Requests are still written exactly

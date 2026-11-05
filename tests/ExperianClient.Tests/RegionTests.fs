@@ -65,7 +65,7 @@ let ``Serasa signs in with the client alone, and its token is used`` () : Task =
         Assert.True(Result.isOk result)
         let signIn = handler.Calls |> List.find (fun call -> call.Uri.EndsWith "/login")
         Assert.Equal("https://api.serasaexperian.com.br/security/iam/v1/client-identities/login", signIn.Uri)
-        Assert.Equal("Basic " + Convert.ToBase64String(Text.Encoding.UTF8.GetBytes "id:shh"), signIn.Headers["Authorization"])
+        Assert.Equal("Basic " + Convert.ToBase64String("id:shh"B), signIn.Headers["Authorization"])
         Assert.DoesNotContain("password", signIn.Body)
         let call = handler.Calls |> List.find (fun call -> call.Uri.EndsWith "/scores")
         Assert.Equal("https://api.serasaexperian.com.br/open-banking/score/v1/scores", call.Uri)
@@ -130,17 +130,12 @@ let ``Experian's samples of the newer products keep every field`` () =
     Assert.Equal<string>("", String.Join(" ", Set.difference (fieldsOf intl) (fieldsOf (client.InternationalPayments.Serialize(client.InternationalPayments.Deserialize(intl, typeof<InternationalPayments.RequestMessage>))))))
     Assert.Equal<string>("", String.Join(" ", Set.difference (fieldsOf instant) (fieldsOf (client.InstantCredit.Serialize(client.InstantCredit.Deserialize(instant, typeof<InstantCredit.attributesRequest>))))))
 
-[<Theory>]
-[<InlineData("{}")>]
-[<InlineData("""{"score":0.0,"success":false}""")>]
-[<InlineData("null")>]
+[<Theory; InlineData("{}"); InlineData("""{"score":0.0,"success":false}"""); InlineData("null")>]
 let ``a web data answer that isn't a score is an error, not the lowest risk`` (body: string) : Task =
     task {
         let handler = new FakeExperianHandler(portalAnswers body)
         let client = ExperianClient.create credentials Endpoints.sandboxEu handler
-        let! result = Api.WebData.scoreAsync client (DateOnly(2026, 1, 31)) "Co" "Calle 1" "Madrid" "id-1" FakeExperian.ct
-
-        match result with
+        match! Api.WebData.scoreAsync client (DateOnly(2026, 1, 31)) "Co" "Calle 1" "Madrid" "id-1" FakeExperian.ct with
         | Error _ -> ()
         | Ok score -> failwith $"%A{score}"
     }

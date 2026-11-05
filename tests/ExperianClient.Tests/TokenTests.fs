@@ -51,6 +51,83 @@ let ``one token serves later calls until a minute before it expires`` () : Task 
         Assert.Equal<string list>(["Bearer tok-1"; "Bearer tok-1"; "Bearer tok-2"], handler.ApiCalls |> List.map (fun c -> c.Headers["Authorization"]))
     }
 
+let private refusedSignIn (tokenStatus: int) =
+    fun (call: Call) ->
+        if isToken call then tokenStatus, """{"error":"invalid_grant"}""" else 200, "[]"
+
+[<Theory; InlineData(400); InlineData(401); InlineData(403)>]
+let ``refused credentials are not sent again for an hour`` (status: int) : Task =
+    task {
+        let clock = ref (DateTimeOffset(2026, 10, 27, 12, 0, 0, TimeSpan.Zero))
+        use handler = new FakeExperianHandler(refusedSignIn status)
+        let client = clientAt clock handler
+
+        for _ in 1..5 do
+            match! employers handler client with
+            | Error failure -> Assert.True(ExperianFailure.isCredentialRefusal failure)
+            | Ok _ -> failwith "It should have been refused."
+
+        Assert.Equal(1, handler.TokenCalls.Length)
+        Assert.Empty handler.ApiCalls
+
+        clock.Value <- clock.Value.AddMinutes 59.
+        let! _ = employers handler client
+        Assert.Equal(1, handler.TokenCalls.Length)
+
+        clock.Value <- clock.Value.AddMinutes 1.
+        let! _ = employers handler client
+        Assert.Equal(2, handler.TokenCalls.Length)
+    }
+
+[<Fact>]
+let ``concurrent calls with refused credentials send them once`` () : Task =
+    task {
+        use handler = new FakeExperianHandler(refusedSignIn 401)
+        let client = clientWith handler
+        let! results = Task.WhenAll [ for _ in 1..20 -> employers handler client ]
+        Assert.All(results, fun result -> Assert.True(result.IsError))
+        Assert.Equal(1, handler.TokenCalls.Length)
+    }
+
+[<Theory>]
+[<InlineData(408)>]
+[<InlineData(429)>]
+[<InlineData(500)>]
+[<InlineData(503)>]
+let ``a busy or failing server is not a refusal, so the next call asks again`` (status: int) : Task =
+    task {
+        use handler = new FakeExperianHandler(refusedSignIn status)
+        let client = clientWith handler
+
+        for _ in 1..3 do
+            match! employers handler client with
+            | Error failure -> Assert.False(ExperianFailure.isCredentialRefusal failure)
+            | Ok _ -> failwith "It should have failed."
+
+        Assert.Equal(3, handler.TokenCalls.Length)
+    }
+
+[<Fact>]
+let ``a sign-in that works after the pause clears the refusal`` () : Task =
+    task {
+        let clock = ref (DateTimeOffset(2026, 10, 27, 12, 0, 0, TimeSpan.Zero))
+        let accepted = ref false
+
+        use handler =
+            new FakeExperianHandler(fun call ->
+                if not (isToken call) then 200, "[]"
+                elif accepted.Value then 200, tokenJson "tok-1"
+                else 401, "{}")
+
+        let client = clientAt clock handler
+        let! _ = employers handler client
+        accepted.Value <- true
+        clock.Value <- clock.Value.AddHours 1.
+        let! result = employers handler client
+        expectOk result |> ignore
+        Assert.Equal(2, handler.TokenCalls.Length)
+    }
+
 [<Fact>]
 let ``concurrent first calls share one token fetch`` () : Task =
     task {

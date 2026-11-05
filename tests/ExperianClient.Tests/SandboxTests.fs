@@ -178,7 +178,7 @@ let private regionClient (region: string) endpoints =
 let ``sandbox US: TEC Connect answers with a credit profile`` () : Task =
     task {
         let client = regionClient "US" Endpoints.sandboxUs
-        let sample = IO.File.ReadAllText(IO.Path.Combine(__SOURCE_DIRECTORY__, "Samples", "us-tec-connect.json"))
+        let! sample = IO.File.ReadAllTextAsync(IO.Path.Combine(__SOURCE_DIRECTORY__, "Samples", "us-tec-connect.json"))
         let request = client.CreditProfile.Deserialize(sample, typeof<CreditProfile.tecCreditProfileRequest>) :?> CreditProfile.tecCreditProfileRequest
         let! result = Api.CreditProfile.tecConnectAsync client request (ValueSome "SBMYSQL") FakeExperian.ct
         let answer = FakeExperian.expectOk result
@@ -274,8 +274,7 @@ let ``sandbox US: an SSN check answers`` () : Task =
     task {
         let client = regionClient "US" Endpoints.sandboxUs
         let request = client.SsnVerification.Deserialize(sampleOf "us-ssn.json", typeof<SsnVerification.verifyRequest>) :?> SsnVerification.verifyRequest
-        let! result = Api.SsnVerification.verifyAsync client "0000000" "1234" request (ValueSome "ABC123") FakeExperian.ct
-        match result with
+        match! Api.SsnVerification.verifyAsync client "0000000" "1234" request (ValueSome "ABC123") FakeExperian.ct with
         | Error(ApiError(500, body)) when body.Contains "RaiseFault.notFound" -> Assert.Skip $"Experian's sandbox has no working eCBSV path: {body}"
         | other -> expectEnabled "Verification Ecbsv Sandbox" other |> ignore
     }
