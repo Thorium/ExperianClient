@@ -216,8 +216,9 @@ as the specs type and name them.
 ## Endpoints
 
 `Endpoints.sandbox` (`sandbox-uk-api.experian.com`) and `Endpoints.production` (`uk-api.experian.com`) use the
-specs' base paths. The KYC spec only names its sandbox path (`/da/ccis-devportalapis/`), so set
-`{ Endpoints.production with Kyc = ... }` if Experian gives you a different live one.
+specs' base paths. The KYC, bank account verification, international payments and age and date of birth specs only name
+their sandbox path (`/da/ccis-devportalapis/`), so set `{ Endpoints.production with Kyc = ... }`, and likewise for the
+others, if Experian gives you a different live one.
 
 ## Regions
 

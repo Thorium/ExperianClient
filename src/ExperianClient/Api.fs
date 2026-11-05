@@ -512,7 +512,18 @@ module WebData =
 
     /// id comes back to trace the request; date is when the web data is taken from. The spec names only the sandbox's test path.
     let scoreAsync (client: ExperianClient) (date: DateOnly) (name: string) (address: string) (town: string) (id: string) (ct: CancellationToken) =
-        attempt ct (client.WebData.GetWebscoresTestScore(date.ToString("yyyy-MM-dd", Globalization.CultureInfo.InvariantCulture), name, address, town, id, ct))
+        task {
+            let! answer = attempt ct (client.WebData.GetWebscoresTestScore(date.ToString("yyyy-MM-dd", Globalization.CultureInfo.InvariantCulture), name, address, town, id, ct))
+
+            // success is false on an answer that isn't a score, where the score would read as the lowest risk
+            return
+                answer
+                |> Result.bind (fun score ->
+                    if isNull (box score) || not score.Success then
+                        Error(TransportError(System.IO.InvalidDataException "Experian's answer holds no score."))
+                    else
+                        Ok score)
+        }
 
 /// Brazil, through Serasa Experian: scores and checks of a person's open banking data. Connect with Endpoints.productionBrazil and a
 /// Credentials of the client id and secret. Its sandbox has stopped answering, so these have only run against a stand-in.

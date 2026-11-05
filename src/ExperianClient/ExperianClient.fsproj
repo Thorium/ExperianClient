@@ -5,14 +5,16 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Experian</RootNamespace>
     <PackageId>ExperianClient</PackageId>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Authors>Tuomas Hietanen</Authors>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Description>For experian.com. Unofficial .NET client for Experian's developer-portal APIs. UK: Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED, IDP, Bank Account Verify, International Payments Verification, KYB, AML Flags, age and date of birth checks. US: Credit Profile, Instant Credit, SSN verification (eCBSV), Experian Verify. Netherlands and Spain: Web Data Insights. Brazil: Serasa Experian open banking. Most countries: Address, Email and Phone Validation, Client Gateway.</Description>
     <PackageTags>experian.com;experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>v1.2.0:
+    <PackageReleaseNotes>v1.2.1:
+- FIXED: Api.WebData.scoreAsync is an error on an answer with success false or no body, where the score would read as the lowest risk
+v1.2.0:
 - ADDED: US Credit Profile and Instant Credit: Api.CreditProfile, Api.InstantCredit, Endpoints.sandboxUs / productionUs
 - ADDED: UK Bank Account Verify and International Payments Verification: Api.BankAccountVerify, Api.InternationalPayments
 - ADDED: UK KYB and AML Flags: Api.Kyb, Api.AmlFlags, needing "KYB Sandbox" on the app. Sectors not seen to succeed: the sandbox answers 500

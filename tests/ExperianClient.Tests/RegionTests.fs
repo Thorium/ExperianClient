@@ -129,3 +129,18 @@ let ``Experian's samples of the newer products keep every field`` () =
     Assert.Equal<string>("", String.Join(" ", Set.difference (fieldsOf bank) (fieldsOf (client.BankAccountVerify.Serialize(client.BankAccountVerify.Deserialize(bank, typeof<BankAccountVerify.RequestMessage>))))))
     Assert.Equal<string>("", String.Join(" ", Set.difference (fieldsOf intl) (fieldsOf (client.InternationalPayments.Serialize(client.InternationalPayments.Deserialize(intl, typeof<InternationalPayments.RequestMessage>))))))
     Assert.Equal<string>("", String.Join(" ", Set.difference (fieldsOf instant) (fieldsOf (client.InstantCredit.Serialize(client.InstantCredit.Deserialize(instant, typeof<InstantCredit.attributesRequest>))))))
+
+[<Theory>]
+[<InlineData("{}")>]
+[<InlineData("""{"score":0.0,"success":false}""")>]
+[<InlineData("null")>]
+let ``a web data answer that isn't a score is an error, not the lowest risk`` (body: string) : Task =
+    task {
+        let handler = new FakeExperianHandler(portalAnswers body)
+        let client = ExperianClient.create credentials Endpoints.sandboxEu handler
+        let! result = Api.WebData.scoreAsync client (DateOnly(2026, 1, 31)) "Co" "Calle 1" "Madrid" "id-1" FakeExperian.ct
+
+        match result with
+        | Error _ -> ()
+        | Ok score -> failwith $"%A{score}"
+    }
