@@ -5,14 +5,25 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Experian</RootNamespace>
     <PackageId>ExperianClient</PackageId>
-    <Version>1.2.2</Version>
+    <Version>1.2.3</Version>
     <Authors>Tuomas Hietanen</Authors>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Description>For experian.com. Unofficial .NET client for Experian's developer-portal APIs. UK: Delphi Select (credit search, Identity Authenticate / AuthPlus, Detect, Affordability), KYC and PEP/sanctions, PowerCurve Customer Acquisition, Work Report, NED, IDP, Bank Account Verify, International Payments Verification, KYB, AML Flags, age and date of birth checks. US: Credit Profile, Instant Credit, SSN verification (eCBSV), Experian Verify. Netherlands and Spain: Web Data Insights. Brazil: Serasa Experian open banking. Most countries: Address, Email and Phone Validation, Client Gateway.</Description>
     <PackageTags>experian.com;experian;delphi;credit;kyc;aml;uk;fsharp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>v1.2.2:
+    <PackageReleaseNotes>v1.2.3:
+- CHANGED: a success answer the client can't read, or a body of null, is InvalidResponse with its status and body, not TransportError or Ok null (BREAKING for exhaustive matches); printing one and describe leave the body out
+- ADDED: ExperianClient.Create and ApertureClient.Create with a timeout; without one it stays HttpClient's 100 seconds
+- ADDED: KybOutcome.ofResponse, ofPeopleResponse: fail-closed reading of KYB answers as Clear, NeedsReview or NotScreened
+- FIXED: KybOutcome: an answer naming no company is a gap, CompanyNotIdentified (BREAKING for exhaustive matches)
+- FIXED: KybOutcome: DirectorNumDisqualifications, or a director's DirectorNumberConvictions, absent or - is a gap
+- FIXED: KybOutcome: a No flag beside a stated risk is a hit
+- FIXED: KybOutcome: a key party with no name or ids is a gap
+- FIXED: KybOutcome: a null LexisNexisDetails row is a gap
+- FIXED: KybOutcome: Matched yes with NumberOfMatches other than 1 is a gap, MatchCount (BREAKING for exhaustive matches)
+- FIXED: KybOutcome: DataQualityFlag no longer hides a hit in the same block
+v1.2.2:
 - FIXED: credentials Experian refused are not sent again for an hour, because failed sign-ins can lock the account
 - ADDED: ExperianFailure.isCredentialRefusal, ExperianFailure.refusesCredentials
 v1.2.1:

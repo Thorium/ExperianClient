@@ -125,6 +125,19 @@ module Endpoints =
     let sandboxBrazil = onSerasaHost "sandbox-api.serasaexperian.com.br"
     let productionBrazil = onSerasaHost "api.serasaexperian.com.br"
 
+/// A success answer the client could not read. Experian did the work, so sending the call again repeats it: a Delphi search writes
+/// another footprint. Printing one (%A, ToString) leaves the body out.
+[<StructuredFormatDisplay("{Display}")>]
+type UnreadableAnswer =
+    { HttpStatus: int
+      /// The answer as sent. It can hold a whole credit file or a signing secret: keep it out of logs.
+      Body: string
+      /// Where the answer could not be read, or the failure's type. It quotes nothing from the answer except plain field names.
+      Reason: string }
+
+    member this.Display = $"{{ HttpStatus = {this.HttpStatus}; Reason = {this.Reason}; Body hidden }}"
+    override this.ToString() = this.Display
+
 type ExperianFailure =
     /// The request was not sent: an argument cannot be valid.
     | InvalidRequest of reason: string
@@ -132,8 +145,10 @@ type ExperianFailure =
     | ApiError of httpStatus: int * body: string
     /// The token endpoint refused the credentials, or answered without an access_token.
     | TokenRefused of httpStatus: int * body: string
-    /// The request was not answered, or the answer could not be read.
+    /// There was no complete answer, so whether Experian did the work is unknown.
     | TransportError of exn
+    /// Experian answered with success, and the client could not read the answer.
+    | InvalidResponse of UnreadableAnswer
 
 module ExperianFailure =
 
@@ -155,6 +170,7 @@ module ExperianFailure =
         | ApiError(status, body) -> $"Experian answered HTTP {status}: {body}"
         | TokenRefused(status, body) -> $"Experian refused the token request (HTTP {status}): {body}"
         | TransportError e -> $"Request failed: {e.Message}"
+        | InvalidResponse answer -> $"Experian answered HTTP {answer.HttpStatus}, and the answer could not be read: {answer.Reason}"
 
 /// Raised inside a call when the token endpoint refuses; calls return it as TokenRefused.
 exception TokenRefusedException of httpStatus: int * body: string
@@ -178,6 +194,45 @@ module internal Wire =
         if not (isNull content || isNull content.Headers.ContentType) && content.Headers.ContentType.MediaType = "application/json" then
             content.Headers.ContentType.CharSet <- null
 
+    /// An HttpClient over handler. Without a timeout it keeps HttpClient's default of 100 seconds.
+    let httpClient (handler: HttpMessageHandler) (baseAddress: Uri) (timeout: TimeSpan voption) =
+        let client = new HttpClient(handler, false, BaseAddress = baseAddress)
+        timeout |> ValueOption.iter (fun limit -> client.Timeout <- limit)
+        client
+
+    /// Refuses at creation a timeout HttpClient would refuse at the first call.
+    let checkTimeout (timeout: TimeSpan) =
+        let longest = TimeSpan.FromMilliseconds(float Int32.MaxValue)
+        if timeout <> Timeout.InfiniteTimeSpan && (timeout <= TimeSpan.Zero || timeout > longest) then
+            raise (ArgumentOutOfRangeException(nameof timeout, timeout, "A timeout must be positive and at most Int32.MaxValue milliseconds, or infinite."))
+
+/// The success answer a call received, kept so that the call can report it if it can't read it. Each Api call has its own slot;
+/// generated clients called directly have none.
+module internal LastAnswer =
+
+    [<AllowNullLiteral>]
+    type Slot() =
+        member val Answer: struct (int * byte[]) voption = ValueNone with get, set
+
+    let private current = AsyncLocal<Slot>()
+
+    /// A new slot for the call running on this execution flow.
+    let start () =
+        let slot = Slot()
+        current.Value <- slot
+        slot
+
+    /// Keeps a success answer's whole body. The content stays buffered, so the generated client still reads it.
+    let keep (response: HttpResponseMessage) (ct: CancellationToken) =
+        task {
+            match current.Value with
+            | null -> ()
+            | slot when response.IsSuccessStatusCode && not (isNull response.Content) ->
+                let! body = response.Content.ReadAsByteArrayAsync ct
+                slot.Answer <- ValueSome(struct (int response.StatusCode, body))
+            | _ -> ()
+        }
+
 /// Reads a number or boolean in a string field as its JSON text: Experian sends numeric-looking codes (scorecard ids, CIFAS codes) unquoted.
 type internal LenientStringConverter() =
     inherit Serialization.JsonConverter<string>()
@@ -197,23 +252,31 @@ type internal LenientStringConverter() =
 
     override _.Write(writer, value, _) = writer.WriteStringValue value
 
+module internal QuotedNumber =
+
+    /// A quoted number's value. A JsonException gives the failure a JSON path; the parser's own message would quote the text.
+    let read (parsed: bool * 'T) =
+        match parsed with
+        | true, value -> value
+        | _ -> raise (JsonException())
+
 /// Number converters that also read quoted numbers. Registered converters reach option elements too, which NumberHandling does not.
 type internal LenientInt32Converter() =
     inherit Serialization.JsonConverter<int>()
     override _.Read(reader, _, _) =
-        if reader.TokenType = JsonTokenType.String then Int32.Parse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture) else reader.GetInt32()
+        if reader.TokenType = JsonTokenType.String then QuotedNumber.read (Int32.TryParse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture)) else reader.GetInt32()
     override _.Write(writer, value, _) = writer.WriteNumberValue value
 
 type internal LenientInt64Converter() =
     inherit Serialization.JsonConverter<int64>()
     override _.Read(reader, _, _) =
-        if reader.TokenType = JsonTokenType.String then Int64.Parse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture) else reader.GetInt64()
+        if reader.TokenType = JsonTokenType.String then QuotedNumber.read (Int64.TryParse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture)) else reader.GetInt64()
     override _.Write(writer, value, _) = writer.WriteNumberValue value
 
 type internal LenientDoubleConverter() =
     inherit Serialization.JsonConverter<double>()
     override _.Read(reader, _, _) =
-        if reader.TokenType = JsonTokenType.String then Double.Parse(reader.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture) else reader.GetDouble()
+        if reader.TokenType = JsonTokenType.String then QuotedNumber.read (Double.TryParse(reader.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture)) else reader.GetDouble()
     override _.Write(writer, value, _) = writer.WriteNumberValue value
 
 module internal Placeholder =
@@ -463,6 +526,7 @@ type internal BearerHandler(tokens: TokenSource, origins: Set<string>, inner: Ht
     override this.SendAsync(request, ct) =
         task {
             let! response = this.SendAuthorized(request, ct)
+            do! LastAnswer.keep response ct
             let isJson =
                 not (isNull response.Content)
                 && (isNull response.Content.Headers.ContentType || response.Content.Headers.ContentType.MediaType = "application/json")
@@ -483,12 +547,12 @@ type internal BearerHandler(tokens: TokenSource, origins: Set<string>, inner: Ht
 /// Keep it for the application's lifetime; the handler stays the caller's (it is never disposed here). A caller's handler must not follow
 /// redirects: it would send the body, and the sign-in's password, to wherever a redirect points.
 [<Sealed>]
-type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, handler: HttpMessageHandler, now: unit -> DateTimeOffset) =
+type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, handler: HttpMessageHandler, now: unit -> DateTimeOffset, timeout: TimeSpan voption) =
     let tokens = TokenSource(credentials, endpoints.Token, new HttpMessageInvoker(handler, false), now, endpoints.SignIn)
     let authorized = new BearerHandler(tokens, Endpoints.origins endpoints, handler)
 
     let json = Reading.options
-    let http (baseAddress: Uri) = new HttpClient(authorized, false, BaseAddress = baseAddress)
+    let http (baseAddress: Uri) = Wire.httpClient authorized baseAddress timeout
     let delphiSelect = lazy DelphiSelect.Client(http endpoints.DelphiSelect, json)
     let kyc = lazy Kyc.Client(http endpoints.Kyc, json)
     let ned = lazy Ned.Client(http endpoints.Ned, json)
@@ -522,8 +586,10 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     let transactionCategorization = lazy TransactionCategorization.Client(http endpoints.TransactionCategorization, json)
     let affordabilityCheck = lazy AffordabilityChecks.Client(http endpoints.AffordabilityCheck, json)
 
+    internal new(credentials, endpoints, handler, now: unit -> DateTimeOffset) = ExperianClient(credentials, endpoints, handler, now, ValueNone)
+
     /// A client over a caller-owned handler, such as one shared SocketsHttpHandler.
-    new(credentials, endpoints, handler) = ExperianClient(credentials, endpoints, handler, fun () -> DateTimeOffset.UtcNow)
+    new(credentials, endpoints, handler) = ExperianClient(credentials, endpoints, handler, (fun () -> DateTimeOffset.UtcNow), ValueNone)
 
     member _.Endpoints = endpoints
     member _.Tokens = tokens
@@ -566,8 +632,14 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     static member CreateHandler() : HttpMessageHandler =
         new SocketsHttpHandler(UseCookies = false, PooledConnectionLifetime = TimeSpan.FromMinutes 5., AllowAutoRedirect = false)
 
-    /// A client with its own handler.
-    static member Create(credentials, endpoints) = ExperianClient(credentials, endpoints, ExperianClient.CreateHandler())
+    /// A client with its own handler and HttpClient's default timeout of 100 seconds.
+    static member Create(credentials: Credentials, endpoints: Endpoints) = ExperianClient(credentials, endpoints, ExperianClient.CreateHandler())
+
+    /// A client with its own handler. timeout limits one Api call, with any sign-in and 401 resend inside it; past it the call is a
+    /// TransportError, and Experian may still have done the work.
+    static member Create(credentials: Credentials, endpoints: Endpoints, timeout: TimeSpan) =
+        Wire.checkTimeout timeout
+        ExperianClient(credentials, endpoints, ExperianClient.CreateHandler(), (fun () -> DateTimeOffset.UtcNow), ValueSome timeout)
 
 module ExperianClient =
 
@@ -578,55 +650,99 @@ module ExperianClient =
 type internal AuthTokenHandler(authToken: string, inner: HttpMessageHandler) =
     inherit DelegatingHandler(inner)
 
-    override _.SendAsync(request, ct) =
+    member private _.SendInner(request, ct) = base.SendAsync(request, ct)
+
+    override this.SendAsync(request, ct) =
         request.Headers.TryAddWithoutValidation("Auth-Token", authToken) |> ignore
         Wire.plainJson request.Content
-        base.SendAsync(request, ct)
+        task {
+            let! response = this.SendInner(request, ct)
+            do! LastAnswer.keep response ct
+            return response
+        }
 
 /// A connection to Experian's Address, Email and Phone Validation. They don't use the developer portal: they answer on one host, for any
 /// region, to a token from Experian's Self Service Portal that opens whichever of them are licensed. Each product's client is made when
 /// first used. Keep it for the application's lifetime; the handler stays the caller's (it is never disposed here). A caller's handler must
 /// not follow redirects: .NET would send this token's header to wherever a redirect points.
 [<Sealed>]
-type ApertureClient(authToken: string, handler: HttpMessageHandler) =
+type ApertureClient internal (authToken: string, handler: HttpMessageHandler, timeout: TimeSpan voption) =
     let authorized = new AuthTokenHandler(authToken, handler)
-    let http () = new HttpClient(authorized, false, BaseAddress = Uri "https://api.experianaperture.io/")
+    let http () = Wire.httpClient authorized (Uri "https://api.experianaperture.io/") timeout
     let address = lazy AddressValidation.Client(http (), Reading.options)
     let email = lazy EmailValidation.Client(http (), Reading.options)
     let phone = lazy PhoneValidation.Client(http (), Reading.options)
+
+    new(authToken, handler) = ApertureClient(authToken, handler, ValueNone)
 
     member _.Address = address.Value
     member _.Email = email.Value
     member _.Phone = phone.Value
 
-    /// A client with its own handler.
-    static member Create(authToken) = ApertureClient(authToken, ExperianClient.CreateHandler())
+    /// A client with its own handler and HttpClient's default timeout of 100 seconds.
+    static member Create(authToken: string) = ApertureClient(authToken, ExperianClient.CreateHandler())
+
+    /// A client with its own handler. timeout limits one Api call; past it the call is a TransportError.
+    static member Create(authToken: string, timeout: TimeSpan) =
+        Wire.checkTimeout timeout
+        ApertureClient(authToken, ExperianClient.CreateHandler(), ValueSome timeout)
 
 /// How the Api functions run a call and report its failure.
 module internal Call =
 
-    [<TailCall>]
-    let rec private failureOf (e: exn) =
+    /// A success answer of JSON null, to a call that expects a value.
+    exception private NullAnswerException
+
+    /// Where an answer could not be read. Exception messages can quote the answer, so none is used. A bracketed path segment is a
+    /// key that isn't a plain name, which could be any text, so the path stops there.
+    let private reasonOf (e: exn) =
         match e with
-        | :? AggregateException as e when e.InnerExceptions.Count = 1 -> failureOf e.InnerException
+        | NullAnswerException -> "The answer is null"
+        | :? JsonException as e ->
+            let path =
+                match e.Path with
+                | null -> "?"
+                | path ->
+                    match path.IndexOf("['", StringComparison.Ordinal) with
+                    | -1 -> path
+                    | at -> path.Substring(0, at) + "[?]"
+            $"Invalid at {path}, line {e.LineNumber}, byte {e.BytePositionInLine}"
+        | _ -> e.GetType().Name
+
+    [<TailCall>]
+    let rec private failureOf (slot: LastAnswer.Slot) (e: exn) =
+        match e with
+        | :? AggregateException as e when e.InnerExceptions.Count = 1 -> failureOf slot e.InnerException
         | :? Swagger.OpenApiException as e -> ApiError(e.StatusCode, e.ResponseBody)
         | TokenRefusedException(status, body) -> TokenRefused(status, body)
         | OtherHostException host -> InvalidRequest $"{host} isn't one of the client's endpoints, so the token isn't sent there"
-        | e -> TransportError e
+        | :? HttpRequestException
+        | :? IO.IOException
+        | :? OperationCanceledException -> TransportError e
+        | e ->
+            match slot.Answer with
+            | ValueSome(struct (status, body)) ->
+                InvalidResponse { HttpStatus = status; Body = Encoding.UTF8.GetString body; Reason = reasonOf e }
+            | ValueNone -> TransportError e
 
-    /// Runs a call; exceptions become Error. Cancellation of the token propagates.
+    /// Runs a call of one request; exceptions become Error. Cancellation of the token propagates.
     let guarded (ct: CancellationToken) (run: unit -> Task<Result<'T, ExperianFailure>>) =
         task {
+            let slot = LastAnswer.start ()
             try
-                return! run ()
+                let! result = run ()
+                return
+                    match result with
+                    | Ok value when isNull (box value) && typeof<'T> <> typeof<unit> -> Error(failureOf slot NullAnswerException)
+                    | _ -> result
             with error when not (ct.IsCancellationRequested && (error :? OperationCanceledException)) ->
-                return Error(failureOf error)
+                return Error(failureOf slot error)
         }
 
-    /// Runs a generated call.
-    let attempt (ct: CancellationToken) (call: Async<'T>) =
+    /// Runs a generated call. A generated client sends its request as soon as it is called, so the call is made inside the guard.
+    let attempt (ct: CancellationToken) (call: unit -> Async<'T>) =
         guarded ct (fun () -> task {
-            let! value = Async.StartAsTask(call, cancellationToken = ct)
+            let! value = Async.StartAsTask(call (), cancellationToken = ct)
             return Ok value })
 
     /// A path parameter as one escaped segment. The generated clients insert path values as they are, so "../" or "?"

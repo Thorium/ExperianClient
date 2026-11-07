@@ -131,6 +131,26 @@ anything else stays visible as an `Other…` case.
   - the overall decision (`Continue`, `Refer`, `Stop`), its reasons and recommended next actions;
   - per service, the rules that fired. For identity verification they confirm; for contra-indicator and PEP/sanctions
     services they alert. The housekeeping rules 9990 and 9991 are left out.
+- **KYB:** a 200 from `Api.Kyb.companyDataAsync` or `peopleDataAsync` doesn't mean screened and clear: blocks depend on
+  Experian's per-client configuration, and error codes and suppressed checks arrive in a 200.
+  `KybOutcome.ofResponse answer` and `KybOutcome.ofPeopleResponse answer` give:
+  - `Clear`: every check ran and every flag it rests on holds its clean value. It covers the key parties the answer
+    lists. Compare `Results.BusinessRef` or `Matching.BestMatchedId` with the company you asked about;
+  - `NeedsReview(hits, gaps)`: a person has to look. Each hit names the kind (PEP, sanction, adverse media, dissolved,
+    AML flag, CrossCore refusal or referral and others) and the subject (the company, a key party, the person, or a
+    Lexis Nexis match that links to no party);
+  - `NotScreened gaps`: no hit was seen, but something didn't run or can't be read: an error code, CrossCore not
+    attempted or timed out, a suppressed check, a missing block, flag or director count, a company not found or not named,
+    `NumberOfMatches` other than 1, a key party with no name or ids, a null Lexis Nexis row, a value the spec doesn't list.
+
+  The answer doesn't say what was asked for, so all checks are expected. A client without one of them, such as no CrossCore
+  licence, uses `KybOutcome.ofResponseFor [ KybCheck.Screening ] answer`; only an absent or suppressed result of a check
+  left out is let go. Clean flags must be present: `No` for Lexis Nexis, `N` for the rest, `0` for
+  `DirectorNumDisqualifications` and, on a director, `DirectorNumberConvictions`. An answer that omits them reads
+  `NotScreened`. `No` beside a stated risk is a hit, and a hit counts beside `DataQualityFlag`.
+
+  In a business search, `excludedissolved` is documented against its name (`true` includes dissolved companies), so check
+  each result's `BusinessStatus` instead of relying on it.
 
 ## Use
 
@@ -173,10 +193,17 @@ Every `Api` call returns `Task<Result<_, ExperianFailure>>`:
 - `InvalidRequest reason`: not sent. A path parameter was empty, `.` or `..`.
 - `ApiError(status, body)`: Experian answered with a non-success status.
 - `TokenRefused(status, body)`: the token endpoint refused the credentials.
-- `TransportError exn`: there was no answer, or it could not be read.
+- `TransportError exn`: there was no complete answer, so whether Experian did the work is unknown.
+- `InvalidResponse answer`: Experian answered with success and the client could not read it. `answer` has `HttpStatus`,
+  `Body` and `Reason`. Experian did the work, so sending a Delphi search again writes another footprint. `Body` can hold a
+  whole credit file: `describe` and printing the failure leave it out.
 
 Cancelling your token throws `OperationCanceledException` as usual. For operations not in `Api`, the generated
 clients are on the client, already authorised: `experian.DelphiSelect`, `experian.Kyc`, `experian.PowerCurve`, and so on.
+
+`ExperianClient.Create(credentials, endpoints, timeout)` limits each `Api` call, with any sign-in and 401 resend inside
+it; past the limit the call is a `TransportError`. Without it the limit is `HttpClient`'s default of 100 seconds.
+`ApertureClient.Create(authToken, timeout)` does the same.
 
 `ExperianClient.create credentials endpoints handler` shares a caller-owned `HttpMessageHandler`, such as one
 `SocketsHttpHandler` for the whole application. The client never disposes it. Set `AllowAutoRedirect = false` on it, as

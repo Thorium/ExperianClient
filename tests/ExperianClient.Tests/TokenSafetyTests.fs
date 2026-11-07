@@ -57,7 +57,7 @@ let ``a Client Gateway path value can't carry the token to another host`` () : T
         let handler = new Recording(fun _ -> HttpStatusCode.OK)
         let client = ExperianClient.create credentials Endpoints.production handler
         let call = client.ClientGateway.GetHybridDeploymentDetails(useCase = @"\/evil.example/x", authorization = null, xCorrelationId = Guid.Empty, auditIds = [| "a" |], cancellationToken = FakeExperian.ct)
-        let! result = Call.attempt FakeExperian.ct call
+        let! result = Call.attempt FakeExperian.ct (fun () -> call)
         Assert.True(isToOtherHost result, $"Got {result}")
         Assert.Empty handler.Seen
     }
@@ -75,7 +75,7 @@ let ``a token the caller passes is the one sent, with no sign-in`` () : Task =
                     401, "{}")
         let client = ExperianClient.create credentials Endpoints.production handler
         let call = client.ClientGateway.GetHybridDeploymentDetails(useCase = "pc", authorization = "Bearer caller-jwt", xCorrelationId = Guid.Empty, auditIds = [| "a" |], cancellationToken = FakeExperian.ct)
-        let! result = Call.attempt FakeExperian.ct call
+        let! result = Call.attempt FakeExperian.ct (fun () -> call)
         Assert.True((match result with Error(ApiError(401, _)) -> true | _ -> false), $"Got {result}")
         Assert.Equal(0, signIns.Value)
         let sent = Assert.Single handler.ApiCalls

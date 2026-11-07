@@ -12,6 +12,7 @@
     <Compile Include="ApiTests.fs" />
     <Compile Include="DelphiTests.fs" />
     <Compile Include="ReportsTests.fs" />
+    <Compile Include="KybOutcomeTests.fs" />
     <Compile Include="WebhookTests.fs" />
     <Compile Include="RegionTests.fs" />
     <Compile Include="ValidationTests.fs" />

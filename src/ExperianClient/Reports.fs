@@ -416,3 +416,420 @@ module KycOutcome =
                           Score = ValueOption.ofOption rule.RuleScore
                           Text = ValueOption.ofOption rule.RuleText })
                     |> List.ofSeq }) }
+
+/// A check the KYB company and people data calls can carry out. Licensing and Experian's per-client configuration decide
+/// which ones a client gets, and the answer does not say what was asked for.
+[<Struct; RequireQualifiedAccess>]
+type KybCheck =
+    /// Lexis Nexis PEP, sanctions and adverse media screening.
+    | Screening
+    /// CrossCore authentication of individuals. Experian does not send business records to it.
+    | Authentication
+    /// AML flags on the company: adverse markers and cashflow profiles. The people data call has none.
+    | AdverseMarkers
+
+    static member All = [ Screening; Authentication; AdverseMarkers ]
+
+/// A key party of a company data answer. An id Experian reports as "Unknown" is ValueNone.
+type KybKeyParty =
+    { /// A company's legal name, or an individual's names.
+      Name: string voption
+      UboShareholderId: string voption
+      PscId: string voption
+      DirectorUrn: string voption }
+
+/// Who a hit or gap in a KYB answer concerns.
+[<RequireQualifiedAccess>]
+type KybSubject =
+    | Company
+    | KeyParty of KybKeyParty
+    /// The individual in a people data answer.
+    | Person
+    /// A Lexis Nexis match whose ids link to no key party, with the name sent to Lexis Nexis.
+    | Unlinked of inputName: string voption
+
+/// What a person has to look at. Risks are Experian's High or Standard, which depend on the client's configuration.
+[<RequireQualifiedAccess>]
+type KybHitKind =
+    | Pep of risk: string voption
+    | Sanction
+    | AdverseMedia of risk: string voption
+    | Enforcement of risk: string voption
+    /// Experian's SOE flag.
+    | Soe
+    /// Experian's RCA flag.
+    | Rca of risk: string voption
+    /// Lexis Nexis hit without a category, or a match row that flags no category.
+    | Uncategorised
+    /// CrossCore answered NotAuthenticated or Refer.
+    | Authentication of AuthPlusDecision
+    | Dissolved
+    /// The company's UBO structure has an exception, with Experian's summary of it.
+    | OwnershipException of description: string voption
+    /// A set flag or non-zero count, by its name in the answer: an AML flag, PartialOwnershipFlag, FcaDisciplinaryActionTaken,
+    /// DirectorNumDisqualifications or DirectorNumberConvictions.
+    | AdverseMarker of field: string
+
+type KybHit =
+    { Subject: KybSubject
+      Kind: KybHitKind }
+
+/// Why a KYB answer can't be read as complete.
+[<RequireQualifiedAccess>]
+type KybGap =
+    /// The answer has no Results.
+    | NoResults
+    /// An entry of Results.ErrorCodes, such as ORCHESTRATOR_API_TIMEOUT.
+    | ErrorCode of code: string
+    /// LnScreeningSuppress or IdVerificationSuppress is true.
+    | Suppressed of field: string
+    /// DataQualityFlag, or a Matching.Matched other than yes: the check concerned no known company.
+    | CompanyNotFound of value: string
+    /// No BusinessRef, Matching.BestMatchedId or BusinessName: nothing says which company was checked.
+    | CompanyNotIdentified
+    /// Matching.Matched is yes and NumberOfMatches is not 1: the record checked may not be the company asked about.
+    | MatchCount of matches: double
+    /// A block is absent. KeyParties and LexisNexisDetails also when they hold a null.
+    | BlockMissing of subject: KybSubject * block: string
+    /// A field the check rests on is absent or blank.
+    | FieldMissing of subject: KybSubject * field: string
+    /// A value the spec does not list.
+    | UnknownValue of subject: KybSubject * field: string * value: string
+    /// CrosscoreAttempted other than True, or CCAuthenticationAttempted other than TRUE, with its value.
+    | CrossCoreNotCompleted of subject: KybSubject * field: string * value: string
+    /// Authentication was expected, and every key party is a company.
+    | NoIndividualKeyParty
+
+/// What a KYB company or people data answer shows. A 200 alone shows nothing: Experian's answers depend on per-client
+/// configuration, and errors and suppressed checks arrive in a 200.
+[<RequireQualifiedAccess>]
+type KybOutcome =
+    /// Every expected check ran, and every flag it rests on holds its clean value. It covers the key parties the answer
+    /// lists and the company in Results.BusinessRef or Matching.BestMatchedId, which the caller compares with the company
+    /// it asked about.
+    | Clear
+    /// A person has to look at the hits. Gaps are what also went unchecked; they are empty when every expected check ran.
+    | NeedsReview of hits: KybHit list * gaps: KybGap list
+    /// No hit was seen, and some checks did not run or can't be read. Never to be read as clear.
+    | NotScreened of gaps: KybGap list
+
+module KybOutcome =
+
+    type private Finding =
+        | Hit of KybHit
+        | Gap of KybGap
+
+    let private hit subject kind = Hit { Subject = subject; Kind = kind }
+
+    /// The value, without blanks.
+    let private text (value: string option) =
+        value |> Option.map _.Trim() |> Option.filter (String.IsNullOrEmpty >> not)
+
+    let private equalsText (expected: string) (value: string) = value.Equals(expected, StringComparison.OrdinalIgnoreCase)
+
+    let private items (values: 'T[]) = values |> Option.ofObj |> Option.defaultValue [||] |> List.ofArray |> List.filter (fun v -> not (isNull (box v)))
+
+    let private missingBlock expected subject block = if expected then [ Gap(KybGap.BlockMissing(subject, block)) ] else []
+
+    let private missingField expected subject field = if expected then [ Gap(KybGap.FieldMissing(subject, field)) ] else []
+
+    let private isSet value = equalsText "Y" value || equalsText "Yes" value
+
+    /// Experian words a risk only for a hit.
+    let private statesRisk =
+        function
+        | KybHitKind.Pep(ValueSome _)
+        | KybHitKind.AdverseMedia(ValueSome _)
+        | KybHitKind.Enforcement(ValueSome _)
+        | KybHitKind.Rca(ValueSome _) -> true
+        | _ -> false
+
+    /// Y or Yes is a hit, whichever word the field's spec uses, and so is the clean word beside a stated risk. Only the field's
+    /// own clean word is clean; anything else is a gap.
+    let private flags (clean: string) expected subject entries =
+        entries
+        |> List.collect (fun (field, value, kind) ->
+            match text value with
+            | None -> missingField expected subject field
+            | Some value when isSet value -> [ hit subject kind ]
+            | Some value when equalsText clean value && statesRisk kind -> [ hit subject kind ]
+            | Some value when equalsText clean value -> []
+            | Some value -> [ Gap(KybGap.UnknownValue(subject, field, value)) ])
+
+    let private optional = text >> ValueOption.ofOption
+
+    let private lexisNexisFlags pep pepRisk sanction enforcement enforcementRisk soe rca rcaRisk adverseMedia adverseMediaRisk uncategorised =
+        [ "LNPep", pep, KybHitKind.Pep(optional pepRisk)
+          "LNSanction", sanction, KybHitKind.Sanction
+          "LNEnforcement", enforcement, KybHitKind.Enforcement(optional enforcementRisk)
+          "LNSoe", soe, KybHitKind.Soe
+          "LNRca", rca, KybHitKind.Rca(optional rcaRisk)
+          "LNAdverseMedia", adverseMedia, KybHitKind.AdverseMedia(optional adverseMediaRisk)
+          "LNUncategorisedHit", uncategorised, KybHitKind.Uncategorised ]
+
+    let private summaryFlags (block: Kyb.KybDataSummaryLNFields) =
+        lexisNexisFlags block.LnPep block.LnPepRisk block.LnSanction block.LnEnforcement block.LnEnforcementRisk block.LnSoe block.LnRca block.LnRcaRisk block.LnAdverseMedia block.LnAdverseMediaRisk block.LnUncategorisedHit
+
+    let private partyFlags (block: Kyb.KybDataLNDetails) =
+        lexisNexisFlags block.LnPep block.LnPepRisk block.LnSanction block.LnEnforcement block.LnEnforcementRisk block.LnSoe block.LnRca block.LnRcaRisk block.LnAdverseMedia block.LnAdverseMediaRisk block.LnUncategorisedHit
+
+    let private summary expected subject blockName (block: Kyb.KybDataSummaryLNFields) =
+        match Option.ofObj block with
+        | Some lexisNexis -> flags "No" expected subject (summaryFlags lexisNexis)
+        | None -> missingBlock expected subject blockName
+
+    /// A row is a match Lexis Nexis returned, so it is a hit whatever its flags say. A null row is a match that can't be read.
+    let private matchRows (owner: KybSubject) (subjectOf: Kyb.KybDataLexisNexisDetails_Item -> KybSubject) (rows: Kyb.KybDataLexisNexisDetails_Item[]) =
+        let readable = items rows
+        let unreadable = if isNull rows || readable.Length = rows.Length then [] else [ Gap(KybGap.BlockMissing(owner, "LexisNexisDetails")) ]
+        unreadable
+        @ (readable
+           |> List.collect (fun row ->
+               let subject = subjectOf row
+               let flagged =
+                   lexisNexisFlags row.Pep row.PepRisk row.Sanction row.Enforcement row.EnforcementRisk row.Soe row.Rca row.RcaRisk row.AdverseMedia row.AdverseMediaRisk row.UncategorisedHit
+                   |> List.filter (fun (_, value, _) -> text value |> Option.exists isSet)
+                   |> List.map (fun (_, _, kind) -> kind)
+               match flagged with
+               | [] -> [ hit subject KybHitKind.Uncategorised ]
+               | kinds -> kinds |> List.map (hit subject)))
+
+    let private crossCore expected subject blockName (block: Kyb.KybDataCCDetails) =
+        match Option.ofObj block with
+        | None -> missingBlock expected subject blockName
+        | Some details ->
+            let call =
+                match text details.CrosscoreAttempted with
+                | Some value when equalsText "True" value -> []
+                | Some value -> [ Gap(KybGap.CrossCoreNotCompleted(subject, "CrosscoreAttempted", value)) ]
+                | None -> missingField expected subject "CrosscoreAttempted"
+            let called = expected && List.isEmpty call
+            let sent =
+                match text details.CcAuthenticationAttempted with
+                | Some value when equalsText "TRUE" value -> []
+                | Some value when equalsText "FALSE" value && not expected -> []
+                | Some value -> [ Gap(KybGap.CrossCoreNotCompleted(subject, "CCAuthenticationAttempted", value)) ]
+                | None -> missingField called subject "CCAuthenticationAttempted"
+            let decision =
+                match AuthPlus.decision details.CcDecision with
+                | Authenticated level when level = 1 || level = 2 -> []
+                | Authenticated _ -> [ Gap(KybGap.UnknownValue(subject, "CCDecision", details.CcDecision |> Option.defaultValue "")) ]
+                | NotAuthenticated _
+                | Refer _ as refused -> [ hit subject (KybHitKind.Authentication refused) ]
+                | NoDecision -> missingField (called && List.isEmpty sent) subject "CCDecision"
+                | OtherAuthPlusDecision code -> [ Gap(KybGap.UnknownValue(subject, "CCDecision", code)) ]
+            call @ sent @ decision
+
+    let private keyParty (party: Kyb.KybDataKeyParties_Item) =
+        let known (id: string option) = text id |> Option.filter (equalsText "Unknown" >> not) |> ValueOption.ofOption
+        { Name =
+            match text party.LegalName, List.choose text [ party.Forename; party.MiddleName; party.Surname ] with
+            | Some legalName, _ -> ValueSome legalName
+            | None, [] -> ValueNone
+            | None, names -> ValueSome(String.Join(" ", names))
+          UboShareholderId = known party.UboShareholderId
+          PscId = known party.Pscid
+          DirectorUrn = known party.DirectorUrn }
+
+    /// Types C and O are companies, which Experian does not authenticate. X, a missing type or any other is taken for an individual.
+    let private isIndividual (party: Kyb.KybDataKeyParties_Item) =
+        match text party.ShareholderType with
+        | Some kind -> not (equalsText "C" kind || equalsText "O" kind)
+        | None -> true
+
+    /// A key party the spec gives a conviction count: a current director. A URN of Unknown is still a director's.
+    let private isDirector (party: Kyb.KybDataKeyParties_Item) =
+        text party.DirectorFlag |> Option.exists isSet || Option.isSome (text party.DirectorUrn)
+
+    /// Non-zero is a hit, and only zero is clean. "" and "-" arrive here as absent.
+    let private count expected subject field (value: double option) =
+        match value with
+        | Some number when number <> 0. -> [ hit subject (KybHitKind.AdverseMarker field) ]
+        | Some _ -> []
+        | None -> missingField expected subject field
+
+    let private partyFindings (expects: KybCheck -> bool) (party: Kyb.KybDataKeyParties_Item) =
+        let identity = keyParty party
+        let subject = KybSubject.KeyParty identity
+        let unidentified =
+            match identity.Name, identity.UboShareholderId, identity.PscId, identity.DirectorUrn with
+            | ValueNone, ValueNone, ValueNone, ValueNone -> missingField (expects KybCheck.Screening || expects KybCheck.Authentication) subject "Name"
+            | _ -> []
+        let lexisNexis =
+            match Option.ofObj party.Lexisnexis with
+            | Some block -> flags "No" (expects KybCheck.Screening) subject (partyFlags block)
+            | None -> missingBlock (expects KybCheck.Screening) subject "Lexisnexis"
+        unidentified
+        @ lexisNexis
+        @ crossCore (expects KybCheck.Authentication && isIndividual party) subject "Crosscore" party.Crosscore
+        @ count (expects KybCheck.AdverseMarkers && isDirector party) subject "DirectorNumberConvictions" party.DirectorNumberConvictions
+
+    let private keyParties (expects: KybCheck -> bool) (parties: Kyb.KybDataKeyParties_Item[]) =
+        let expected = expects KybCheck.Screening || expects KybCheck.Authentication
+        let readable = items parties
+        match Option.ofObj parties with
+        | Some all when all.Length > 0 ->
+            (if readable.Length < all.Length then missingBlock expected KybSubject.Company "KeyParties" else [])
+            @ (if expects KybCheck.Authentication && not (List.exists isIndividual readable) then [ Gap KybGap.NoIndividualKeyParty ] else [])
+            @ (readable |> List.collect (partyFindings expects))
+        | _ -> missingBlock expected KybSubject.Company "KeyParties"
+
+    /// The AML flags, by their names in the answer, with the UBO structure's partial ownership flag.
+    let private companyMarkers (company: Kyb.KybDataCompanyInformation) =
+        [ "PartialOwnershipFlag", company.PartialOwnershipFlag
+          "FormationAgent", company.FormationAgent
+          "SlpLlpOwned", company.SlpLlpOwned
+          "NoPsc", company.NoPsc
+          "PscDodging", company.PscDodging
+          "Phoenix", company.Phoenix
+          "CHDefaultAddress", company.ChDefaultAddress
+          "ResidentialAddress", company.ResidentialAddress
+          "ResidentialAddressHighVol", company.ResidentialAddressHighVol
+          "MailboxAddress", company.MailboxAddress
+          "RegisteredAddressChanges", company.RegisteredAddressChanges
+          "DirectorNationalityChanges", company.DirectorNationalityChanges
+          "NoUKDirIncorp", company.NoUkDirIncorp
+          "HighRiskDirIncorp", company.HighRiskDirIncorp
+          "NoUKDir", company.NoUkDir
+          "HighRiskDir", company.HighRiskDir
+          "NoUKPsc", company.NoUkPsc
+          "HighRiskPsc", company.HighRiskPsc
+          "NoUKUbo", company.NoUkUbo
+          "HighRiskUbo", company.HighRiskUbo
+          "NoUKKp", company.NoUkKp
+          "HighRiskKp", company.HighRiskKp
+          "MultiJurDirIncorp", company.MultiJurDirIncorp
+          "MultiJurDir", company.MultiJurDir
+          "DirHighVolCos", company.DirHighVolCos
+          "ConflictingDirCoR", company.ConflictingDirCoR
+          "ConflictingDirNat", company.ConflictingDirNat
+          "ConflictingDirDoB", company.ConflictingDirDoB
+          "ConsistentOverPerformance", company.ConsistentOverPerformance
+          "FastMoneyMovement", company.FastMoneyMovement
+          "LowAverageBalance", company.LowAverageBalance
+          "RoundTransactionsLatestMonth", company.RoundTransactionsLatestMonth
+          "RoundTransactionsLatestYear", company.RoundTransactionsLatestYear
+          "RoundTransactionsFull", company.RoundTransactionsFull
+          "MisalignedInflows", company.MisalignedInflows
+          "MultipleCurrentAccounts", company.MultipleCurrentAccounts
+          "MultipleBanks", company.MultipleBanks
+          "MultipleBanksNewIncorp", company.MultipleBanksNewIncorp
+          "TradingWhilstDormant", company.TradingWhilstDormant ]
+        |> List.map (fun (field, value) -> field, value, KybHitKind.AdverseMarker field)
+
+    let private companyFindings (expects: KybCheck -> bool) (block: Kyb.KybDataCompanyInformation) =
+        let screening = expects KybCheck.Screening
+        let markers = expects KybCheck.AdverseMarkers
+        let subject = KybSubject.Company
+        match Option.ofObj block with
+        | None -> missingBlock (screening || markers) subject "CompanyInformation"
+        | Some company ->
+            // DataQualityFlag excuses what a company not found leaves absent, never a hit the block still holds.
+            let quality = text company.DataQualityFlag
+            let screening = screening && Option.isNone quality
+            let markers = markers && Option.isNone quality
+            (quality |> Option.map (fun value -> Gap(KybGap.CompanyNotFound value)) |> Option.toList)
+            @ summary screening subject "Lexisnexis" company.Lexisnexis
+            @ flags "N" (screening || markers) subject [ "DissolvedFlag", company.DissolvedFlag, KybHitKind.Dissolved ]
+            @ (text company.DissolutionDate |> Option.map (fun _ -> hit subject KybHitKind.Dissolved) |> Option.toList)
+            @ flags "N" markers subject [ "ExceptionFlag", company.ExceptionFlag, KybHitKind.OwnershipException(optional company.ExceptionDescription) ]
+            @ flags "N" markers subject (companyMarkers company)
+            @ count markers subject "DirectorNumDisqualifications" company.DirectorNumDisqualifications
+
+    let private matching (block: Kyb.KybDataMatching) =
+        match Option.ofObj block with
+        | None -> []
+        | Some found ->
+            let matched =
+                match text found.Matched, found.NumberOfMatches with
+                | Some value, Some matches when equalsText "yes" value && matches <> 1. -> [ Gap(KybGap.MatchCount matches) ]
+                | Some value, _ when equalsText "yes" value -> []
+                | Some value, _ -> [ Gap(KybGap.CompanyNotFound value) ]
+                | None, _ -> missingField true KybSubject.Company "Matched"
+            matched
+            @ (items found.MatchingDetails
+               |> List.collect (fun source ->
+                   flags "N" false KybSubject.Company [ "FcaDisciplinaryActionTaken", source.FcaDisciplinaryActionTaken, KybHitKind.AdverseMarker "FcaDisciplinaryActionTaken" ]))
+
+    let private errorCodes (codes: string[]) =
+        codes
+        |> Option.ofObj
+        |> Option.defaultValue [||]
+        |> List.ofArray
+        |> List.map (fun code -> Gap(KybGap.ErrorCode(if isNull code then "" else code.Trim())))
+
+    /// A JSON boolean arrives here as its text. Absent says nothing: the check's own block still has to be there.
+    let private suppressed expected subject field (value: string option) =
+        match text value with
+        | Some value when equalsText "true" value -> if expected then [ Gap(KybGap.Suppressed field) ] else []
+        | Some value when equalsText "false" value -> []
+        | Some value -> [ Gap(KybGap.UnknownValue(subject, field, value)) ]
+        | None -> []
+
+    /// An empty list asks for every check, so that it can't make a check-free clear.
+    let private expecting (requested: KybCheck list) =
+        match requested with
+        | [] -> fun (_: KybCheck) -> true
+        | requested -> fun check -> List.contains check requested
+
+    let private outcome findings =
+        let hits = findings |> List.choose (function Hit found -> Some found | Gap _ -> None) |> List.distinct
+        let gaps = findings |> List.choose (function Gap gap -> Some gap | Hit _ -> None) |> List.distinct
+        match hits, gaps with
+        | [], [] -> KybOutcome.Clear
+        | [], gaps -> KybOutcome.NotScreened gaps
+        | hits, gaps -> KybOutcome.NeedsReview(hits, gaps)
+
+    /// The outcome of a company data answer, for a client that asked for only these checks. Hits, error codes and failed
+    /// calls count whatever was asked for; only an absent or suppressed result of a check not asked for is let go.
+    let ofResponseFor (requested: KybCheck list) (response: Kyb.KybDataResponse) =
+        let expects = expecting requested
+        match response |> Option.ofObj |> Option.bind (fun r -> Option.ofObj r.Results) with
+        | None -> KybOutcome.NotScreened [ KybGap.NoResults ]
+        | Some results ->
+            let parties = items results.KeyParties |> List.map keyParty
+            let subjectOf (row: Kyb.KybDataLexisNexisDetails_Item) =
+                let links (id: string option) (partyId: string voption) =
+                    match text id, partyId with
+                    | Some id, ValueSome partyId -> id = partyId
+                    | _ -> false
+                parties
+                |> List.tryFind (fun party -> links row.UboShareholderId party.UboShareholderId || links row.Pscid party.PscId || links row.DirectorUrn party.DirectorUrn)
+                |> Option.map KybSubject.KeyParty
+                |> Option.defaultValue (KybSubject.Unlinked(optional row.InputName))
+            let identified =
+                [ text results.BusinessRef
+                  results.Matching |> Option.ofObj |> Option.bind (fun found -> text found.BestMatchedId)
+                  results.CompanyInformation |> Option.ofObj |> Option.bind (fun block -> text block.BusinessName) ]
+                |> List.exists Option.isSome
+            errorCodes results.ErrorCodes
+            @ (if identified then [] else [ Gap KybGap.CompanyNotIdentified ])
+            @ suppressed (expects KybCheck.Screening) KybSubject.Company "LnScreeningSuppress" results.LnScreeningSuppress
+            @ suppressed (expects KybCheck.Authentication) KybSubject.Company "IdVerificationSuppress" results.IdVerificationSuppress
+            @ matching results.Matching
+            @ companyFindings expects results.CompanyInformation
+            @ keyParties expects results.KeyParties
+            @ matchRows KybSubject.Company subjectOf results.LexisNexisDetails
+            |> outcome
+
+    /// The outcome of a company data answer with every check expected. A client not licensed for one, or a request that
+    /// leaves a block out, reads NotScreened naming it: see ofResponseFor.
+    let ofResponse (response: Kyb.KybDataResponse) = ofResponseFor KybCheck.All response
+
+    /// The outcome of a people data answer, for a client that asked for only these checks. Hits are the Person's.
+    let ofPeopleResponseFor (requested: KybCheck list) (response: Kyb.KybDataPeopleResponse) =
+        let expects = expecting requested
+        match response |> Option.ofObj |> Option.bind (fun r -> Option.ofObj r.Results) with
+        | None -> KybOutcome.NotScreened [ KybGap.NoResults ]
+        | Some results ->
+            let person = KybSubject.Person
+            errorCodes results.ErrorCodes
+            @ suppressed (expects KybCheck.Screening) person "LnScreeningSuppress" results.LnScreeningSuppress
+            @ suppressed (expects KybCheck.Authentication) person "IdVerificationSuppress" results.IdVerificationSuppress
+            @ summary (expects KybCheck.Screening) person "ClientPeopleScreeningLexisNexis" results.ClientPeopleScreeningLexisNexis
+            @ crossCore (expects KybCheck.Authentication) person "ClientPeopleScreeningCrosscore" results.ClientPeopleScreeningCrosscore
+            @ matchRows person (fun _ -> person) results.LexisNexisDetails
+            |> outcome
+
+    /// The outcome of a people data answer with screening and authentication expected.
+    let ofPeopleResponse (response: Kyb.KybDataPeopleResponse) = ofPeopleResponseFor KybCheck.All response

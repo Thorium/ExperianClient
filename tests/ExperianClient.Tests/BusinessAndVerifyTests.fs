@@ -57,6 +57,84 @@ let ``AML flags ask the company call for its blocks`` () : Task =
         Assert.Contains("AMLFlags", call.Body)
     }
 
+[<Fact>]
+let ``a KYB search sends excludedissolved as it is given`` () : Task =
+    task {
+        let handler = portal "{}"
+        let search = { Api.Kyb.BusinessSearch.Default with Name = ValueSome "TEST"; ExcludeDissolved = ValueSome false }
+        let! result = Api.Kyb.searchBusinessesAsync (clientOn Endpoints.sandbox handler) search FakeExperian.ct
+        expectOk result |> ignore
+        Assert.Contains("excludedissolved=false", (soleCall handler).Uri)
+    }
+
+[<Fact>]
+let ``KYB directors are read for one company`` () : Task =
+    task {
+        let handler = portal """{"NumCurrDirs":1,"Directors":{"CurrentDirector":[{"DirectorNumber":"D1","NumberConvictions":0}]}}"""
+        let client = clientOn Endpoints.sandbox handler
+        let! result = Api.Kyb.directorsAsync client "12/34" FakeExperian.ct
+        let answer = expectOk result
+        Assert.Equal(Some 1, answer.NumCurrDirs)
+        Assert.Equal(Some "D1", answer.Directors.CurrentDirector[0].DirectorNumber)
+        let call = soleCall handler
+        Assert.Equal("GET", call.Method)
+        Assert.Equal("https://sandbox-uk-api.experian.com/compliance/business/v1/registeredcompany/12%2F34/directors", call.Uri)
+        Assert.Equal("Bearer t1", call.Headers["Authorization"])
+        let! refused = Api.Kyb.directorsAsync client ".." FakeExperian.ct
+        Assert.True(match refused with Error(InvalidRequest _) -> true | _ -> false)
+    }
+
+[<Fact>]
+let ``KYB shareholders are read for one company`` () : Task =
+    task {
+        let handler = portal """{"Shareholder":[{"ShareholderNo":"7","ShareholderDetails":{"ShareholderType":"C","SuppressionFlag":"Y"}}]}"""
+        let client = clientOn Endpoints.sandbox handler
+        let! result = Api.Kyb.shareholdersAsync client "12/34" FakeExperian.ct
+        let answer = expectOk result
+        Assert.Equal(Some "7", answer.Shareholder[0].ShareholderNo)
+        Assert.Equal(Some "Y", answer.Shareholder[0].ShareholderDetails.SuppressionFlag)
+        let call = soleCall handler
+        Assert.Equal("GET", call.Method)
+        Assert.Equal("https://sandbox-uk-api.experian.com/compliance/business/v1/registeredcompany/12%2F34/shareholders", call.Uri)
+        let! refused = Api.Kyb.shareholdersAsync client ".." FakeExperian.ct
+        Assert.True(match refused with Error(InvalidRequest _) -> true | _ -> false)
+    }
+
+[<Fact>]
+let ``KYB people data posts the person and reads the screening`` () : Task =
+    task {
+        let handler = portal """{"Results":{"ClientPeopleScreeningLexisNexis":{"LNSanction":"Yes"},"ErrorCodes":["ORCHESTRATOR_API_TIMEOUT"]}}"""
+        let client = clientOn Endpoints.sandbox handler
+        let request = client.Kyb.Deserialize("""{"Firstname":"Bob","Surname":"Smith","Postcode":"NG80 1ZZ","IdVerificationSuppress":"true"}""", typeof<Kyb.KybDataPeopleRequestBody>) :?> Kyb.KybDataPeopleRequestBody
+        let! result = Api.Kyb.peopleDataAsync client request FakeExperian.ct
+        let answer = expectOk result
+        Assert.Equal(Some "Yes", answer.Results.ClientPeopleScreeningLexisNexis.LnSanction)
+        Assert.Equal<string[]>([| "ORCHESTRATOR_API_TIMEOUT" |], answer.Results.ErrorCodes)
+        let call = soleCall handler
+        Assert.Equal("POST", call.Method)
+        Assert.Equal("https://sandbox-uk-api.experian.com/compliance/business/v1/people/kybdata", call.Uri)
+        Assert.Contains("\"Firstname\":\"Bob\"", call.Body)
+        Assert.Contains("\"IdVerificationSuppress\":\"true\"", call.Body)
+        Assert.Equal("application/json", call.Headers["Content-Type"])
+    }
+
+[<Fact>]
+let ``a KYB company answer reaches its outcome through the client`` () : Task =
+    task {
+        let handler = portal """{"Results":{"LnScreeningSuppress":true,"ErrorCodes":["ORCHESTRATOR_API_TIMEOUT"],"CompanyInformation":{"DataQualityFlag":"Company not found"}}}"""
+        let client = clientOn Endpoints.sandbox handler
+        let request = client.Kyb.Deserialize("""{"BusinessRef":"99999999"}""", typeof<Kyb.KybDataRequestBody>) :?> Kyb.KybDataRequestBody
+        let! result = Api.Kyb.companyDataAsync client request FakeExperian.ct
+        Assert.Equal(
+            KybOutcome.NotScreened
+                [ KybGap.ErrorCode "ORCHESTRATOR_API_TIMEOUT"
+                  KybGap.CompanyNotIdentified
+                  KybGap.Suppressed "LnScreeningSuppress"
+                  KybGap.CompanyNotFound "Company not found"
+                  KybGap.BlockMissing(KybSubject.Company, "KeyParties") ],
+            KybOutcome.ofResponse (expectOk result))
+    }
+
 /// The paths of the values in JSON, without nulls.
 let private fieldsOf (json: string) =
     let rec walk (prefix: string) (element: JsonElement) =
