@@ -33,7 +33,17 @@ let ``AuthPlus results read the decision, index, confirmation and high-risk rule
     Assert.Equal(ValueSome "Caution. One or more high-risk conditions applies", first.DecisionText)
     Assert.Equal(ValueSome(AuthenticationIndex.Index 45), first.Index)
     Assert.Equal(ValueSome "1", first.ConfirmedLevel)
-    Assert.Equal<HighRiskRule list>([ { Id = ValueSome "U003"; Text = ValueSome "CIFAS data present at a supplied Address" } ], first.HighRiskRules)
+
+    Assert.Equal<HighRiskRule list>(
+        [
+            {
+                Id = ValueSome "U003"
+                Text = ValueSome "CIFAS data present at a supplied Address"
+            }
+        ],
+        first.HighRiskRules
+    )
+
     Assert.Equal(Authenticated 5, results[1].Decision)
     Assert.Equal(ValueSome AuthenticationIndex.NotUsed, results[1].Index)
     Assert.Empty(results[1].HighRiskRules)
@@ -72,8 +82,11 @@ let ``impaired credit history reads per applicant, ValueNone when not configured
 [<Fact>]
 let ``CCJ totals by band`` () =
     let ccj code =
-        let json = $"""{{"Response":{{"ConsumerSummary":{{"PremiumValueData":{{"ImpairedCH":{{"NDMAICH":"N","NDMACCJ":{code}}}}}}}}}}}"""
+        let json =
+            $"""{{"Response":{{"ConsumerSummary":{{"PremiumValueData":{{"ImpairedCH":{{"NDMAICH":"N","NDMACCJ":{code}}}}}}}}}}}"""
+
         (PublicRecords.impairedCredit (delphi json)).Value.MainApplicant.Value.Ccj
+
     Assert.Equal(ValueSome CcjTotal.NoCcj, ccj 0)
     Assert.Equal(ValueSome CcjTotal.UpTo500, ccj 1)
     Assert.Equal(ValueSome(CcjTotal.UpTo 550), ccj 11)
@@ -134,8 +147,11 @@ let ``affordability reads income estimates, verification and debt ratios`` () =
 [<Fact>]
 let ``income verification bands follow the spec`` () =
     let band code =
-        let json = $"""{{"Response":{{"ConsumerSummary":{{"PremiumValueData":{{"AffordabilityIQ":{{"AFFV01":{code}}}}}}}}}}}"""
+        let json =
+            $"""{{"Response":{{"ConsumerSummary":{{"PremiumValueData":{{"AffordabilityIQ":{{"AFFV01":{code}}}}}}}}}}}"""
+
         (Affordability.ofOutput (delphi json)).Value.MainApplicantVerification.Value
+
     Assert.Equal(IncomeVerification.AboveEstimate 201, band 0)
     Assert.Equal(IncomeVerification.AboveEstimate 181, band 10)
     Assert.Equal(IncomeVerification.AboveEstimate 171, band 20)
@@ -160,14 +176,21 @@ let ``KYC outcome reads the decision, reasons and fired rules per service`` () =
     Assert.Equal(ValueSome "Refer", outcome.Text)
     Assert.Equal<string list>([ "PEP match found" ], outcome.Reasons)
     Assert.Equal<string list>([ "Review the PEP match" ], outcome.NextActions)
-    Assert.Equal<string voption list>([ ValueSome "uk-idv"; ValueSome "uk-pepsanc" ], outcome.Services |> List.map _.Name)
+
+    Assert.Equal<string voption list>(
+        [ ValueSome "uk-idv"; ValueSome "uk-pepsanc" ],
+        outcome.Services |> List.map _.Name
+    )
+
     Assert.Equal<string voption list>([ ValueSome "5200" ], outcome.Services[0].FiredRules |> List.map _.Id)
     Assert.Equal(ValueSome "REFER", outcome.Services[1].Decision)
     Assert.Equal<string voption list>([ ValueSome "PSE9200" ], outcome.Services[1].FiredRules |> List.map _.Id)
 
 [<Fact>]
 let ``KYC decision codes and an empty answer`` () =
-    let decision code = (KycOutcome.ofResponse (kyc $"""{{"responseHeader":{{"overallResponse":{{"decision":"{code}"}}}}}}""")).Decision
+    let decision code =
+        (KycOutcome.ofResponse (kyc $"""{{"responseHeader":{{"overallResponse":{{"decision":"{code}"}}}}}}""")).Decision
+
     Assert.Equal(KycDecision.Continue, decision "CONTINUE")
     Assert.Equal(KycDecision.Stop, decision "Stop")
     Assert.Equal(KycDecision.NoDecision, decision "")
@@ -178,9 +201,23 @@ let ``KYC decision codes and an empty answer`` () =
 
 [<Fact>]
 let ``the joint applicant's history is read only when the answer lists two applicants`` () =
-    let ich = """"ImpairedCH":{"NDMAICH":"N","NDJAICH":"Y","NDJABankrupt":"B","NDJACCJ":0}"""
-    let single = delphi ("""{"Response":{"Applicants":[{"ApplicantIdentifier":1}],"ConsumerSummary":{"PremiumValueData":{""" + ich + "}}}}")
-    let joint = delphi ("""{"Response":{"Applicants":[{"ApplicantIdentifier":1},{"ApplicantIdentifier":2}],"ConsumerSummary":{"PremiumValueData":{""" + ich + "}}}}")
+    let ich =
+        """"ImpairedCH":{"NDMAICH":"N","NDJAICH":"Y","NDJABankrupt":"B","NDJACCJ":0}"""
+
+    let single =
+        delphi (
+            """{"Response":{"Applicants":[{"ApplicantIdentifier":1}],"ConsumerSummary":{"PremiumValueData":{"""
+            + ich
+            + "}}}}"
+        )
+
+    let joint =
+        delphi (
+            """{"Response":{"Applicants":[{"ApplicantIdentifier":1},{"ApplicantIdentifier":2}],"ConsumerSummary":{"PremiumValueData":{"""
+            + ich
+            + "}}}}"
+        )
+
     Assert.Equal(ValueNone, (PublicRecords.impairedCredit single).Value.JointApplicant)
     let jointHistory = (PublicRecords.impairedCredit joint).Value.JointApplicant.Value
     Assert.True jointHistory.Bankruptcy
@@ -192,6 +229,7 @@ let ``housekeeping rules 9990 and 9991 are not fired rules`` () =
         """{"responseHeader":{"overallResponse":{"decision":"CONTINUE"}},"clientResponsePayload":{"decisionElements":[
             {"serviceName":"uk-contras","rules":[{"ruleId":"9990","ruleName":"NRF9990","ruleScore":1,"ruleText":"No other rule has fired"}]},
             {"serviceName":"uk-idv","rules":[{"ruleId":"9991","ruleName":"NRF9991","ruleScore":1},{"ruleId":"5200","ruleScore":1}]}]}}"""
+
     let outcome = KycOutcome.ofResponse (kyc answer)
     Assert.Empty(outcome.Services[0].FiredRules)
     Assert.Equal<string voption list>([ ValueSome "5200" ], outcome.Services[1].FiredRules |> List.map _.Id)

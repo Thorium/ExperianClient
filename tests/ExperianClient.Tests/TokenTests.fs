@@ -48,12 +48,19 @@ let ``one token serves later calls until a minute before it expires`` () : Task 
         clock.Value <- clock.Value.AddMinutes 1.5
         let! _ = employers handler client
         Assert.Equal(2, handler.TokenCalls.Length)
-        Assert.Equal<string list>(["Bearer tok-1"; "Bearer tok-1"; "Bearer tok-2"], handler.ApiCalls |> List.map (fun c -> c.Headers["Authorization"]))
+
+        Assert.Equal<string list>(
+            [ "Bearer tok-1"; "Bearer tok-1"; "Bearer tok-2" ],
+            handler.ApiCalls |> List.map (fun c -> c.Headers["Authorization"])
+        )
     }
 
 let private refusedSignIn (tokenStatus: int) =
     fun (call: Call) ->
-        if isToken call then tokenStatus, """{"error":"invalid_grant"}""" else 200, "[]"
+        if isToken call then
+            tokenStatus, """{"error":"invalid_grant"}"""
+        else
+            200, "[]"
 
 [<Theory; InlineData(400); InlineData(401); InlineData(403)>]
 let ``refused credentials are not sent again for an hour`` (status: int) : Task =
@@ -143,44 +150,71 @@ let ``concurrent first calls share one token fetch`` () : Task =
 let ``a 401 fetches a new token and sends the request once more`` () : Task =
     task {
         let attempts = ref 0
+
         let api (call: Call) =
             attempts.Value <- attempts.Value + 1
-            if call.Headers["Authorization"] = "Bearer tok-1" then 401, """{"error":"invalid_token"}""" else 200, "[]"
+
+            if call.Headers["Authorization"] = "Bearer tok-1" then
+                401, """{"error":"invalid_token"}"""
+            else
+                200, "[]"
+
         use handler = new FakeExperianHandler(respondWith api)
         let! result = employers handler (clientWith handler)
         expectOk result |> ignore
         Assert.Equal(2, handler.TokenCalls.Length)
-        Assert.Equal<string list>(["Bearer tok-1"; "Bearer tok-2"], handler.ApiCalls |> List.map (fun c -> c.Headers["Authorization"]))
+
+        Assert.Equal<string list>(
+            [ "Bearer tok-1"; "Bearer tok-2" ],
+            handler.ApiCalls |> List.map (fun c -> c.Headers["Authorization"])
+        )
     }
 
 [<Fact>]
 let ``a second 401 is returned as ApiError`` () : Task =
     task {
-        use handler = new FakeExperianHandler(respondWith (fun _ -> 401, """{"error":"invalid_token"}"""))
+        use handler =
+            new FakeExperianHandler(respondWith (fun _ -> 401, """{"error":"invalid_token"}"""))
+
         let! result = employers handler (clientWith handler)
+
         match result with
         | Error(ApiError(401, body)) -> Assert.Contains("invalid_token", body)
         | other -> failwith $"%A{other}"
+
         Assert.Equal(2, handler.ApiCalls.Length)
     }
 
 [<Fact>]
 let ``refused credentials are TokenRefused and no API call is made`` () : Task =
     task {
-        let respond (call: Call) = if isToken call then 401, """{"errors":[{"message":"bad credentials"}]}""" else 200, "[]"
+        let respond (call: Call) =
+            if isToken call then
+                401, """{"errors":[{"message":"bad credentials"}]}"""
+            else
+                200, "[]"
+
         use handler = new FakeExperianHandler(respond)
         let! result = employers handler (clientWith handler)
+
         match result with
         | Error(TokenRefused(401, body)) -> Assert.Contains("bad credentials", body)
         | other -> failwith $"%A{other}"
+
         Assert.Empty handler.ApiCalls
     }
 
 [<Fact>]
 let ``a token answer without access_token is TokenRefused`` () : Task =
     task {
-        let respond (call: Call) = if isToken call then 200, """{"token_type":"Bearer"}""" else 200, "[]"
+        let respond (call: Call) =
+            if isToken call then
+                200, """{"token_type":"Bearer"}"""
+            else
+                200, "[]"
+
         use handler = new FakeExperianHandler(respond)
+
         match! employers handler (clientWith handler) with
         | Error(TokenRefused(200, _)) -> ()
         | other -> failwith $"%A{other}"
@@ -189,7 +223,10 @@ let ``a token answer without access_token is TokenRefused`` () : Task =
 [<Fact>]
 let ``expires_in is read as a number or a string, and defaults to 30 minutes`` () =
     let now = DateTimeOffset(2026, 10, 27, 12, 0, 0, TimeSpan.Zero)
-    let expiry json = (Token.parse now json).Value.ExpiresAt - now
+
+    let expiry json =
+        (Token.parse now json).Value.ExpiresAt - now
+
     Assert.Equal(TimeSpan.FromSeconds 600., expiry """{"access_token":"a","expires_in":600}""")
     Assert.Equal(TimeSpan.FromSeconds 900., expiry """{"access_token":"a","expires_in":"900"}""")
     Assert.Equal(TimeSpan.FromMinutes 30., expiry """{"access_token":"a"}""")
@@ -203,7 +240,10 @@ let ``cancellation propagates instead of becoming an Error`` () : Task =
         use handler = new FakeExperianHandler(respondWith (fun _ -> 200, "[]"))
         use cts = new Threading.CancellationTokenSource()
         do! cts.CancelAsync()
-        let! error = Assert.ThrowsAnyAsync<OperationCanceledException>(fun () ->
-            Api.Ned.searchEmployersAsync (clientWith handler) "Acme" ValueNone ValueNone cts.Token :> Task)
+
+        let! error =
+            Assert.ThrowsAnyAsync<OperationCanceledException>(fun () ->
+                Api.Ned.searchEmployersAsync (clientWith handler) "Acme" ValueNone ValueNone cts.Token :> Task)
+
         Assert.NotNull error
     }

@@ -4,7 +4,8 @@ module Experian.Providers
 
 open SwaggerProvider
 
-let [<Literal>] private schemas = __SOURCE_DIRECTORY__ + "/Schemas/"
+[<Literal>]
+let private schemas = __SOURCE_DIRECTORY__ + "/Schemas/"
 
 /// Delphi Select v2: consumer bureau search, Identity Authenticate (AuthPlus), Detect, Affordability, ExPIN.
 type DelphiSelect = OpenApiClientProvider<const(schemas + "delphi-select-v2-swagger-2.5.0.0.yaml"), PreferAsync=true>
@@ -55,10 +56,12 @@ type PhoneValidation = OpenApiClientProvider<const(schemas + "aperture-phonevali
 // The United States
 
 /// Credit Profile: credit report, employment insight, healthcare, automotive, TEC Connect and Connect Check.
-type CreditProfile = OpenApiClientProvider<const(schemas + "credit-profile-product-apis-oas-3.1-v-2.0.84.yaml"), PreferAsync=true>
+type CreditProfile =
+    OpenApiClientProvider<const(schemas + "credit-profile-product-apis-oas-3.1-v-2.0.84.yaml"), PreferAsync=true>
 
 /// Instant Credit: advanced and custom stand-alone instant credit decisions.
-type InstantCredit = OpenApiClientProvider<const(schemas + "instant-credit-cp-v-openapi3.2.0.52.yaml"), PreferAsync=true>
+type InstantCredit =
+    OpenApiClientProvider<const(schemas + "instant-credit-cp-v-openapi3.2.0.52.yaml"), PreferAsync=true>
 
 /// eCBSV: whether a Social Security number, name and date of birth match the Social Security Administration's records, with the person's consent.
 type SsnVerification = OpenApiClientProvider<const(schemas + "experianecbsv_noauth.yaml"), PreferAsync=true>
@@ -68,8 +71,13 @@ type SsnVerification = OpenApiClientProvider<const(schemas + "experianecbsv_noau
 type VerifyCore = OpenApiClientProvider<const(schemas + "expverify-core-v2-1.23.24.yaml"), PreferAsync=true>
 type VerifyPlus = OpenApiClientProvider<const(schemas + "expverify-plus-v2-1.23.24.yaml"), PreferAsync=true>
 type VerifyPremium = OpenApiClientProvider<const(schemas + "expverify-premium-v2-1.23.24.yaml"), PreferAsync=true>
-type VerifyPremiumPrequal = OpenApiClientProvider<const(schemas + "expverify-mortgageprequal-v2-1.23.24.yaml"), PreferAsync=true>
-type VerifyEmployment = OpenApiClientProvider<const(schemas + "expverify-employment-v2-5.31.24_1.yaml"), PreferAsync=true>
+
+type VerifyPremiumPrequal =
+    OpenApiClientProvider<const(schemas + "expverify-mortgageprequal-v2-1.23.24.yaml"), PreferAsync=true>
+
+type VerifyEmployment =
+    OpenApiClientProvider<const(schemas + "expverify-employment-v2-5.31.24_1.yaml"), PreferAsync=true>
+
 type VerifyGovernment = OpenApiClientProvider<const(schemas + "expverify-gov-updated-1.23.24.yaml"), PreferAsync=true>
 type ReverifyVoe = OpenApiClientProvider<const(schemas + "expverify-reverify-voe-v2-1.23.24.yaml"), PreferAsync=true>
 type ReverifyVoie = OpenApiClientProvider<const(schemas + "expverify-reverify-voie-v2-1.23.24.yaml"), PreferAsync=true>
@@ -85,11 +93,18 @@ type ReverifyCpdVoie = OpenApiClientProvider<const(schemas + "expn_verify_cpd_rv
 // The Netherlands and Spain
 
 /// EMEA Web Data Insights: a credit risk score for a small business from its digital footprint.
-type WebData = OpenApiClientProvider<const(schemas + "aces-webdata-webscore-v2-swagger-apiproxy-gdp.yaml"), PreferAsync=true>
+type WebData =
+    OpenApiClientProvider<const(schemas + "aces-webdata-webscore-v2-swagger-apiproxy-gdp.yaml"), PreferAsync=true>
 
 // Brazil, through Serasa Experian: scores and checks from open banking data
 
 type OpenBankingScore = OpenApiClientProvider<const(schemas + "cs-openbanking-scoring-br_2.yaml"), PreferAsync=true>
-type IncomeVerifications = OpenApiClientProvider<const(schemas + "cs-openbanking-income_verification-br_2.yaml"), PreferAsync=true>
-type TransactionCategorization = OpenApiClientProvider<const(schemas + "cs-openbanking-categorization-br_2.yaml"), PreferAsync=true>
-type AffordabilityChecks = OpenApiClientProvider<const(schemas + "cs-openbanking-affordability-check-br_2.yaml"), PreferAsync=true>
+
+type IncomeVerifications =
+    OpenApiClientProvider<const(schemas + "cs-openbanking-income_verification-br_2.yaml"), PreferAsync=true>
+
+type TransactionCategorization =
+    OpenApiClientProvider<const(schemas + "cs-openbanking-categorization-br_2.yaml"), PreferAsync=true>
+
+type AffordabilityChecks =
+    OpenApiClientProvider<const(schemas + "cs-openbanking-affordability-check-br_2.yaml"), PreferAsync=true>

@@ -21,76 +21,87 @@ type SignIn =
 /// Printing one (%A, ToString) shows the username and client id only.
 [<StructuredFormatDisplay("{Display}")>]
 type Credentials =
-    { Username: string
-      Password: string
-      ClientId: string
-      ClientSecret: string }
+    {
+        Username: string
+        Password: string
+        ClientId: string
+        ClientSecret: string
+    }
 
-    member this.Display = $"{{ Username = {this.Username}; ClientId = {this.ClientId}; Password and ClientSecret hidden }}"
+    member this.Display =
+        $"{{ Username = {this.Username}; ClientId = {this.ClientId}; Password and ClientSecret hidden }}"
+
     override this.ToString() = this.Display
 
 /// The token endpoint and each product's base address. Product addresses end with '/': generated paths resolve against them.
 type Endpoints =
-    { Token: Uri
-      DelphiSelect: Uri
-      Kyc: Uri
-      Ned: Uri
-      WorkReport: Uri
-      Idp: Uri
-      PowerCurve: Uri
-      SignIn: SignIn
-      ClientGateway: Uri
-      BankAccountVerify: Uri
-      InternationalPayments: Uri
-      Kyb: Uri
-      AgeAndDateOfBirth: Uri
-      SsnVerification: Uri
-      Verify: Uri
-      VerifyCpd: Uri
-      InstantCredit: Uri
-      CreditProfile: Uri
-      WebData: Uri
-      OpenBankingScore: Uri
-      IncomeVerification: Uri
-      TransactionCategorization: Uri
-      AffordabilityCheck: Uri }
+    {
+        Token: Uri
+        DelphiSelect: Uri
+        Kyc: Uri
+        Ned: Uri
+        WorkReport: Uri
+        Idp: Uri
+        PowerCurve: Uri
+        SignIn: SignIn
+        ClientGateway: Uri
+        BankAccountVerify: Uri
+        InternationalPayments: Uri
+        Kyb: Uri
+        AgeAndDateOfBirth: Uri
+        SsnVerification: Uri
+        Verify: Uri
+        VerifyCpd: Uri
+        InstantCredit: Uri
+        CreditProfile: Uri
+        WebData: Uri
+        OpenBankingScore: Uri
+        IncomeVerification: Uri
+        TransactionCategorization: Uri
+        AffordabilityCheck: Uri
+    }
 
 /// Credentials for a sign-in that takes only the app's client id and secret: Serasa Experian's.
 module Credentials =
     let ofClient (clientId: string) (clientSecret: string) =
-        { Username = ""
-          Password = ""
-          ClientId = clientId
-          ClientSecret = clientSecret }
+        {
+            Username = ""
+            Password = ""
+            ClientId = clientId
+            ClientSecret = clientSecret
+        }
 
 module Endpoints =
 
     /// The bundled specs' base paths on one host.
     let onHost (host: string) =
         let at (path: string) = Uri($"https://{host}{path}")
-        { Token = at "/oauth2/v1/token"
-          DelphiSelect = at "/risk/consumer/v2/"
-          Kyc = at "/da/ccis-devportalapis/"
-          Ned = at "/"
-          WorkReport = at "/"
-          Idp = at "/"
-          PowerCurve = at "/decisioning/experianone/customeracquisition/v1/"
-          SignIn = PortalPassword
-          ClientGateway = at "/v1/"
-          BankAccountVerify = at "/da/ccis-devportalapis/"
-          InternationalPayments = at "/da/ccis-devportalapis/"
-          Kyb = at "/"
-          AgeAndDateOfBirth = at "/da/ccis-devportalapis/"
-          SsnVerification = at "/consumerservices/ecbsv/v1/"
-          Verify = at "/consumerservices/verification/v2/"
-          VerifyCpd = at "/consumerservices/evcpd/v1/"
-          InstantCredit = at "/consumerservices/credit-profile/"
-          CreditProfile = at "/consumerservices/credit-profile/"
-          WebData = at "/creditrisk/webdata/gdp/v1/"
-          OpenBankingScore = at "/open-banking/score/v1/"
-          IncomeVerification = at "/open-banking/income-verification/v1/"
-          TransactionCategorization = at "/open-banking/categorization/v1/"
-          AffordabilityCheck = at "/open-banking/affordability-check/v1/" }
+
+        {
+            Token = at "/oauth2/v1/token"
+            DelphiSelect = at "/risk/consumer/v2/"
+            Kyc = at "/da/ccis-devportalapis/"
+            Ned = at "/"
+            WorkReport = at "/"
+            Idp = at "/"
+            PowerCurve = at "/decisioning/experianone/customeracquisition/v1/"
+            SignIn = PortalPassword
+            ClientGateway = at "/v1/"
+            BankAccountVerify = at "/da/ccis-devportalapis/"
+            InternationalPayments = at "/da/ccis-devportalapis/"
+            Kyb = at "/"
+            AgeAndDateOfBirth = at "/da/ccis-devportalapis/"
+            SsnVerification = at "/consumerservices/ecbsv/v1/"
+            Verify = at "/consumerservices/verification/v2/"
+            VerifyCpd = at "/consumerservices/evcpd/v1/"
+            InstantCredit = at "/consumerservices/credit-profile/"
+            CreditProfile = at "/consumerservices/credit-profile/"
+            WebData = at "/creditrisk/webdata/gdp/v1/"
+            OpenBankingScore = at "/open-banking/score/v1/"
+            IncomeVerification = at "/open-banking/income-verification/v1/"
+            TransactionCategorization = at "/open-banking/categorization/v1/"
+            AffordabilityCheck = at "/open-banking/affordability-check/v1/"
+        }
 
     /// The scheme, host and port of every address in a set: the only places its token goes.
     let internal origins (endpoints: Endpoints) =
@@ -104,7 +115,8 @@ module Endpoints =
     let private onSerasaHost (host: string) =
         { onHost host with
             Token = Uri($"https://{host}/security/iam/v1/client-identities/login")
-            SignIn = SerasaClient }
+            SignIn = SerasaClient
+        }
 
     let sandbox = onHost "sandbox-uk-api.experian.com"
 
@@ -112,10 +124,16 @@ module Endpoints =
     let production = onHost "uk-api.experian.com"
 
     /// The sandbox answers Experian Verify on v1 only, with one fixed report.
-    let sandboxUs = { onHost "sandbox-us-api.experian.com" with Verify = Uri "https://sandbox-us-api.experian.com/consumerservices/verification/v1/" }
+    let sandboxUs =
+        { onHost "sandbox-us-api.experian.com" with
+            Verify = Uri "https://sandbox-us-api.experian.com/consumerservices/verification/v1/"
+        }
 
     /// Experian Verify on a page the client hosts answers on a host of its own.
-    let productionUs = { onHost "us-api.experian.com" with VerifyCpd = Uri "https://us-ev-api.experian.com/consumerservices/evcpd/v1/" }
+    let productionUs =
+        { onHost "us-api.experian.com" with
+            VerifyCpd = Uri "https://us-ev-api.experian.com/consumerservices/evcpd/v1/"
+        }
 
     /// Web Data Insights, for the Netherlands and Spain.
     let sandboxEu = onHost "sandbox-eu-api.experian.com"
@@ -129,13 +147,17 @@ module Endpoints =
 /// another footprint. Printing one (%A, ToString) leaves the body out.
 [<StructuredFormatDisplay("{Display}")>]
 type UnreadableAnswer =
-    { HttpStatus: int
-      /// The answer as sent. It can hold a whole credit file or a signing secret: keep it out of logs.
-      Body: string
-      /// Where the answer could not be read, or the failure's type. It quotes nothing from the answer except plain field names.
-      Reason: string }
+    {
+        HttpStatus: int
+        /// The answer as sent. It can hold a whole credit file or a signing secret: keep it out of logs.
+        Body: string
+        /// Where the answer could not be read, or the failure's type. It quotes nothing from the answer except plain field names.
+        Reason: string
+    }
 
-    member this.Display = $"{{ HttpStatus = {this.HttpStatus}; Reason = {this.Reason}; Body hidden }}"
+    member this.Display =
+        $"{{ HttpStatus = {this.HttpStatus}; Reason = {this.Reason}; Body hidden }}"
+
     override this.ToString() = this.Display
 
 type ExperianFailure =
@@ -170,7 +192,8 @@ module ExperianFailure =
         | ApiError(status, body) -> $"Experian answered HTTP {status}: {body}"
         | TokenRefused(status, body) -> $"Experian refused the token request (HTTP {status}): {body}"
         | TransportError e -> $"Request failed: {e.Message}"
-        | InvalidResponse answer -> $"Experian answered HTTP {answer.HttpStatus}, and the answer could not be read: {answer.Reason}"
+        | InvalidResponse answer ->
+            $"Experian answered HTTP {answer.HttpStatus}, and the answer could not be read: {answer.Reason}"
 
 /// Raised inside a call when the token endpoint refuses; calls return it as TokenRefused.
 exception TokenRefusedException of httpStatus: int * body: string
@@ -181,8 +204,10 @@ exception OtherHostException of host: string
 /// A bearer token and the time after which it is not used. Printing one shows the expiry only.
 [<StructuredFormatDisplay("{Display}")>]
 type AccessToken =
-    { Value: string
-      ExpiresAt: DateTimeOffset }
+    {
+        Value: string
+        ExpiresAt: DateTimeOffset
+    }
 
     member this.Display = $"{{ Value hidden; ExpiresAt = {this.ExpiresAt:o} }}"
     override this.ToString() = this.Display
@@ -191,7 +216,10 @@ module internal Wire =
 
     /// Experian's gateway answers 415 to "application/json; charset=utf-8"; JSON is UTF-8 by definition, so the charset is dropped.
     let plainJson (content: HttpContent) =
-        if not (isNull content || isNull content.Headers.ContentType) && content.Headers.ContentType.MediaType = "application/json" then
+        if
+            not (isNull content || isNull content.Headers.ContentType)
+            && content.Headers.ContentType.MediaType = "application/json"
+        then
             content.Headers.ContentType.CharSet <- null
 
     /// An HttpClient over handler. Without a timeout it keeps HttpClient's default of 100 seconds.
@@ -203,8 +231,18 @@ module internal Wire =
     /// Refuses at creation a timeout HttpClient would refuse at the first call.
     let checkTimeout (timeout: TimeSpan) =
         let longest = TimeSpan.FromMilliseconds(float Int32.MaxValue)
-        if timeout <> Timeout.InfiniteTimeSpan && (timeout <= TimeSpan.Zero || timeout > longest) then
-            raise (ArgumentOutOfRangeException(nameof timeout, timeout, "A timeout must be positive and at most Int32.MaxValue milliseconds, or infinite."))
+
+        if
+            timeout <> Timeout.InfiniteTimeSpan
+            && (timeout <= TimeSpan.Zero || timeout > longest)
+        then
+            raise (
+                ArgumentOutOfRangeException(
+                    nameof timeout,
+                    timeout,
+                    "A timeout must be positive and at most Int32.MaxValue milliseconds, or infinite."
+                )
+            )
 
 /// The success answer a call received, kept so that the call can report it if it can't read it. Each Api call has its own slot;
 /// generated clients called directly have none.
@@ -263,20 +301,35 @@ module internal QuotedNumber =
 /// Number converters that also read quoted numbers. Registered converters reach option elements too, which NumberHandling does not.
 type internal LenientInt32Converter() =
     inherit Serialization.JsonConverter<int>()
+
     override _.Read(reader, _, _) =
-        if reader.TokenType = JsonTokenType.String then QuotedNumber.read (Int32.TryParse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture)) else reader.GetInt32()
+        if reader.TokenType = JsonTokenType.String then
+            QuotedNumber.read (Int32.TryParse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture))
+        else
+            reader.GetInt32()
+
     override _.Write(writer, value, _) = writer.WriteNumberValue value
 
 type internal LenientInt64Converter() =
     inherit Serialization.JsonConverter<int64>()
+
     override _.Read(reader, _, _) =
-        if reader.TokenType = JsonTokenType.String then QuotedNumber.read (Int64.TryParse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture)) else reader.GetInt64()
+        if reader.TokenType = JsonTokenType.String then
+            QuotedNumber.read (Int64.TryParse(reader.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture))
+        else
+            reader.GetInt64()
+
     override _.Write(writer, value, _) = writer.WriteNumberValue value
 
 type internal LenientDoubleConverter() =
     inherit Serialization.JsonConverter<double>()
+
     override _.Read(reader, _, _) =
-        if reader.TokenType = JsonTokenType.String then QuotedNumber.read (Double.TryParse(reader.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture)) else reader.GetDouble()
+        if reader.TokenType = JsonTokenType.String then
+            QuotedNumber.read (Double.TryParse(reader.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture))
+        else
+            reader.GetDouble()
+
     override _.Write(writer, value, _) = writer.WriteNumberValue value
 
 module internal Placeholder =
@@ -309,10 +362,13 @@ type internal BlankAsNoneFactory() =
     inherit Serialization.JsonConverterFactory()
 
     override _.CanConvert t =
-        t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<option<_>> && t.GetGenericArguments()[0] <> typeof<string>
+        t.IsGenericType
+        && t.GetGenericTypeDefinition() = typedefof<option<_>>
+        && t.GetGenericArguments()[0] <> typeof<string>
 
     override _.CreateConverter(t, _) =
-        Activator.CreateInstance(typedefof<BlankAsNoneConverter<_>>.MakeGenericType(t.GetGenericArguments())) :?> Serialization.JsonConverter
+        Activator.CreateInstance(typedefof<BlankAsNoneConverter<_>>.MakeGenericType(t.GetGenericArguments()))
+        :?> Serialization.JsonConverter
 
 module internal Reading =
 
@@ -323,7 +379,9 @@ module internal Reading =
         let options =
             JsonSerializerOptions(
                 DefaultIgnoreCondition = Serialization.JsonIgnoreCondition.WhenWritingNull,
-                PropertyNameCaseInsensitive = true)
+                PropertyNameCaseInsensitive = true
+            )
+
         options.Converters.Add(BlankAsNoneFactory())
         options.Converters.Add(LenientStringConverter())
         options.Converters.Add(LenientInt32Converter())
@@ -341,12 +399,14 @@ module internal EncodedJson =
                 | null -> ValueNone
                 | inner ->
                     let trimmed = inner.TrimStart()
+
                     if trimmed.StartsWith '{' || trimmed.StartsWith '[' then
                         use _ = JsonDocument.Parse inner
                         ValueSome inner
                     else
                         ValueNone
-            with :? JsonException -> ValueNone
+            with :? JsonException ->
+                ValueNone
         else
             ValueNone
 
@@ -365,7 +425,10 @@ module internal Token =
     /// Serasa Experian's sign-in: the client id and secret alone. The answer's names are read by parse.
     let serasaRequest (credentials: Credentials) (tokenUri: Uri) =
         let request = new HttpRequestMessage(HttpMethod.Post, tokenUri)
-        let pair = Convert.ToBase64String(Encoding.UTF8.GetBytes $"{credentials.ClientId}:{credentials.ClientSecret}")
+
+        let pair =
+            Convert.ToBase64String(Encoding.UTF8.GetBytes $"{credentials.ClientId}:{credentials.ClientSecret}")
+
         request.Headers.Authorization <- AuthenticationHeaderValue("Basic", pair)
         request.Content <- new StringContent("{}", Encoding.UTF8, "application/json")
         request
@@ -373,10 +436,14 @@ module internal Token =
     let request (credentials: Credentials) (tokenUri: Uri) =
         let body =
             JsonSerializer.Serialize(
-                {| username = credentials.Username
-                   password = credentials.Password
-                   client_id = credentials.ClientId
-                   client_secret = credentials.ClientSecret |})
+                {|
+                    username = credentials.Username
+                    password = credentials.Password
+                    client_id = credentials.ClientId
+                    client_secret = credentials.ClientSecret
+                |}
+            )
+
         let request = new HttpRequestMessage(HttpMethod.Post, tokenUri)
         request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue "application/json")
         request.Headers.TryAddWithoutValidation("Grant_type", "password") |> ignore
@@ -417,14 +484,23 @@ module internal Token =
                         | ValueSome s when s > 0. -> TimeSpan.FromSeconds s
                         | _ -> defaultLifetime
                     | ValueNone -> defaultLifetime
-                ValueSome { Value = token.GetString(); ExpiresAt = now + lifetime }
+
+                ValueSome
+                    {
+                        Value = token.GetString()
+                        ExpiresAt = now + lifetime
+                    }
             | _ -> ValueNone
-        with :? JsonException -> ValueNone
+        with :? JsonException ->
+            ValueNone
 
 /// Fetches the bearer token and keeps it until a minute before it expires; concurrent callers share one fetch. Credentials Experian
 /// refused are not sent again for an hour: until then a call fails with TokenRefused, without a request.
 [<Sealed>]
-type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: HttpMessageInvoker, now: unit -> DateTimeOffset, ?signIn: SignIn) =
+type TokenSource
+    internal
+    (credentials: Credentials, tokenUri: Uri, invoker: HttpMessageInvoker, now: unit -> DateTimeOffset, ?signIn: SignIn)
+    =
     let gate = new SemaphoreSlim(1, 1)
 
     /// A reference cell, not a voption: it is read outside the gate, and a struct read could be torn.
@@ -444,9 +520,11 @@ type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: Htt
                 match defaultArg signIn PortalPassword with
                 | PortalPassword -> Token.request credentials tokenUri
                 | SerasaClient -> Token.serasaRequest credentials tokenUri
+
             use! response = invoker.SendAsync(request, ct)
             let! text = response.Content.ReadAsStringAsync ct
             let status = int response.StatusCode
+
             return
                 if not response.IsSuccessStatusCode then
                     if ExperianFailure.refusesCredentials status then
@@ -468,13 +546,20 @@ type TokenSource internal (credentials: Credentials, tokenUri: Uri, invoker: Htt
         | ValueNone ->
             task {
                 do! gate.WaitAsync ct
+
                 try
                     match usable () with
                     | ValueSome token -> return token
                     | ValueNone ->
                         match refused with
                         | Some(status, until) when now () < until ->
-                            return raise (TokenRefusedException(status, "Not sent: Experian refused these credentials within the last hour."))
+                            return
+                                raise (
+                                    TokenRefusedException(
+                                        status,
+                                        "Not sent: Experian refused these credentials within the last hour."
+                                    )
+                                )
                         | _ ->
                             let! token = fetch ct
                             current <- Some token
@@ -505,12 +590,14 @@ type internal BearerHandler(tokens: TokenSource, origins: Set<string>, inner: Ht
         task {
             refuseOtherHost ()
             Wire.plainJson request.Content
+
             if request.Headers.Contains "Authorization" then
                 return! this.SendInner(request, ct)
             else
                 let! token = tokens.GetAsync ct
                 request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", token.Value)
                 let! response = this.SendInner(request, ct)
+
                 if response.StatusCode <> HttpStatusCode.Unauthorized then
                     return response
                 else
@@ -527,13 +614,17 @@ type internal BearerHandler(tokens: TokenSource, origins: Set<string>, inner: Ht
         task {
             let! response = this.SendAuthorized(request, ct)
             do! LastAnswer.keep response ct
+
             let isJson =
                 not (isNull response.Content)
-                && (isNull response.Content.Headers.ContentType || response.Content.Headers.ContentType.MediaType = "application/json")
+                && (isNull response.Content.Headers.ContentType
+                    || response.Content.Headers.ContentType.MediaType = "application/json")
+
             if not (response.IsSuccessStatusCode && isJson) then
                 return response
             else
                 let! text = response.Content.ReadAsStringAsync ct
+
                 return
                     match EncodedJson.decoded text with
                     | ValueSome json ->
@@ -547,12 +638,25 @@ type internal BearerHandler(tokens: TokenSource, origins: Set<string>, inner: Ht
 /// Keep it for the application's lifetime; the handler stays the caller's (it is never disposed here). A caller's handler must not follow
 /// redirects: it would send the body, and the sign-in's password, to wherever a redirect points.
 [<Sealed>]
-type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, handler: HttpMessageHandler, now: unit -> DateTimeOffset, timeout: TimeSpan voption) =
-    let tokens = TokenSource(credentials, endpoints.Token, new HttpMessageInvoker(handler, false), now, endpoints.SignIn)
+type ExperianClient
+    internal
+    (
+        credentials: Credentials,
+        endpoints: Endpoints,
+        handler: HttpMessageHandler,
+        now: unit -> DateTimeOffset,
+        timeout: TimeSpan voption
+    ) =
+    let tokens =
+        TokenSource(credentials, endpoints.Token, new HttpMessageInvoker(handler, false), now, endpoints.SignIn)
+
     let authorized = new BearerHandler(tokens, Endpoints.origins endpoints, handler)
 
     let json = Reading.options
-    let http (baseAddress: Uri) = Wire.httpClient authorized baseAddress timeout
+
+    let http (baseAddress: Uri) =
+        Wire.httpClient authorized baseAddress timeout
+
     let delphiSelect = lazy DelphiSelect.Client(http endpoints.DelphiSelect, json)
     let kyc = lazy Kyc.Client(http endpoints.Kyc, json)
     let ned = lazy Ned.Client(http endpoints.Ned, json)
@@ -560,15 +664,28 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     let idp = lazy Idp.Client(http endpoints.Idp, json)
     let powerCurve = lazy PowerCurve.Client(http endpoints.PowerCurve, json)
     let clientGateway = lazy ClientGateway.Client(http endpoints.ClientGateway, json)
-    let bankAccountVerify = lazy BankAccountVerify.Client(http endpoints.BankAccountVerify, json)
-    let internationalPayments = lazy InternationalPayments.Client(http endpoints.InternationalPayments, json)
+
+    let bankAccountVerify =
+        lazy BankAccountVerify.Client(http endpoints.BankAccountVerify, json)
+
+    let internationalPayments =
+        lazy InternationalPayments.Client(http endpoints.InternationalPayments, json)
+
     let kyb = lazy Kyb.Client(http endpoints.Kyb, json)
-    let ageAndDateOfBirth = lazy AgeAndDateOfBirth.Client(http endpoints.AgeAndDateOfBirth, json)
-    let ssnVerification = lazy SsnVerification.Client(http endpoints.SsnVerification, json)
+
+    let ageAndDateOfBirth =
+        lazy AgeAndDateOfBirth.Client(http endpoints.AgeAndDateOfBirth, json)
+
+    let ssnVerification =
+        lazy SsnVerification.Client(http endpoints.SsnVerification, json)
+
     let verifyCore = lazy VerifyCore.Client(http endpoints.Verify, json)
     let verifyPlus = lazy VerifyPlus.Client(http endpoints.Verify, json)
     let verifyPremium = lazy VerifyPremium.Client(http endpoints.Verify, json)
-    let verifyPremiumPrequal = lazy VerifyPremiumPrequal.Client(http endpoints.Verify, json)
+
+    let verifyPremiumPrequal =
+        lazy VerifyPremiumPrequal.Client(http endpoints.Verify, json)
+
     let verifyEmployment = lazy VerifyEmployment.Client(http endpoints.Verify, json)
     let verifyGovernment = lazy VerifyGovernment.Client(http endpoints.Verify, json)
     let reverifyVoe = lazy ReverifyVoe.Client(http endpoints.Verify, json)
@@ -581,15 +698,25 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     let instantCredit = lazy InstantCredit.Client(http endpoints.InstantCredit, json)
     let creditProfile = lazy CreditProfile.Client(http endpoints.CreditProfile, json)
     let webData = lazy WebData.Client(http endpoints.WebData, json)
-    let openBankingScore = lazy OpenBankingScore.Client(http endpoints.OpenBankingScore, json)
-    let incomeVerification = lazy IncomeVerifications.Client(http endpoints.IncomeVerification, json)
-    let transactionCategorization = lazy TransactionCategorization.Client(http endpoints.TransactionCategorization, json)
-    let affordabilityCheck = lazy AffordabilityChecks.Client(http endpoints.AffordabilityCheck, json)
 
-    internal new(credentials, endpoints, handler, now: unit -> DateTimeOffset) = ExperianClient(credentials, endpoints, handler, now, ValueNone)
+    let openBankingScore =
+        lazy OpenBankingScore.Client(http endpoints.OpenBankingScore, json)
+
+    let incomeVerification =
+        lazy IncomeVerifications.Client(http endpoints.IncomeVerification, json)
+
+    let transactionCategorization =
+        lazy TransactionCategorization.Client(http endpoints.TransactionCategorization, json)
+
+    let affordabilityCheck =
+        lazy AffordabilityChecks.Client(http endpoints.AffordabilityCheck, json)
+
+    internal new(credentials, endpoints, handler, now: unit -> DateTimeOffset) =
+        ExperianClient(credentials, endpoints, handler, now, ValueNone)
 
     /// A client over a caller-owned handler, such as one shared SocketsHttpHandler.
-    new(credentials, endpoints, handler) = ExperianClient(credentials, endpoints, handler, (fun () -> DateTimeOffset.UtcNow), ValueNone)
+    new(credentials, endpoints, handler) =
+        ExperianClient(credentials, endpoints, handler, (fun () -> DateTimeOffset.UtcNow), ValueNone)
 
     member _.Endpoints = endpoints
     member _.Tokens = tokens
@@ -630,21 +757,34 @@ type ExperianClient internal (credentials: Credentials, endpoints: Endpoints, ha
     /// A handler for the Experian hosts. Create it once per application. It doesn't follow redirects, so a token or personal data can't
     /// follow one to another host: a 3xx answer is an ApiError.
     static member CreateHandler() : HttpMessageHandler =
-        new SocketsHttpHandler(UseCookies = false, PooledConnectionLifetime = TimeSpan.FromMinutes 5., AllowAutoRedirect = false)
+        new SocketsHttpHandler(
+            UseCookies = false,
+            PooledConnectionLifetime = TimeSpan.FromMinutes 5.,
+            AllowAutoRedirect = false
+        )
 
     /// A client with its own handler and HttpClient's default timeout of 100 seconds.
-    static member Create(credentials: Credentials, endpoints: Endpoints) = ExperianClient(credentials, endpoints, ExperianClient.CreateHandler())
+    static member Create(credentials: Credentials, endpoints: Endpoints) =
+        ExperianClient(credentials, endpoints, ExperianClient.CreateHandler())
 
     /// A client with its own handler. timeout limits one Api call, with any sign-in and 401 resend inside it; past it the call is a
     /// TransportError, and Experian may still have done the work.
     static member Create(credentials: Credentials, endpoints: Endpoints, timeout: TimeSpan) =
         Wire.checkTimeout timeout
-        ExperianClient(credentials, endpoints, ExperianClient.CreateHandler(), (fun () -> DateTimeOffset.UtcNow), ValueSome timeout)
+
+        ExperianClient(
+            credentials,
+            endpoints,
+            ExperianClient.CreateHandler(),
+            (fun () -> DateTimeOffset.UtcNow),
+            ValueSome timeout
+        )
 
 module ExperianClient =
 
     /// A client over a caller-owned handler.
-    let create credentials endpoints (handler: HttpMessageHandler) = ExperianClient(credentials, endpoints, handler)
+    let create credentials endpoints (handler: HttpMessageHandler) =
+        ExperianClient(credentials, endpoints, handler)
 
 /// Adds the token to every request and sends JSON without a charset.
 type internal AuthTokenHandler(authToken: string, inner: HttpMessageHandler) =
@@ -655,6 +795,7 @@ type internal AuthTokenHandler(authToken: string, inner: HttpMessageHandler) =
     override this.SendAsync(request, ct) =
         request.Headers.TryAddWithoutValidation("Auth-Token", authToken) |> ignore
         Wire.plainJson request.Content
+
         task {
             let! response = this.SendInner(request, ct)
             do! LastAnswer.keep response ct
@@ -668,7 +809,10 @@ type internal AuthTokenHandler(authToken: string, inner: HttpMessageHandler) =
 [<Sealed>]
 type ApertureClient internal (authToken: string, handler: HttpMessageHandler, timeout: TimeSpan voption) =
     let authorized = new AuthTokenHandler(authToken, handler)
-    let http () = Wire.httpClient authorized (Uri "https://api.experianaperture.io/") timeout
+
+    let http () =
+        Wire.httpClient authorized (Uri "https://api.experianaperture.io/") timeout
+
     let address = lazy AddressValidation.Client(http (), Reading.options)
     let email = lazy EmailValidation.Client(http (), Reading.options)
     let phone = lazy PhoneValidation.Client(http (), Reading.options)
@@ -680,7 +824,8 @@ type ApertureClient internal (authToken: string, handler: HttpMessageHandler, ti
     member _.Phone = phone.Value
 
     /// A client with its own handler and HttpClient's default timeout of 100 seconds.
-    static member Create(authToken: string) = ApertureClient(authToken, ExperianClient.CreateHandler())
+    static member Create(authToken: string) =
+        ApertureClient(authToken, ExperianClient.CreateHandler())
 
     /// A client with its own handler. timeout limits one Api call; past it the call is a TransportError.
     static member Create(authToken: string, timeout: TimeSpan) =
@@ -706,6 +851,7 @@ module internal Call =
                     match path.IndexOf("['", StringComparison.Ordinal) with
                     | -1 -> path
                     | at -> path.Substring(0, at) + "[?]"
+
             $"Invalid at {path}, line {e.LineNumber}, byte {e.BytePositionInLine}"
         | _ -> e.GetType().Name
 
@@ -715,25 +861,34 @@ module internal Call =
         | :? AggregateException as e when e.InnerExceptions.Count = 1 -> failureOf slot e.InnerException
         | :? Swagger.OpenApiException as e -> ApiError(e.StatusCode, e.ResponseBody)
         | TokenRefusedException(status, body) -> TokenRefused(status, body)
-        | OtherHostException host -> InvalidRequest $"{host} isn't one of the client's endpoints, so the token isn't sent there"
+        | OtherHostException host ->
+            InvalidRequest $"{host} isn't one of the client's endpoints, so the token isn't sent there"
         | :? HttpRequestException
         | :? IO.IOException
         | :? OperationCanceledException -> TransportError e
         | e ->
             match slot.Answer with
             | ValueSome(struct (status, body)) ->
-                InvalidResponse { HttpStatus = status; Body = Encoding.UTF8.GetString body; Reason = reasonOf e }
+                InvalidResponse
+                    {
+                        HttpStatus = status
+                        Body = Encoding.UTF8.GetString body
+                        Reason = reasonOf e
+                    }
             | ValueNone -> TransportError e
 
     /// Runs a call of one request; exceptions become Error. Cancellation of the token propagates.
     let guarded (ct: CancellationToken) (run: unit -> Task<Result<'T, ExperianFailure>>) =
         task {
             let slot = LastAnswer.start ()
+
             try
                 let! result = run ()
+
                 return
                     match result with
-                    | Ok value when isNull (box value) && typeof<'T> <> typeof<unit> -> Error(failureOf slot NullAnswerException)
+                    | Ok value when isNull (box value) && typeof<'T> <> typeof<unit> ->
+                        Error(failureOf slot NullAnswerException)
                     | _ -> result
             with error when not (ct.IsCancellationRequested && (error :? OperationCanceledException)) ->
                 return Error(failureOf slot error)
@@ -741,9 +896,11 @@ module internal Call =
 
     /// Runs a generated call. A generated client sends its request as soon as it is called, so the call is made inside the guard.
     let attempt (ct: CancellationToken) (call: unit -> Async<'T>) =
-        guarded ct (fun () -> task {
-            let! value = Async.StartAsTask(call (), cancellationToken = ct)
-            return Ok value })
+        guarded ct (fun () ->
+            task {
+                let! value = Async.StartAsTask(call (), cancellationToken = ct)
+                return Ok value
+            })
 
     /// A path parameter as one escaped segment. The generated clients insert path values as they are, so "../" or "?"
     /// would reach another endpoint with the bearer token; empty, "." and ".." are refused.

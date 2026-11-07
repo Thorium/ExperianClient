@@ -8,7 +8,9 @@ open Experian
 
 [<Literal>]
 let private key = "3f2504e0-4f89-11d3-9a0c-0305e82c3301"
-let private body = Encoding.UTF8.GetBytes """{"eventType":"DocumentProcessed","customerApplicationId":"A-1","partyId":1}"""
+
+let private body =
+    Encoding.UTF8.GetBytes """{"eventType":"DocumentProcessed","customerApplicationId":"A-1","partyId":1}"""
 
 /// The signature computed independently of Webhook.signature.
 let private expected =

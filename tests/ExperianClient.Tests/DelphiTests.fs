@@ -8,16 +8,20 @@ open Experian
 open FakeExperian
 
 let private casesOf<'T> () =
-    FSharpType.GetUnionCases typeof<'T> |> Array.map (fun case -> FSharpValue.MakeUnion(case, [||]) :?> 'T) |> List.ofArray
+    FSharpType.GetUnionCases typeof<'T>
+    |> Array.map (fun case -> FSharpValue.MakeUnion(case, [||]) :?> 'T)
+    |> List.ofArray
 
 let private knownSearchTypes =
-    (casesOf<Quotation> () |> List.map Quotation) @ (casesOf<CreditProduct> () |> List.map CreditApplication)
+    (casesOf<Quotation>() |> List.map Quotation)
+    @ (casesOf<CreditProduct>() |> List.map CreditApplication)
 
 [<Fact>]
 let ``every typed search type has its own CAPS code and reads back from it`` () =
     let codes = knownSearchTypes |> List.map SearchType.code
     Assert.Equal(codes.Length, (List.distinct codes).Length)
     Assert.All(codes, fun code -> Assert.Matches("^[A-Z]{2}$", code))
+
     for searchType in knownSearchTypes do
         Assert.Equal(searchType, SearchType.ofCode (SearchType.code searchType))
 
@@ -25,8 +29,8 @@ let ``every typed search type has its own CAPS code and reads back from it`` () 
 let ``quotations are soft, credit applications hard, other codes unclassified`` () =
     Assert.Equal("QL", SearchType.code (Quotation Quotation.PersonalLoan))
     Assert.Equal("CD", SearchType.code (CreditApplication CreditProduct.DebtConsolidationLoan))
-    Assert.All(casesOf<Quotation> (), fun q -> Assert.Equal(Soft, SearchType.footprint (Quotation q)))
-    Assert.All(casesOf<CreditProduct> (), fun p -> Assert.Equal(Hard, SearchType.footprint (CreditApplication p)))
+    Assert.All(casesOf<Quotation>(), fun q -> Assert.Equal(Soft, SearchType.footprint (Quotation q)))
+    Assert.All(casesOf<CreditProduct>(), fun p -> Assert.Equal(Hard, SearchType.footprint (CreditApplication p)))
     Assert.Equal(OtherSearch "EQ", SearchType.ofCode " eq ")
     Assert.Equal(Unclassified, SearchType.footprint (OtherSearch "EQ"))
     Assert.Equal(CreditApplication CreditProduct.PersonalLoan, SearchType.ofCode "pl")
@@ -34,11 +38,17 @@ let ``quotations are soft, credit applications hard, other codes unclassified`` 
 [<Fact>]
 let ``setSearchType writes the CAPS code, creating the Application when missing`` () =
     let input = ApiTests.sandboxApplication ()
-    Api.DelphiSelect.setSearchType (Quotation Quotation.PersonalLoan) input |> ignore
+
+    Api.DelphiSelect.setSearchType (Quotation Quotation.PersonalLoan) input
+    |> ignore
+
     Assert.Equal(Some "QL", input.Submission.Application.ApplicationType)
     Assert.Equal(Some true, input.Submission.Application.SearchConsent)
     input.Submission.Application <- null
-    let returned = Api.DelphiSelect.setSearchType (CreditApplication CreditProduct.DebtConsolidationLoan) input
+
+    let returned =
+        Api.DelphiSelect.setSearchType (CreditApplication CreditProduct.DebtConsolidationLoan) input
+
     Assert.Same(input, returned)
     Assert.Equal(Some "CD", input.Submission.Application.ApplicationType)
 
@@ -46,12 +56,27 @@ let ``setSearchType writes the CAPS code, creating the Application when missing`
 let ``convertQuoteAsync puts a credit product to the quote's quotetofull`` () : Task =
     task {
         use handler = new FakeExperianHandler(respondWith (fun _ -> 200, "{}"))
+
         let! result =
-            Api.DelphiSelect.convertQuoteAsync (clientWith handler) "0123456789" CreditProduct.DebtConsolidationLoan (ValueSome "A1234") ct
+            Api.DelphiSelect.convertQuoteAsync
+                (clientWith handler)
+                "0123456789"
+                CreditProduct.DebtConsolidationLoan
+                (ValueSome "A1234")
+                ct
+
         expectOk result |> ignore
         let call = Assert.Single handler.ApiCalls
-        Assert.Equal("PUT https://sandbox-uk-api.experian.com/risk/consumer/v2/dataselect/application/0123456789/quotetofull", $"{call.Method} {call.Uri}")
-        Assert.Equal("""{"Submission":{"ClientData":{"ClientAccountNumber":"A1234"},"Application":{"ApplicationType":"CD"}}}""", call.Body)
+
+        Assert.Equal(
+            "PUT https://sandbox-uk-api.experian.com/risk/consumer/v2/dataselect/application/0123456789/quotetofull",
+            $"{call.Method} {call.Uri}"
+        )
+
+        Assert.Equal(
+            """{"Submission":{"ClientData":{"ClientAccountNumber":"A1234"},"Application":{"ApplicationType":"CD"}}}""",
+            call.Body
+        )
     }
 
 /// Fictitious accounts shaped like the sandbox answer: the applicant's open card, an associate's loan, the applicant's
@@ -74,7 +99,10 @@ let private consumerData =
 
 let private accounts () =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
-    let output = (clientWith handler).DelphiSelect.Deserialize(consumerData, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
+    let output =
+        (clientWith handler).DelphiSelect.Deserialize(consumerData, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
     (CreditAccounts.ofOutput output).Value
 
 [<Fact>]
@@ -110,7 +138,11 @@ let ``credit accounts are read with lender, holder, status and amounts in pounds
 [<Fact>]
 let ``only the applicant's records as the same person or a potential alias are their own`` () =
     let own = accounts () |> List.filter CreditAccounts.isOwn
-    Assert.Equal<string list>([ "EXAMPLE CARD CO"; "EXAMPLE STORES"; "EXAMPLE LOANS" ], own |> List.map (fun a -> a.Lender.Value))
+
+    Assert.Equal<string list>(
+        [ "EXAMPLE CARD CO"; "EXAMPLE STORES"; "EXAMPLE LOANS" ],
+        own |> List.map (fun a -> a.Lender.Value)
+    )
 
 [<Fact>]
 let ``outstanding keeps the applicant's own unsettled balances, not other people's or settled ones`` () =
@@ -125,7 +157,12 @@ let ``a response without consumer data is ValueNone, not an empty debt list`` ()
 
 let private answer (consumerData: string) =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
-    (clientWith handler).DelphiSelect.Deserialize($"""{{"Response":{{"FullConsumerData":{{"ConsumerData":{consumerData}}}}}}}""", typeof<DelphiSelect.Output>)
+
+    (clientWith handler)
+        .DelphiSelect.Deserialize(
+            $"""{{"Response":{{"FullConsumerData":{{"ConsumerData":{consumerData}}}}}}}""",
+            typeof<DelphiSelect.Output>
+        )
     :?> DelphiSelect.Output
 
 let private accountRecord (matchTo: string) (category: string) =
@@ -206,7 +243,10 @@ let private defaults =
 [<Fact>]
 let ``a default owes its current default balance, and a satisfied default is settled`` () =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
-    let output = (clientWith handler).DelphiSelect.Deserialize(defaults, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
+    let output =
+        (clientWith handler).DelphiSelect.Deserialize(defaults, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
     let all = (CreditAccounts.ofOutput output).Value
     Assert.Equal(Defaulted, all[0].Status)
     Assert.Equal(ValueSome 900m, all[0].Balance)
@@ -221,7 +261,10 @@ let ``a default owes its current default balance, and a satisfied default is set
 [<Fact>]
 let ``null inputs do not throw`` () =
     Assert.Equal(OtherSearch "", SearchType.ofCode null)
-    let input = Api.DelphiSelect.setSearchType (Quotation Quotation.PersonalLoan) (DelphiSelect.Input())
+
+    let input =
+        Api.DelphiSelect.setSearchType (Quotation Quotation.PersonalLoan) (DelphiSelect.Input())
+
     Assert.Equal(Some "QL", input.Submission.Application.ApplicationType)
 
 [<Fact>]
@@ -255,7 +298,10 @@ let private signalsData =
 
 let private signals () =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
-    let output = (clientWith handler).DelphiSelect.Deserialize(signalsData, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
+    let output =
+        (clientWith handler).DelphiSelect.Deserialize(signalsData, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
     (CreditFileSignals.ofOutput output).Value
 
 [<Fact>]
@@ -265,7 +311,12 @@ let ``summary flags read as a set of file flags`` () =
 [<Fact>]
 let ``special instructions are the applicant's own, with their dates`` () =
     let s = signals ()
-    Assert.Equal<string list>([ "PLAN LENDER"; "OLD ARRANGEMENT" ], s.Instructions |> List.map (fun a -> a.Lender.Value))
+
+    Assert.Equal<string list>(
+        [ "PLAN LENDER"; "OLD ARRANGEMENT" ],
+        s.Instructions |> List.map (fun a -> a.Lender.Value)
+    )
+
     let plan = s.Instructions[0].SpecialInstruction.Value
     Assert.Equal(DebtManagementProgramme, plan.Instruction)
     Assert.Equal(ValueSome(DateOnly(2024, 1, 1)), plan.From)
@@ -279,14 +330,27 @@ let ``only instructions in force today are current`` () =
     let s = signals ()
     let current = CreditFileSignals.currentInstructions (DateOnly(2026, 10, 28)) s
     Assert.Equal<string list>([ "PLAN LENDER" ], current |> List.map (fun a -> a.Lender.Value))
-    Assert.Equal<string list>([ "OLD ARRANGEMENT" ], CreditFileSignals.currentInstructions (DateOnly(2018, 6, 1)) s |> List.map (fun a -> a.Lender.Value))
+
+    Assert.Equal<string list>(
+        [ "OLD ARRANGEMENT" ],
+        CreditFileSignals.currentInstructions (DateOnly(2018, 6, 1)) s
+        |> List.map (fun a -> a.Lender.Value)
+    )
+
     Assert.Empty(CreditFileSignals.currentInstructions (DateOnly(2017, 1, 1)) s)
 
 [<Fact>]
 let ``notices of correction keep their reference and text lines`` () =
     let notice = Assert.Single (signals ()).Notices
     Assert.Equal(ValueSome "NOC0001", notice.Reference)
-    Assert.Equal<string list>([ "I was unable to pay while in hospital."; "Please contact me before any decision." ], notice.Lines)
+
+    Assert.Equal<string list>(
+        [
+            "I was unable to pay while in hospital."
+            "Please contact me before any decision."
+        ],
+        notice.Lines
+    )
 
 [<Fact>]
 let ``CIFAS markers are the applicant's own, with protective registration recognised`` () =
@@ -300,9 +364,13 @@ let ``a response without consumer data has no signals`` () =
 [<Fact>]
 let ``empty notices of correction are not notices`` () =
     use handler = new FakeExperianHandler(fun _ -> 200, "{}")
+
     let json =
         """{"Response":{"FullConsumerData":{"ConsumerData":{"NOC":[{"NoCDetails":[{"TextLine":null},{"Reference":" ","TextLine":["  "]},{"TextLine":["Only text"]}]}]}}}}"""
-    let output = (clientWith handler).DelphiSelect.Deserialize(json, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
+    let output =
+        (clientWith handler).DelphiSelect.Deserialize(json, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
     let notice = Assert.Single (CreditFileSignals.ofOutput output).Value.Notices
     Assert.Equal(ValueNone, notice.Reference)
     Assert.Equal<string list>([ "Only text" ], notice.Lines)

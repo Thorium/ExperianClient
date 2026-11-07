@@ -19,21 +19,27 @@ type AuthenticationIndex =
     | NotUsed
 
 /// A high-risk policy rule that fired (Unnn).
-type HighRiskRule = { Id: string voption; Text: string voption }
+type HighRiskRule =
+    {
+        Id: string voption
+        Text: string voption
+    }
 
 /// One applicant's Identity Authenticate (AuthPlus) result.
 type AuthPlusResult =
-    { ApplicantIdentifier: int voption
-      Reference: string voption
-      Decision: AuthPlusDecision
-      /// Text the client configured for the decision.
-      DecisionText: string voption
-      Index: AuthenticationIndex voption
-      IndexText: string voption
-      /// The level the identity was confirmed at, and its text.
-      ConfirmedLevel: string voption
-      ConfirmedLevelText: string voption
-      HighRiskRules: HighRiskRule list }
+    {
+        ApplicantIdentifier: int voption
+        Reference: string voption
+        Decision: AuthPlusDecision
+        /// Text the client configured for the decision.
+        DecisionText: string voption
+        Index: AuthenticationIndex voption
+        IndexText: string voption
+        /// The level the identity was confirmed at, and its text.
+        ConfirmedLevel: string voption
+        ConfirmedLevelText: string voption
+        HighRiskRules: HighRiskRule list
+    }
 
 module AuthPlus =
 
@@ -42,7 +48,9 @@ module AuthPlus =
         | None
         | Some "" -> NoDecision
         | Some code when code.Length = 4 ->
-            match code.Substring(0, 2), Int32.TryParse(code.Substring 2, NumberStyles.None, CultureInfo.InvariantCulture) with
+            match
+                code.Substring(0, 2), Int32.TryParse(code.Substring 2, NumberStyles.None, CultureInfo.InvariantCulture)
+            with
             | "AU", (true, level) -> Authenticated level
             | "NA", (true, level) -> NotAuthenticated level
             | "RA", (true, level) -> Refer level
@@ -71,28 +79,36 @@ module AuthPlus =
             let consumer = result.AuthConsumer |> Option.ofObj
             let data = consumer |> Option.bind (fun c -> Option.ofObj c.DecisionData)
             let confirmed = consumer |> Option.bind (fun c -> Option.ofObj c.IdConfirmedFlag)
-            { ApplicantIdentifier = ValueOption.ofOption result.ApplicantIdentifier
-              Reference = consumer |> Option.bind _.AuthPlusRef |> ValueOption.ofOption
-              Decision = decision (data |> Option.bind _.AuthPlusDecision)
-              DecisionText = data |> Option.bind _.AuthPlusDecText |> ValueOption.ofOption
-              Index = index (data |> Option.bind _.AuthenticationIndex)
-              IndexText = data |> Option.bind _.AuthIndexText |> ValueOption.ofOption
-              ConfirmedLevel = confirmed |> Option.bind _.IdConfirmedLevel |> ValueOption.ofOption
-              ConfirmedLevelText = confirmed |> Option.bind _.IdConfirmLevelText |> ValueOption.ofOption
-              HighRiskRules =
-                result.HighRiskPolicyRules
-                |> Option.ofObj
-                |> Option.defaultValue [||]
-                |> Seq.filter present
-                |> Seq.map (fun rule ->
-                    { Id = ValueOption.ofOption rule.HighRiskPolRuleId
-                      Text = ValueOption.ofOption rule.HighRiskPolRuleText })
-                |> List.ofSeq })
+
+            {
+                ApplicantIdentifier = ValueOption.ofOption result.ApplicantIdentifier
+                Reference = consumer |> Option.bind _.AuthPlusRef |> ValueOption.ofOption
+                Decision = decision (data |> Option.bind _.AuthPlusDecision)
+                DecisionText = data |> Option.bind _.AuthPlusDecText |> ValueOption.ofOption
+                Index = index (data |> Option.bind _.AuthenticationIndex)
+                IndexText = data |> Option.bind _.AuthIndexText |> ValueOption.ofOption
+                ConfirmedLevel = confirmed |> Option.bind _.IdConfirmedLevel |> ValueOption.ofOption
+                ConfirmedLevelText = confirmed |> Option.bind _.IdConfirmLevelText |> ValueOption.ofOption
+                HighRiskRules =
+                    result.HighRiskPolicyRules
+                    |> Option.ofObj
+                    |> Option.defaultValue [||]
+                    |> Seq.filter present
+                    |> Seq.map (fun rule ->
+                        {
+                            Id = ValueOption.ofOption rule.HighRiskPolRuleId
+                            Text = ValueOption.ofOption rule.HighRiskPolRuleText
+                        })
+                    |> List.ofSeq
+            })
         |> List.ofSeq
 
     /// AuthPlus results in an application answer.
     let ofOutput (output: DelphiSelect.Output) =
-        output |> Option.ofObj |> Option.bind (fun o -> Option.ofObj o.Response) |> Option.map (fun r -> ofResults r.AuthPlusResults)
+        output
+        |> Option.ofObj
+        |> Option.bind (fun o -> Option.ofObj o.Response)
+        |> Option.map (fun r -> ofResults r.AuthPlusResults)
         |> Option.defaultValue []
 
 /// The total value of county court judgments in the last three years, as Experian bands it.
@@ -107,33 +123,39 @@ type CcjTotal =
 
 /// One applicant's impaired credit history (ICH). Bankruptcy and IVA cover the last three years, arrears the last two.
 type ImpairedCredit =
-    { /// Any impaired credit history reference is set.
-      Impaired: bool
-      Bankruptcy: bool
-      Iva: bool
-      Ccj: CcjTotal voption
-      /// Three or more monthly payments in arrears on secured credit.
-      SecuredArrears: bool
-      UnsecuredArrears: bool }
+    {
+        /// Any impaired credit history reference is set.
+        Impaired: bool
+        Bankruptcy: bool
+        Iva: bool
+        Ccj: CcjTotal voption
+        /// Three or more monthly payments in arrears on secured credit.
+        SecuredArrears: bool
+        UnsecuredArrears: bool
+    }
 
 /// Impaired credit history per applicant; ValueNone when absent, when the client is not configured for ICH ('Z'), and
 /// for the joint applicant when the answer lists only one applicant (Experian still sends 'N' for that slot).
 type ImpairedCreditHistory =
-    { MainApplicant: ImpairedCredit voption
-      JointApplicant: ImpairedCredit voption }
+    {
+        MainApplicant: ImpairedCredit voption
+        JointApplicant: ImpairedCredit voption
+    }
 
 /// A public record (court judgment, insolvency and similar) from a Delphi Select answer. TypeCode is Experian's
 /// Standard Data Code; Experian's ImpairedCredit flags give the classification by applicant.
 type PublicRecord =
-    { TypeCode: string voption
-      Holder: AccountHolder
-      /// Holder alone doesn't make the record theirs: see CreditAccounts.isApplicantRecord.
-      Match: RecordMatch
-      Date: DateOnly voption
-      Amount: decimal voption
-      Plaintiff: string voption
-      SatisfiedOn: DateOnly voption
-      Source: string voption }
+    {
+        TypeCode: string voption
+        Holder: AccountHolder
+        /// Holder alone doesn't make the record theirs: see CreditAccounts.isApplicantRecord.
+        Match: RecordMatch
+        Date: DateOnly voption
+        Amount: decimal voption
+        Plaintiff: string voption
+        SatisfiedOn: DateOnly voption
+        Source: string voption
+    }
 
 module PublicRecords =
 
@@ -159,29 +181,38 @@ module PublicRecords =
         | Some "Z" -> ValueNone
         | Some code ->
             ValueSome
-                { Impaired = (code = "Y")
-                  Bankruptcy = flag "B" bankrupt
-                  Iva = flag "V" iva
-                  Ccj = ccj ccjBand
-                  SecuredArrears = flag "A" secured
-                  UnsecuredArrears = flag "A" unsecured }
+                {
+                    Impaired = (code = "Y")
+                    Bankruptcy = flag "B" bankrupt
+                    Iva = flag "V" iva
+                    Ccj = ccj ccjBand
+                    SecuredArrears = flag "A" secured
+                    UnsecuredArrears = flag "A" unsecured
+                }
 
     /// The impaired credit history in an application answer; ValueNone when the answer has none.
     let impairedCredit (output: DelphiSelect.Output) =
-        let response = output |> Option.ofObj |> Option.bind (fun o -> Option.ofObj o.Response)
+        let response =
+            output |> Option.ofObj |> Option.bind (fun o -> Option.ofObj o.Response)
+
         let hasJointApplicant =
-            response |> Option.exists (fun r -> not (isNull r.Applicants) && r.Applicants.Length >= 2)
+            response
+            |> Option.exists (fun r -> not (isNull r.Applicants) && r.Applicants.Length >= 2)
+
         response
         |> Option.bind (fun r -> Option.ofObj r.ConsumerSummary)
         |> Option.bind (fun c -> Option.ofObj c.PremiumValueData)
         |> Option.bind (fun p -> Option.ofObj p.ImpairedCh)
         |> Option.map (fun ich ->
-            { MainApplicant = applicant ich.Ndmaich ich.NdmaBankrupt ich.Ndmaiva ich.Ndmaccj ich.Ndmasecarr ich.Ndmaunsecarr
-              JointApplicant =
-                if hasJointApplicant then
-                    applicant ich.Ndjaich ich.NdjaBankrupt ich.Ndjaiva ich.Ndjaccj ich.Ndjasecarr ich.Ndjaunsecarr
-                else
-                    ValueNone })
+            {
+                MainApplicant =
+                    applicant ich.Ndmaich ich.NdmaBankrupt ich.Ndmaiva ich.Ndmaccj ich.Ndmasecarr ich.Ndmaunsecarr
+                JointApplicant =
+                    if hasJointApplicant then
+                        applicant ich.Ndjaich ich.NdjaBankrupt ich.Ndjaiva ich.Ndjaccj ich.Ndjasecarr ich.Ndjaunsecarr
+                    else
+                        ValueNone
+            })
         |> ValueOption.ofOption
 
     /// Every public record in an application answer, whoever it was matched to; ValueNone when the answer carries no
@@ -202,20 +233,32 @@ module PublicRecords =
             |> Seq.map (fun record ->
                 let pounds = CreditAccounts.pounds record.AmountPounds
                 let details = record.MatchDetails |> Option.ofObj
-                { TypeCode = ValueOption.ofOption record.InformationType
-                  Holder = CreditAccounts.holder (details |> Option.bind _.MatchTo)
-                  Match = CreditAccounts.recordMatch (details |> Option.bind _.BureauRefCategory)
-                  Date = ValueOption.ofOption record.InformationDate
-                  Amount = pounds |> ValueOption.map (fun p -> p + decimal (defaultArg record.AmountPence 0) / 100m)
-                  Plaintiff = ValueOption.ofOption record.CourtPlaintiff
-                  SatisfiedOn =
-                    match record.SatisfactionDate |> Option.map _.Trim() with
-                    | Some text ->
-                        match DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None) with
-                        | true, date -> ValueSome date
-                        | _ -> ValueNone
-                    | None -> ValueNone
-                  Source = ValueOption.ofOption record.DataSource })
+
+                {
+                    TypeCode = ValueOption.ofOption record.InformationType
+                    Holder = CreditAccounts.holder (details |> Option.bind _.MatchTo)
+                    Match = CreditAccounts.recordMatch (details |> Option.bind _.BureauRefCategory)
+                    Date = ValueOption.ofOption record.InformationDate
+                    Amount =
+                        pounds
+                        |> ValueOption.map (fun p -> p + decimal (defaultArg record.AmountPence 0) / 100m)
+                    Plaintiff = ValueOption.ofOption record.CourtPlaintiff
+                    SatisfiedOn =
+                        match record.SatisfactionDate |> Option.map _.Trim() with
+                        | Some text ->
+                            match
+                                DateOnly.TryParseExact(
+                                    text,
+                                    "yyyy-MM-dd",
+                                    CultureInfo.InvariantCulture,
+                                    DateTimeStyles.None
+                                )
+                            with
+                            | true, date -> ValueSome date
+                            | _ -> ValueNone
+                        | None -> ValueNone
+                    Source = ValueOption.ofOption record.DataSource
+                })
             |> List.ofSeq)
         |> ValueOption.ofOption
 
@@ -223,7 +266,8 @@ module PublicRecords =
     let unsatisfied (records: PublicRecord list) =
         records
         |> List.filter (fun record ->
-            CreditAccounts.isApplicantRecord record.Holder record.Match && record.SatisfiedOn.IsNone)
+            CreditAccounts.isApplicantRecord record.Holder record.Match
+            && record.SatisfiedOn.IsNone)
 
 /// An income figure from current account turnover (CATO), or why there is none.
 [<RequireQualifiedAccess>]
@@ -258,26 +302,30 @@ type Percentage =
     | Unavailable of code: int
 
 type IncomeEstimates =
-    { GrossAnnual: IncomeEstimate voption
-      NetAnnual: IncomeEstimate voption
-      NetMonthly: IncomeEstimate voption }
+    {
+        GrossAnnual: IncomeEstimate voption
+        NetAnnual: IncomeEstimate voption
+        NetMonthly: IncomeEstimate voption
+    }
 
 /// Affordability figures in a Delphi Select answer (Affordability / Income Estimation packages); fields are ValueNone when
 /// the package that fills them was not requested.
 type Affordability =
-    { MainApplicant: IncomeEstimates
-      JointApplicant: IncomeEstimates
-      Household: IncomeEstimates
-      MainApplicantVerification: IncomeVerification voption
-      HouseholdVerification: IncomeVerification voption
-      /// Unsecured balances as a % of gross annual income.
-      UnsecuredDebtToIncome: Percentage voption
-      /// Secured balances as a % of gross annual income.
-      SecuredDebtToIncome: Percentage voption
-      /// Revolving credit commitments as a % of net monthly income.
-      RevolvingCommitmentsToIncome: Percentage voption
-      /// Non-revolving credit commitments as a % of net monthly income.
-      NonRevolvingCommitmentsToIncome: Percentage voption }
+    {
+        MainApplicant: IncomeEstimates
+        JointApplicant: IncomeEstimates
+        Household: IncomeEstimates
+        MainApplicantVerification: IncomeVerification voption
+        HouseholdVerification: IncomeVerification voption
+        /// Unsecured balances as a % of gross annual income.
+        UnsecuredDebtToIncome: Percentage voption
+        /// Secured balances as a % of gross annual income.
+        SecuredDebtToIncome: Percentage voption
+        /// Revolving credit commitments as a % of net monthly income.
+        RevolvingCommitmentsToIncome: Percentage voption
+        /// Non-revolving credit commitments as a % of net monthly income.
+        NonRevolvingCommitmentsToIncome: Percentage voption
+    }
 
 module Affordability =
 
@@ -298,7 +346,8 @@ module Affordability =
         | Some 99 -> ValueSome IncomeVerification.BelowEstimate
         | Some 0 -> ValueSome(IncomeVerification.AboveEstimate 201)
         | Some 10 -> ValueSome(IncomeVerification.AboveEstimate 181)
-        | Some band when band >= 20 && band <= 80 && band % 10 = 0 -> ValueSome(IncomeVerification.AboveEstimate(191 - band))
+        | Some band when band >= 20 && band <= 80 && band % 10 = 0 ->
+            ValueSome(IncomeVerification.AboveEstimate(191 - band))
         | Some -1 -> ValueSome IncomeVerification.NoTrace
         | Some -2 -> ValueSome IncomeVerification.NoCatoData
         | Some -3 -> ValueSome IncomeVerification.InsufficientData
@@ -320,20 +369,30 @@ module Affordability =
         |> Option.bind (fun c -> Option.ofObj c.PremiumValueData)
         |> Option.map (fun premium ->
             let iq = premium.AffordabilityIq |> Option.ofObj
-            let dti = premium.AffordabilityIq2 |> Option.ofObj |> Option.bind (fun a -> Option.ofObj a.Dti2)
+
+            let dti =
+                premium.AffordabilityIq2
+                |> Option.ofObj
+                |> Option.bind (fun a -> Option.ofObj a.Dti2)
+
             let estimates gross net monthly =
-                { GrossAnnual = iq |> Option.bind gross |> income
-                  NetAnnual = iq |> Option.bind net |> income
-                  NetMonthly = iq |> Option.bind monthly |> income }
-            { MainApplicant = estimates _.Affe01 _.Affe02 _.Affe03
-              JointApplicant = estimates _.Affe04 _.Affe05 _.Affe06
-              Household = estimates _.Affe07 _.Affe08 _.Affe09
-              MainApplicantVerification = iq |> Option.bind _.Affv01 |> verification
-              HouseholdVerification = iq |> Option.bind _.Affv02 |> verification
-              UnsecuredDebtToIncome = dti |> Option.bind _.SpI56 |> percentage
-              SecuredDebtToIncome = dti |> Option.bind _.SpI57 |> percentage
-              RevolvingCommitmentsToIncome = dti |> Option.bind _.SpI59 |> percentage
-              NonRevolvingCommitmentsToIncome = dti |> Option.bind _.SpI60 |> percentage })
+                {
+                    GrossAnnual = iq |> Option.bind gross |> income
+                    NetAnnual = iq |> Option.bind net |> income
+                    NetMonthly = iq |> Option.bind monthly |> income
+                }
+
+            {
+                MainApplicant = estimates _.Affe01 _.Affe02 _.Affe03
+                JointApplicant = estimates _.Affe04 _.Affe05 _.Affe06
+                Household = estimates _.Affe07 _.Affe08 _.Affe09
+                MainApplicantVerification = iq |> Option.bind _.Affv01 |> verification
+                HouseholdVerification = iq |> Option.bind _.Affv02 |> verification
+                UnsecuredDebtToIncome = dti |> Option.bind _.SpI56 |> percentage
+                SecuredDebtToIncome = dti |> Option.bind _.SpI57 |> percentage
+                RevolvingCommitmentsToIncome = dti |> Option.bind _.SpI59 |> percentage
+                NonRevolvingCommitmentsToIncome = dti |> Option.bind _.SpI60 |> percentage
+            })
         |> ValueOption.ofOption
 
 /// The overall KYC or PEP/sanctions decision.
@@ -346,27 +405,33 @@ type KycDecision =
     | OtherDecision of code: string
 
 type KycRule =
-    { Id: string voption
-      Name: string voption
-      Score: double voption
-      Text: string voption }
+    {
+        Id: string voption
+        Name: string voption
+        Score: double voption
+        Text: string voption
+    }
 
 /// One service's part of a KYC answer (identity verification, contra-indicators, PEPs and sanctions, …).
 type KycService =
-    { Name: string voption
-      Decision: string voption
-      Reason: string voption
-      Score: double voption
-      /// Rules that fired (score above zero), without the housekeeping rules 9990 ("no other rule has fired") and 9991
-      /// ("always true"). For identity verification they confirm; for contra-indicator and PEP/sanctions services they alert.
-      FiredRules: KycRule list }
+    {
+        Name: string voption
+        Decision: string voption
+        Reason: string voption
+        Score: double voption
+        /// Rules that fired (score above zero), without the housekeeping rules 9990 ("no other rule has fired") and 9991
+        /// ("always true"). For identity verification they confirm; for contra-indicator and PEP/sanctions services they alert.
+        FiredRules: KycRule list
+    }
 
 type KycOutcome =
-    { Decision: KycDecision
-      Text: string voption
-      Reasons: string list
-      NextActions: string list
-      Services: KycService list }
+    {
+        Decision: KycDecision
+        Text: string voption
+        Reasons: string list
+        NextActions: string list
+        Services: KycService list
+    }
 
 module KycOutcome =
 
@@ -381,7 +446,11 @@ module KycOutcome =
         | Some "NO DECISION" -> KycDecision.NoDecision
         | Some other -> KycDecision.OtherDecision other
 
-    let private items (values: 'T[]) = values |> Option.ofObj |> Option.defaultValue [||] |> Seq.filter (fun v -> not (isNull (box v)))
+    let private items (values: 'T[]) =
+        values
+        |> Option.ofObj
+        |> Option.defaultValue [||]
+        |> Seq.filter (fun v -> not (isNull (box v)))
 
     /// The outcome of a KYC check or PEP/sanctions screen.
     let ofResponse (response: Kyc.ResponseMessage) =
@@ -390,32 +459,48 @@ module KycOutcome =
             |> Option.ofObj
             |> Option.bind (fun r -> Option.ofObj r.ResponseHeader)
             |> Option.bind (fun h -> Option.ofObj h.OverallResponse)
-        { Decision = decision (overall |> Option.bind _.Decision)
-          Text = overall |> Option.bind _.DecisionText |> ValueOption.ofOption
-          Reasons = overall |> Option.map (fun o -> items o.DecisionReasons |> List.ofSeq) |> Option.defaultValue []
-          NextActions = overall |> Option.map (fun o -> items o.RecommendedNextActions |> List.ofSeq) |> Option.defaultValue []
-          Services =
-            response
-            |> Option.ofObj
-            |> Option.bind (fun r -> Option.ofObj r.ClientResponsePayload)
-            |> Option.map (fun p -> items p.DecisionElements |> List.ofSeq)
-            |> Option.defaultValue []
-            |> List.map (fun element ->
-                { Name = ValueOption.ofOption element.ServiceName
-                  Decision = ValueOption.ofOption element.Decision
-                  Reason = ValueOption.ofOption element.DecisionReason
-                  Score = ValueOption.ofOption element.Score
-                  FiredRules =
-                    items element.Rules
-                    |> Seq.filter (fun rule ->
-                        rule.RuleScore |> Option.exists (fun score -> score > 0.)
-                        && not (rule.RuleId |> Option.exists (fun id -> id.Trim() = "9990" || id.Trim() = "9991")))
-                    |> Seq.map (fun rule ->
-                        { Id = ValueOption.ofOption rule.RuleId
-                          Name = ValueOption.ofOption rule.RuleName
-                          Score = ValueOption.ofOption rule.RuleScore
-                          Text = ValueOption.ofOption rule.RuleText })
-                    |> List.ofSeq }) }
+
+        {
+            Decision = decision (overall |> Option.bind _.Decision)
+            Text = overall |> Option.bind _.DecisionText |> ValueOption.ofOption
+            Reasons =
+                overall
+                |> Option.map (fun o -> items o.DecisionReasons |> List.ofSeq)
+                |> Option.defaultValue []
+            NextActions =
+                overall
+                |> Option.map (fun o -> items o.RecommendedNextActions |> List.ofSeq)
+                |> Option.defaultValue []
+            Services =
+                response
+                |> Option.ofObj
+                |> Option.bind (fun r -> Option.ofObj r.ClientResponsePayload)
+                |> Option.map (fun p -> items p.DecisionElements |> List.ofSeq)
+                |> Option.defaultValue []
+                |> List.map (fun element ->
+                    {
+                        Name = ValueOption.ofOption element.ServiceName
+                        Decision = ValueOption.ofOption element.Decision
+                        Reason = ValueOption.ofOption element.DecisionReason
+                        Score = ValueOption.ofOption element.Score
+                        FiredRules =
+                            items element.Rules
+                            |> Seq.filter (fun rule ->
+                                rule.RuleScore |> Option.exists (fun score -> score > 0.)
+                                && not (
+                                    rule.RuleId
+                                    |> Option.exists (fun id -> id.Trim() = "9990" || id.Trim() = "9991")
+                                ))
+                            |> Seq.map (fun rule ->
+                                {
+                                    Id = ValueOption.ofOption rule.RuleId
+                                    Name = ValueOption.ofOption rule.RuleName
+                                    Score = ValueOption.ofOption rule.RuleScore
+                                    Text = ValueOption.ofOption rule.RuleText
+                                })
+                            |> List.ofSeq
+                    })
+        }
 
 /// A check the KYB company and people data calls can carry out. Licensing and Experian's per-client configuration decide
 /// which ones a client gets, and the answer does not say what was asked for.
@@ -432,11 +517,13 @@ type KybCheck =
 
 /// A key party of a company data answer. An id Experian reports as "Unknown" is ValueNone.
 type KybKeyParty =
-    { /// A company's legal name, or an individual's names.
-      Name: string voption
-      UboShareholderId: string voption
-      PscId: string voption
-      DirectorUrn: string voption }
+    {
+        /// A company's legal name, or an individual's names.
+        Name: string voption
+        UboShareholderId: string voption
+        PscId: string voption
+        DirectorUrn: string voption
+    }
 
 /// Who a hit or gap in a KYB answer concerns.
 [<RequireQualifiedAccess>]
@@ -471,8 +558,10 @@ type KybHitKind =
     | AdverseMarker of field: string
 
 type KybHit =
-    { Subject: KybSubject
-      Kind: KybHitKind }
+    {
+        Subject: KybSubject
+        Kind: KybHitKind
+    }
 
 /// Why a KYB answer can't be read as complete.
 [<RequireQualifiedAccess>]
@@ -525,15 +614,30 @@ module KybOutcome =
     let private text (value: string option) =
         value |> Option.map _.Trim() |> Option.filter (String.IsNullOrEmpty >> not)
 
-    let private equalsText (expected: string) (value: string) = value.Equals(expected, StringComparison.OrdinalIgnoreCase)
+    let private equalsText (expected: string) (value: string) =
+        value.Equals(expected, StringComparison.OrdinalIgnoreCase)
 
-    let private items (values: 'T[]) = values |> Option.ofObj |> Option.defaultValue [||] |> List.ofArray |> List.filter (fun v -> not (isNull (box v)))
+    let private items (values: 'T[]) =
+        values
+        |> Option.ofObj
+        |> Option.defaultValue [||]
+        |> Array.filter (fun v -> not (isNull (box v)))
+        |> List.ofArray
 
-    let private missingBlock expected subject block = if expected then [ Gap(KybGap.BlockMissing(subject, block)) ] else []
+    let private missingBlock expected subject block =
+        if expected then
+            [ Gap(KybGap.BlockMissing(subject, block)) ]
+        else
+            []
 
-    let private missingField expected subject field = if expected then [ Gap(KybGap.FieldMissing(subject, field)) ] else []
+    let private missingField expected subject field =
+        if expected then
+            [ Gap(KybGap.FieldMissing(subject, field)) ]
+        else
+            []
 
-    let private isSet value = equalsText "Y" value || equalsText "Yes" value
+    let private isSet value =
+        equalsText "Y" value || equalsText "Yes" value
 
     /// Experian words a risk only for a hit.
     let private statesRisk =
@@ -558,20 +662,56 @@ module KybOutcome =
 
     let private optional = text >> ValueOption.ofOption
 
-    let private lexisNexisFlags pep pepRisk sanction enforcement enforcementRisk soe rca rcaRisk adverseMedia adverseMediaRisk uncategorised =
-        [ "LNPep", pep, KybHitKind.Pep(optional pepRisk)
-          "LNSanction", sanction, KybHitKind.Sanction
-          "LNEnforcement", enforcement, KybHitKind.Enforcement(optional enforcementRisk)
-          "LNSoe", soe, KybHitKind.Soe
-          "LNRca", rca, KybHitKind.Rca(optional rcaRisk)
-          "LNAdverseMedia", adverseMedia, KybHitKind.AdverseMedia(optional adverseMediaRisk)
-          "LNUncategorisedHit", uncategorised, KybHitKind.Uncategorised ]
+    let private lexisNexisFlags
+        pep
+        pepRisk
+        sanction
+        enforcement
+        enforcementRisk
+        soe
+        rca
+        rcaRisk
+        adverseMedia
+        adverseMediaRisk
+        uncategorised
+        =
+        [
+            "LNPep", pep, KybHitKind.Pep(optional pepRisk)
+            "LNSanction", sanction, KybHitKind.Sanction
+            "LNEnforcement", enforcement, KybHitKind.Enforcement(optional enforcementRisk)
+            "LNSoe", soe, KybHitKind.Soe
+            "LNRca", rca, KybHitKind.Rca(optional rcaRisk)
+            "LNAdverseMedia", adverseMedia, KybHitKind.AdverseMedia(optional adverseMediaRisk)
+            "LNUncategorisedHit", uncategorised, KybHitKind.Uncategorised
+        ]
 
     let private summaryFlags (block: Kyb.KybDataSummaryLNFields) =
-        lexisNexisFlags block.LnPep block.LnPepRisk block.LnSanction block.LnEnforcement block.LnEnforcementRisk block.LnSoe block.LnRca block.LnRcaRisk block.LnAdverseMedia block.LnAdverseMediaRisk block.LnUncategorisedHit
+        lexisNexisFlags
+            block.LnPep
+            block.LnPepRisk
+            block.LnSanction
+            block.LnEnforcement
+            block.LnEnforcementRisk
+            block.LnSoe
+            block.LnRca
+            block.LnRcaRisk
+            block.LnAdverseMedia
+            block.LnAdverseMediaRisk
+            block.LnUncategorisedHit
 
     let private partyFlags (block: Kyb.KybDataLNDetails) =
-        lexisNexisFlags block.LnPep block.LnPepRisk block.LnSanction block.LnEnforcement block.LnEnforcementRisk block.LnSoe block.LnRca block.LnRcaRisk block.LnAdverseMedia block.LnAdverseMediaRisk block.LnUncategorisedHit
+        lexisNexisFlags
+            block.LnPep
+            block.LnPepRisk
+            block.LnSanction
+            block.LnEnforcement
+            block.LnEnforcementRisk
+            block.LnSoe
+            block.LnRca
+            block.LnRcaRisk
+            block.LnAdverseMedia
+            block.LnAdverseMediaRisk
+            block.LnUncategorisedHit
 
     let private summary expected subject blockName (block: Kyb.KybDataSummaryLNFields) =
         match Option.ofObj block with
@@ -579,17 +719,40 @@ module KybOutcome =
         | None -> missingBlock expected subject blockName
 
     /// A row is a match Lexis Nexis returned, so it is a hit whatever its flags say. A null row is a match that can't be read.
-    let private matchRows (owner: KybSubject) (subjectOf: Kyb.KybDataLexisNexisDetails_Item -> KybSubject) (rows: Kyb.KybDataLexisNexisDetails_Item[]) =
+    let private matchRows
+        (owner: KybSubject)
+        (subjectOf: Kyb.KybDataLexisNexisDetails_Item -> KybSubject)
+        (rows: Kyb.KybDataLexisNexisDetails_Item[])
+        =
         let readable = items rows
-        let unreadable = if isNull rows || readable.Length = rows.Length then [] else [ Gap(KybGap.BlockMissing(owner, "LexisNexisDetails")) ]
+
+        let unreadable =
+            if isNull rows || readable.Length = rows.Length then
+                []
+            else
+                [ Gap(KybGap.BlockMissing(owner, "LexisNexisDetails")) ]
+
         unreadable
         @ (readable
            |> List.collect (fun row ->
                let subject = subjectOf row
+
                let flagged =
-                   lexisNexisFlags row.Pep row.PepRisk row.Sanction row.Enforcement row.EnforcementRisk row.Soe row.Rca row.RcaRisk row.AdverseMedia row.AdverseMediaRisk row.UncategorisedHit
+                   lexisNexisFlags
+                       row.Pep
+                       row.PepRisk
+                       row.Sanction
+                       row.Enforcement
+                       row.EnforcementRisk
+                       row.Soe
+                       row.Rca
+                       row.RcaRisk
+                       row.AdverseMedia
+                       row.AdverseMediaRisk
+                       row.UncategorisedHit
                    |> List.filter (fun (_, value, _) -> text value |> Option.exists isSet)
                    |> List.map (fun (_, _, kind) -> kind)
+
                match flagged with
                | [] -> [ hit subject KybHitKind.Uncategorised ]
                | kinds -> kinds |> List.map (hit subject)))
@@ -603,33 +766,47 @@ module KybOutcome =
                 | Some value when equalsText "True" value -> []
                 | Some value -> [ Gap(KybGap.CrossCoreNotCompleted(subject, "CrosscoreAttempted", value)) ]
                 | None -> missingField expected subject "CrosscoreAttempted"
+
             let called = expected && List.isEmpty call
+
             let sent =
                 match text details.CcAuthenticationAttempted with
                 | Some value when equalsText "TRUE" value -> []
                 | Some value when equalsText "FALSE" value && not expected -> []
-                | Some value -> [ Gap(KybGap.CrossCoreNotCompleted(subject, "CCAuthenticationAttempted", value)) ]
+                | Some value ->
+                    [
+                        Gap(KybGap.CrossCoreNotCompleted(subject, "CCAuthenticationAttempted", value))
+                    ]
                 | None -> missingField called subject "CCAuthenticationAttempted"
+
             let decision =
                 match AuthPlus.decision details.CcDecision with
                 | Authenticated level when level = 1 || level = 2 -> []
-                | Authenticated _ -> [ Gap(KybGap.UnknownValue(subject, "CCDecision", details.CcDecision |> Option.defaultValue "")) ]
+                | Authenticated _ ->
+                    [
+                        Gap(KybGap.UnknownValue(subject, "CCDecision", details.CcDecision |> Option.defaultValue ""))
+                    ]
                 | NotAuthenticated _
                 | Refer _ as refused -> [ hit subject (KybHitKind.Authentication refused) ]
                 | NoDecision -> missingField (called && List.isEmpty sent) subject "CCDecision"
                 | OtherAuthPlusDecision code -> [ Gap(KybGap.UnknownValue(subject, "CCDecision", code)) ]
+
             call @ sent @ decision
 
     let private keyParty (party: Kyb.KybDataKeyParties_Item) =
-        let known (id: string option) = text id |> Option.filter (equalsText "Unknown" >> not) |> ValueOption.ofOption
-        { Name =
-            match text party.LegalName, List.choose text [ party.Forename; party.MiddleName; party.Surname ] with
-            | Some legalName, _ -> ValueSome legalName
-            | None, [] -> ValueNone
-            | None, names -> ValueSome(String.Join(" ", names))
-          UboShareholderId = known party.UboShareholderId
-          PscId = known party.Pscid
-          DirectorUrn = known party.DirectorUrn }
+        let known (pid: string option) =
+            text pid |> Option.filter (equalsText "Unknown" >> not) |> ValueOption.ofOption
+
+        {
+            Name =
+                match text party.LegalName, List.choose text [ party.Forename; party.MiddleName; party.Surname ] with
+                | Some legalName, _ -> ValueSome legalName
+                | None, [] -> ValueNone
+                | None, names -> ValueSome(String.Join(" ", names))
+            UboShareholderId = known party.UboShareholderId
+            PscId = known party.Pscid
+            DirectorUrn = known party.DirectorUrn
+        }
 
     /// Types C and O are companies, which Experian does not authenticate. X, a missing type or any other is taken for an individual.
     let private isIndividual (party: Kyb.KybDataKeyParties_Item) =
@@ -639,7 +816,8 @@ module KybOutcome =
 
     /// A key party the spec gives a conviction count: a current director. A URN of Unknown is still a director's.
     let private isDirector (party: Kyb.KybDataKeyParties_Item) =
-        text party.DirectorFlag |> Option.exists isSet || Option.isSome (text party.DirectorUrn)
+        text party.DirectorFlag |> Option.exists isSet
+        || Option.isSome (text party.DirectorUrn)
 
     /// Non-zero is a hit, and only zero is clean. "" and "-" arrive here as absent.
     let private count expected subject field (value: double option) =
@@ -651,88 +829,117 @@ module KybOutcome =
     let private partyFindings (expects: KybCheck -> bool) (party: Kyb.KybDataKeyParties_Item) =
         let identity = keyParty party
         let subject = KybSubject.KeyParty identity
+
         let unidentified =
             match identity.Name, identity.UboShareholderId, identity.PscId, identity.DirectorUrn with
-            | ValueNone, ValueNone, ValueNone, ValueNone -> missingField (expects KybCheck.Screening || expects KybCheck.Authentication) subject "Name"
+            | ValueNone, ValueNone, ValueNone, ValueNone ->
+                missingField (expects KybCheck.Screening || expects KybCheck.Authentication) subject "Name"
             | _ -> []
+
         let lexisNexis =
             match Option.ofObj party.Lexisnexis with
             | Some block -> flags "No" (expects KybCheck.Screening) subject (partyFlags block)
             | None -> missingBlock (expects KybCheck.Screening) subject "Lexisnexis"
+
         unidentified
         @ lexisNexis
         @ crossCore (expects KybCheck.Authentication && isIndividual party) subject "Crosscore" party.Crosscore
-        @ count (expects KybCheck.AdverseMarkers && isDirector party) subject "DirectorNumberConvictions" party.DirectorNumberConvictions
+        @ count
+            (expects KybCheck.AdverseMarkers && isDirector party)
+            subject
+            "DirectorNumberConvictions"
+            party.DirectorNumberConvictions
 
     let private keyParties (expects: KybCheck -> bool) (parties: Kyb.KybDataKeyParties_Item[]) =
         let expected = expects KybCheck.Screening || expects KybCheck.Authentication
         let readable = items parties
+
         match Option.ofObj parties with
         | Some all when all.Length > 0 ->
-            (if readable.Length < all.Length then missingBlock expected KybSubject.Company "KeyParties" else [])
-            @ (if expects KybCheck.Authentication && not (List.exists isIndividual readable) then [ Gap KybGap.NoIndividualKeyParty ] else [])
+            (if readable.Length < all.Length then
+                 missingBlock expected KybSubject.Company "KeyParties"
+             else
+                 [])
+            @ (if expects KybCheck.Authentication && not (List.exists isIndividual readable) then
+                   [ Gap KybGap.NoIndividualKeyParty ]
+               else
+                   [])
             @ (readable |> List.collect (partyFindings expects))
         | _ -> missingBlock expected KybSubject.Company "KeyParties"
 
     /// The AML flags, by their names in the answer, with the UBO structure's partial ownership flag.
     let private companyMarkers (company: Kyb.KybDataCompanyInformation) =
-        [ "PartialOwnershipFlag", company.PartialOwnershipFlag
-          "FormationAgent", company.FormationAgent
-          "SlpLlpOwned", company.SlpLlpOwned
-          "NoPsc", company.NoPsc
-          "PscDodging", company.PscDodging
-          "Phoenix", company.Phoenix
-          "CHDefaultAddress", company.ChDefaultAddress
-          "ResidentialAddress", company.ResidentialAddress
-          "ResidentialAddressHighVol", company.ResidentialAddressHighVol
-          "MailboxAddress", company.MailboxAddress
-          "RegisteredAddressChanges", company.RegisteredAddressChanges
-          "DirectorNationalityChanges", company.DirectorNationalityChanges
-          "NoUKDirIncorp", company.NoUkDirIncorp
-          "HighRiskDirIncorp", company.HighRiskDirIncorp
-          "NoUKDir", company.NoUkDir
-          "HighRiskDir", company.HighRiskDir
-          "NoUKPsc", company.NoUkPsc
-          "HighRiskPsc", company.HighRiskPsc
-          "NoUKUbo", company.NoUkUbo
-          "HighRiskUbo", company.HighRiskUbo
-          "NoUKKp", company.NoUkKp
-          "HighRiskKp", company.HighRiskKp
-          "MultiJurDirIncorp", company.MultiJurDirIncorp
-          "MultiJurDir", company.MultiJurDir
-          "DirHighVolCos", company.DirHighVolCos
-          "ConflictingDirCoR", company.ConflictingDirCoR
-          "ConflictingDirNat", company.ConflictingDirNat
-          "ConflictingDirDoB", company.ConflictingDirDoB
-          "ConsistentOverPerformance", company.ConsistentOverPerformance
-          "FastMoneyMovement", company.FastMoneyMovement
-          "LowAverageBalance", company.LowAverageBalance
-          "RoundTransactionsLatestMonth", company.RoundTransactionsLatestMonth
-          "RoundTransactionsLatestYear", company.RoundTransactionsLatestYear
-          "RoundTransactionsFull", company.RoundTransactionsFull
-          "MisalignedInflows", company.MisalignedInflows
-          "MultipleCurrentAccounts", company.MultipleCurrentAccounts
-          "MultipleBanks", company.MultipleBanks
-          "MultipleBanksNewIncorp", company.MultipleBanksNewIncorp
-          "TradingWhilstDormant", company.TradingWhilstDormant ]
+        [
+            "PartialOwnershipFlag", company.PartialOwnershipFlag
+            "FormationAgent", company.FormationAgent
+            "SlpLlpOwned", company.SlpLlpOwned
+            "NoPsc", company.NoPsc
+            "PscDodging", company.PscDodging
+            "Phoenix", company.Phoenix
+            "CHDefaultAddress", company.ChDefaultAddress
+            "ResidentialAddress", company.ResidentialAddress
+            "ResidentialAddressHighVol", company.ResidentialAddressHighVol
+            "MailboxAddress", company.MailboxAddress
+            "RegisteredAddressChanges", company.RegisteredAddressChanges
+            "DirectorNationalityChanges", company.DirectorNationalityChanges
+            "NoUKDirIncorp", company.NoUkDirIncorp
+            "HighRiskDirIncorp", company.HighRiskDirIncorp
+            "NoUKDir", company.NoUkDir
+            "HighRiskDir", company.HighRiskDir
+            "NoUKPsc", company.NoUkPsc
+            "HighRiskPsc", company.HighRiskPsc
+            "NoUKUbo", company.NoUkUbo
+            "HighRiskUbo", company.HighRiskUbo
+            "NoUKKp", company.NoUkKp
+            "HighRiskKp", company.HighRiskKp
+            "MultiJurDirIncorp", company.MultiJurDirIncorp
+            "MultiJurDir", company.MultiJurDir
+            "DirHighVolCos", company.DirHighVolCos
+            "ConflictingDirCoR", company.ConflictingDirCoR
+            "ConflictingDirNat", company.ConflictingDirNat
+            "ConflictingDirDoB", company.ConflictingDirDoB
+            "ConsistentOverPerformance", company.ConsistentOverPerformance
+            "FastMoneyMovement", company.FastMoneyMovement
+            "LowAverageBalance", company.LowAverageBalance
+            "RoundTransactionsLatestMonth", company.RoundTransactionsLatestMonth
+            "RoundTransactionsLatestYear", company.RoundTransactionsLatestYear
+            "RoundTransactionsFull", company.RoundTransactionsFull
+            "MisalignedInflows", company.MisalignedInflows
+            "MultipleCurrentAccounts", company.MultipleCurrentAccounts
+            "MultipleBanks", company.MultipleBanks
+            "MultipleBanksNewIncorp", company.MultipleBanksNewIncorp
+            "TradingWhilstDormant", company.TradingWhilstDormant
+        ]
         |> List.map (fun (field, value) -> field, value, KybHitKind.AdverseMarker field)
 
     let private companyFindings (expects: KybCheck -> bool) (block: Kyb.KybDataCompanyInformation) =
         let screening = expects KybCheck.Screening
         let markers = expects KybCheck.AdverseMarkers
         let subject = KybSubject.Company
+
         match Option.ofObj block with
         | None -> missingBlock (screening || markers) subject "CompanyInformation"
         | Some company ->
             // DataQualityFlag excuses what a company not found leaves absent, never a hit the block still holds.
             let quality = text company.DataQualityFlag
-            let screening = screening && Option.isNone quality
-            let markers = markers && Option.isNone quality
-            (quality |> Option.map (fun value -> Gap(KybGap.CompanyNotFound value)) |> Option.toList)
+            let screening = screening && quality.IsNone
+            let markers = markers && quality.IsNone
+
+            (quality |> Option.map (KybGap.CompanyNotFound >> Gap) |> Option.toList)
             @ summary screening subject "Lexisnexis" company.Lexisnexis
             @ flags "N" (screening || markers) subject [ "DissolvedFlag", company.DissolvedFlag, KybHitKind.Dissolved ]
-            @ (text company.DissolutionDate |> Option.map (fun _ -> hit subject KybHitKind.Dissolved) |> Option.toList)
-            @ flags "N" markers subject [ "ExceptionFlag", company.ExceptionFlag, KybHitKind.OwnershipException(optional company.ExceptionDescription) ]
+            @ (text company.DissolutionDate
+               |> Option.map (fun _ -> hit subject KybHitKind.Dissolved)
+               |> Option.toList)
+            @ flags
+                "N"
+                markers
+                subject
+                [
+                    "ExceptionFlag",
+                    company.ExceptionFlag,
+                    KybHitKind.OwnershipException(optional company.ExceptionDescription)
+                ]
             @ flags "N" markers subject (companyMarkers company)
             @ count markers subject "DirectorNumDisqualifications" company.DirectorNumDisqualifications
 
@@ -742,21 +949,31 @@ module KybOutcome =
         | Some found ->
             let matched =
                 match text found.Matched, found.NumberOfMatches with
-                | Some value, Some matches when equalsText "yes" value && matches <> 1. -> [ Gap(KybGap.MatchCount matches) ]
+                | Some value, Some matches when equalsText "yes" value && matches <> 1. ->
+                    [ Gap(KybGap.MatchCount matches) ]
                 | Some value, _ when equalsText "yes" value -> []
                 | Some value, _ -> [ Gap(KybGap.CompanyNotFound value) ]
                 | None, _ -> missingField true KybSubject.Company "Matched"
+
             matched
             @ (items found.MatchingDetails
                |> List.collect (fun source ->
-                   flags "N" false KybSubject.Company [ "FcaDisciplinaryActionTaken", source.FcaDisciplinaryActionTaken, KybHitKind.AdverseMarker "FcaDisciplinaryActionTaken" ]))
+                   flags
+                       "N"
+                       false
+                       KybSubject.Company
+                       [
+                           "FcaDisciplinaryActionTaken",
+                           source.FcaDisciplinaryActionTaken,
+                           KybHitKind.AdverseMarker "FcaDisciplinaryActionTaken"
+                       ]))
 
     let private errorCodes (codes: string[]) =
         codes
         |> Option.ofObj
         |> Option.defaultValue [||]
+        |> Array.map (fun code -> Gap(KybGap.ErrorCode(if isNull code then "" else code.Trim())))
         |> List.ofArray
-        |> List.map (fun code -> Gap(KybGap.ErrorCode(if isNull code then "" else code.Trim())))
 
     /// A JSON boolean arrives here as its text. Absent says nothing: the check's own block still has to be there.
     let private suppressed expected subject field (value: string option) =
@@ -773,8 +990,20 @@ module KybOutcome =
         | requested -> fun check -> List.contains check requested
 
     let private outcome findings =
-        let hits = findings |> List.choose (function Hit found -> Some found | Gap _ -> None) |> List.distinct
-        let gaps = findings |> List.choose (function Gap gap -> Some gap | Hit _ -> None) |> List.distinct
+        let hits =
+            findings
+            |> List.choose (function
+                | Hit found -> Some found
+                | Gap _ -> None)
+            |> List.distinct
+
+        let gaps =
+            findings
+            |> List.choose (function
+                | Gap gap -> Some gap
+                | Hit _ -> None)
+            |> List.distinct
+
         match hits, gaps with
         | [], [] -> KybOutcome.Clear
         | [], gaps -> KybOutcome.NotScreened gaps
@@ -784,28 +1013,53 @@ module KybOutcome =
     /// calls count whatever was asked for; only an absent or suppressed result of a check not asked for is let go.
     let ofResponseFor (requested: KybCheck list) (response: Kyb.KybDataResponse) =
         let expects = expecting requested
+
         match response |> Option.ofObj |> Option.bind (fun r -> Option.ofObj r.Results) with
         | None -> KybOutcome.NotScreened [ KybGap.NoResults ]
         | Some results ->
             let parties = items results.KeyParties |> List.map keyParty
+
             let subjectOf (row: Kyb.KybDataLexisNexisDetails_Item) =
-                let links (id: string option) (partyId: string voption) =
-                    match text id, partyId with
-                    | Some id, ValueSome partyId -> id = partyId
+                let links (pid: string option) (partyId: string voption) =
+                    match text pid, partyId with
+                    | Some pid, ValueSome partyId -> pid = partyId
                     | _ -> false
+
                 parties
-                |> List.tryFind (fun party -> links row.UboShareholderId party.UboShareholderId || links row.Pscid party.PscId || links row.DirectorUrn party.DirectorUrn)
+                |> List.tryFind (fun party ->
+                    links row.UboShareholderId party.UboShareholderId
+                    || links row.Pscid party.PscId
+                    || links row.DirectorUrn party.DirectorUrn)
                 |> Option.map KybSubject.KeyParty
                 |> Option.defaultValue (KybSubject.Unlinked(optional row.InputName))
+
             let identified =
-                [ text results.BusinessRef
-                  results.Matching |> Option.ofObj |> Option.bind (fun found -> text found.BestMatchedId)
-                  results.CompanyInformation |> Option.ofObj |> Option.bind (fun block -> text block.BusinessName) ]
+                [
+                    text results.BusinessRef
+                    results.Matching
+                    |> Option.ofObj
+                    |> Option.bind (fun found -> text found.BestMatchedId)
+                    results.CompanyInformation
+                    |> Option.ofObj
+                    |> Option.bind (fun block -> text block.BusinessName)
+                ]
                 |> List.exists Option.isSome
+
             errorCodes results.ErrorCodes
-            @ (if identified then [] else [ Gap KybGap.CompanyNotIdentified ])
-            @ suppressed (expects KybCheck.Screening) KybSubject.Company "LnScreeningSuppress" results.LnScreeningSuppress
-            @ suppressed (expects KybCheck.Authentication) KybSubject.Company "IdVerificationSuppress" results.IdVerificationSuppress
+            @ (if identified then
+                   []
+               else
+                   [ Gap KybGap.CompanyNotIdentified ])
+            @ suppressed
+                (expects KybCheck.Screening)
+                KybSubject.Company
+                "LnScreeningSuppress"
+                results.LnScreeningSuppress
+            @ suppressed
+                (expects KybCheck.Authentication)
+                KybSubject.Company
+                "IdVerificationSuppress"
+                results.IdVerificationSuppress
             @ matching results.Matching
             @ companyFindings expects results.CompanyInformation
             @ keyParties expects results.KeyParties
@@ -819,17 +1073,32 @@ module KybOutcome =
     /// The outcome of a people data answer, for a client that asked for only these checks. Hits are the Person's.
     let ofPeopleResponseFor (requested: KybCheck list) (response: Kyb.KybDataPeopleResponse) =
         let expects = expecting requested
+
         match response |> Option.ofObj |> Option.bind (fun r -> Option.ofObj r.Results) with
         | None -> KybOutcome.NotScreened [ KybGap.NoResults ]
         | Some results ->
             let person = KybSubject.Person
+
             errorCodes results.ErrorCodes
             @ suppressed (expects KybCheck.Screening) person "LnScreeningSuppress" results.LnScreeningSuppress
-            @ suppressed (expects KybCheck.Authentication) person "IdVerificationSuppress" results.IdVerificationSuppress
-            @ summary (expects KybCheck.Screening) person "ClientPeopleScreeningLexisNexis" results.ClientPeopleScreeningLexisNexis
-            @ crossCore (expects KybCheck.Authentication) person "ClientPeopleScreeningCrosscore" results.ClientPeopleScreeningCrosscore
+            @ suppressed
+                (expects KybCheck.Authentication)
+                person
+                "IdVerificationSuppress"
+                results.IdVerificationSuppress
+            @ summary
+                (expects KybCheck.Screening)
+                person
+                "ClientPeopleScreeningLexisNexis"
+                results.ClientPeopleScreeningLexisNexis
+            @ crossCore
+                (expects KybCheck.Authentication)
+                person
+                "ClientPeopleScreeningCrosscore"
+                results.ClientPeopleScreeningCrosscore
             @ matchRows person (fun _ -> person) results.LexisNexisDetails
             |> outcome
 
     /// The outcome of a people data answer with screening and authentication expected.
-    let ofPeopleResponse (response: Kyb.KybDataPeopleResponse) = ofPeopleResponseFor KybCheck.All response
+    let ofPeopleResponse (response: Kyb.KybDataPeopleResponse) =
+        ofPeopleResponseFor KybCheck.All response

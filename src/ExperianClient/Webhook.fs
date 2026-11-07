@@ -6,7 +6,8 @@ open System.Security.Cryptography
 open System.Text
 
 /// The header carrying the base64 HMAC-SHA256 of the delivery body.
-let [<Literal>] SignatureHeader = "X-HMAC-SHA256-Signature"
+[<Literal>]
+let SignatureHeader = "X-HMAC-SHA256-Signature"
 
 /// The base64 HMAC-SHA256 of the body, keyed with the UTF-8 bytes of the shared key as Experian returns it.
 let signature (sharedKey: string) (body: byte[]) =
@@ -18,4 +19,5 @@ let verify (sharedKey: string) (body: byte[]) (signatureHeader: string) =
     not (String.IsNullOrWhiteSpace signatureHeader)
     && CryptographicOperations.FixedTimeEquals(
         ReadOnlySpan(Encoding.ASCII.GetBytes(signature sharedKey body)),
-        ReadOnlySpan(Encoding.ASCII.GetBytes(signatureHeader.Trim())))
+        ReadOnlySpan(Encoding.ASCII.GetBytes(signatureHeader.Trim()))
+    )

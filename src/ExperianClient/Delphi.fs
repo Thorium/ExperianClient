@@ -74,18 +74,44 @@ module SearchType =
         | OtherSearch code -> code
 
     let private all =
-        [ yield! [ Quotation.PersonalLoan; Quotation.CreditCard; Quotation.StoreCard; Quotation.Mortgage; Quotation.Insurance
-                   Quotation.Telco; Quotation.Utility; Quotation.MediaServices; Quotation.MultipleProducts ]
-                 |> List.map Quotation
-          yield! [ CreditProduct.PersonalLoan; CreditProduct.DebtConsolidationLoan; CreditProduct.CreditCard; CreditProduct.StoreCard
-                   CreditProduct.ChargeCard; CreditProduct.CurrentAccount; CreditProduct.OverdraftAccount; CreditProduct.RevolvingCredit
-                   CreditProduct.HirePurchase; CreditProduct.SecuredLoan; CreditProduct.FirstMortgage ]
-                 |> List.map CreditApplication ]
+        [
+            yield!
+                [
+                    Quotation.PersonalLoan
+                    Quotation.CreditCard
+                    Quotation.StoreCard
+                    Quotation.Mortgage
+                    Quotation.Insurance
+                    Quotation.Telco
+                    Quotation.Utility
+                    Quotation.MediaServices
+                    Quotation.MultipleProducts
+                ]
+                |> List.map Quotation
+            yield!
+                [
+                    CreditProduct.PersonalLoan
+                    CreditProduct.DebtConsolidationLoan
+                    CreditProduct.CreditCard
+                    CreditProduct.StoreCard
+                    CreditProduct.ChargeCard
+                    CreditProduct.CurrentAccount
+                    CreditProduct.OverdraftAccount
+                    CreditProduct.RevolvingCredit
+                    CreditProduct.HirePurchase
+                    CreditProduct.SecuredLoan
+                    CreditProduct.FirstMortgage
+                ]
+                |> List.map CreditApplication
+        ]
 
     /// The search type for a CAPS code, typed when this library knows it.
     let ofCode (caps: string) =
         let normalised = if isNull caps then "" else caps.Trim().ToUpperInvariant()
-        all |> List.tryFind (fun searchType -> code searchType = normalised) |> Option.defaultValue (OtherSearch normalised)
+
+        all
+        |> List.tryFind (fun searchType -> code searchType = normalised)
+        |> Option.defaultValue (OtherSearch normalised)
 
     let footprint searchType =
         match searchType with
@@ -99,13 +125,16 @@ module DelphiText =
 
     let private plainRegex = Regex @"[^0-9A-Za-z ,\-./*']"
     /// Each character Delphi's address patterns refuse becomes a space.
-    let plain (text: string) =
-        plainRegex.Replace(text, " ").Trim()
+    let plain (text: string) = plainRegex.Replace(text, " ").Trim()
 
     /// At most limit characters, with no spaces left at either end.
     let limited (limit: int) (text: string) =
         let trimmed = text.Trim()
-        if trimmed.Length <= limit then trimmed else trimmed.Substring(0, limit).TrimEnd()
+
+        if trimmed.Length <= limit then
+            trimmed
+        else
+            trimmed.Substring(0, limit).TrimEnd()
 
     let private addressPart limit text = plain text |> limited limit
 
@@ -175,9 +204,11 @@ type SpecialInstruction =
 
 /// A special instruction and the dates it applies between, when the lender gave them.
 type SpecialInstructionPeriod =
-    { Instruction: SpecialInstruction
-      From: DateOnly voption
-      Until: DateOnly voption }
+    {
+        Instruction: SpecialInstruction
+        From: DateOnly voption
+        Until: DateOnly voption
+    }
 
 module SpecialInstruction =
 
@@ -203,31 +234,33 @@ module SpecialInstruction =
 /// One credit account (CAIS record) from a Delphi Select response. Amounts are whole pounds as the lender last reported
 /// them, not a settlement figure. AccountNumber is shown only for your own data unless Experian agrees otherwise.
 type CreditAccount =
-    { /// Absent for some lenders: Experian withholds the name (for example company type 10).
-      Lender: string voption
-      AccountNumber: string voption
-      /// Experian Standard Data Code for the account type.
-      AccountTypeCode: string voption
-      /// Experian Standard Data Code for the lender's company type.
-      CompanyTypeCode: string voption
-      Holder: AccountHolder
-      /// Holder alone doesn't make the account theirs: see CreditAccounts.isOwn.
-      Match: RecordMatch
-      Joint: bool
-      Status: AccountStatus
-      Balance: decimal voption
-      /// The current balance of a defaulted account; Experian reports it apart from Balance.
-      DefaultBalance: decimal voption
-      /// The part of the balance in arrears.
-      DelinquentBalance: decimal voption
-      CreditLimit: decimal voption
-      Payment: decimal voption
-      StartDate: DateOnly voption
-      SettlementDate: DateOnly voption
-      LastUpdated: DateOnly voption
-      /// Worst CAIS status code: 0 satisfactory, 1-6 months in arrears, 8 default, 9 bad debt, S slow payer, U, D, ?.
-      WorstStatus: string voption
-      SpecialInstruction: SpecialInstructionPeriod voption }
+    {
+        /// Absent for some lenders: Experian withholds the name (for example company type 10).
+        Lender: string voption
+        AccountNumber: string voption
+        /// Experian Standard Data Code for the account type.
+        AccountTypeCode: string voption
+        /// Experian Standard Data Code for the lender's company type.
+        CompanyTypeCode: string voption
+        Holder: AccountHolder
+        /// Holder alone doesn't make the account theirs: see CreditAccounts.isOwn.
+        Match: RecordMatch
+        Joint: bool
+        Status: AccountStatus
+        Balance: decimal voption
+        /// The current balance of a defaulted account; Experian reports it apart from Balance.
+        DefaultBalance: decimal voption
+        /// The part of the balance in arrears.
+        DelinquentBalance: decimal voption
+        CreditLimit: decimal voption
+        Payment: decimal voption
+        StartDate: DateOnly voption
+        SettlementDate: DateOnly voption
+        LastUpdated: DateOnly voption
+        /// Worst CAIS status code: 0 satisfactory, 1-6 months in arrears, 8 default, 9 bad debt, S slow payer, U, D, ?.
+        WorstStatus: string voption
+        SpecialInstruction: SpecialInstructionPeriod voption
+    }
 
 module CreditAccounts =
 
@@ -236,7 +269,14 @@ module CreditAccounts =
         match text with
         | Some text ->
             let digits = text.Replace("£", "").Replace(",", "").Trim()
-            match Decimal.TryParse(digits, NumberStyles.AllowLeadingSign ||| NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
+
+            match
+                Decimal.TryParse(
+                    digits,
+                    NumberStyles.AllowLeadingSign ||| NumberStyles.AllowDecimalPoint,
+                    CultureInfo.InvariantCulture
+                )
+            with
             | true, value -> ValueSome value
             | _ -> ValueNone
         | None -> ValueNone
@@ -298,33 +338,46 @@ module CreditAccounts =
         let details = detail.MatchDetails |> Option.ofObj
         let balance = detail.Balance |> Option.ofObj
         let defaultBalance = detail.CurrentDefBalance |> Option.ofObj
-        { Lender = ValueOption.ofOption detail.SupplyCompanyName
-          AccountNumber = ValueOption.ofOption detail.AccountNumber
-          AccountTypeCode = ValueOption.ofOption detail.AccountType
-          CompanyTypeCode = ValueOption.ofOption detail.CompanyType
-          Holder = holder (details |> Option.bind _.MatchTo)
-          Match = recordMatch (details |> Option.bind _.BureauRefCategory)
-          Joint = (match detail.JointAccount |> Option.map _.Trim() with Some("M" | "J") -> true | _ -> false)
-          Status =
-            status detail.AccountStatus (balance |> Option.bind _.Narrative) (defaultBalance |> Option.bind _.Narrative) detail.DefaultSatisfyDate
-          Balance = pounds (balance |> Option.bind _.Amount)
-          DefaultBalance = pounds (defaultBalance |> Option.bind _.Amount)
-          DelinquentBalance = pounds (detail.DelinquentBalance |> Option.ofObj |> Option.bind _.Amount)
-          CreditLimit = pounds (detail.CreditLimit |> Option.ofObj |> Option.bind _.Amount)
-          Payment = pounds detail.Payment
-          StartDate = ValueOption.ofOption detail.CaisAccStartDate
-          SettlementDate = ValueOption.ofOption detail.SettlementDate
-          LastUpdated = ValueOption.ofOption detail.LastUpdatedDate
-          WorstStatus = ValueOption.ofOption detail.WorstStatus
-          SpecialInstruction =
-            match detail.SpecialInstrInd |> Option.filter (String.IsNullOrWhiteSpace >> not) with
-            | Some code ->
-                let dates = detail.SpecialInstrDet |> Option.ofObj
-                ValueSome
-                    { Instruction = SpecialInstruction.ofCode code
-                      From = dates |> Option.bind _.StartDate |> ValueOption.ofOption
-                      Until = dates |> Option.bind _.EndDate |> ValueOption.ofOption }
-            | None -> ValueNone }
+
+        {
+            Lender = ValueOption.ofOption detail.SupplyCompanyName
+            AccountNumber = ValueOption.ofOption detail.AccountNumber
+            AccountTypeCode = ValueOption.ofOption detail.AccountType
+            CompanyTypeCode = ValueOption.ofOption detail.CompanyType
+            Holder = holder (details |> Option.bind _.MatchTo)
+            Match = recordMatch (details |> Option.bind _.BureauRefCategory)
+            Joint =
+                (match detail.JointAccount |> Option.map _.Trim() with
+                 | Some("M" | "J") -> true
+                 | _ -> false)
+            Status =
+                status
+                    detail.AccountStatus
+                    (balance |> Option.bind _.Narrative)
+                    (defaultBalance |> Option.bind _.Narrative)
+                    detail.DefaultSatisfyDate
+            Balance = pounds (balance |> Option.bind _.Amount)
+            DefaultBalance = pounds (defaultBalance |> Option.bind _.Amount)
+            DelinquentBalance = pounds (detail.DelinquentBalance |> Option.ofObj |> Option.bind _.Amount)
+            CreditLimit = pounds (detail.CreditLimit |> Option.ofObj |> Option.bind _.Amount)
+            Payment = pounds detail.Payment
+            StartDate = ValueOption.ofOption detail.CaisAccStartDate
+            SettlementDate = ValueOption.ofOption detail.SettlementDate
+            LastUpdated = ValueOption.ofOption detail.LastUpdatedDate
+            WorstStatus = ValueOption.ofOption detail.WorstStatus
+            SpecialInstruction =
+                match detail.SpecialInstrInd |> Option.filter (String.IsNullOrWhiteSpace >> not) with
+                | Some code ->
+                    let dates = detail.SpecialInstrDet |> Option.ofObj
+
+                    ValueSome
+                        {
+                            Instruction = SpecialInstruction.ofCode code
+                            From = dates |> Option.bind _.StartDate |> ValueOption.ofOption
+                            Until = dates |> Option.bind _.EndDate |> ValueOption.ofOption
+                        }
+                | None -> ValueNone
+        }
 
     let private consumerData (output: DelphiSelect.Output) =
         output
@@ -348,21 +401,27 @@ module CreditAccounts =
                 |> Seq.collect (fun block -> items block.CaisDetails)
                 |> Seq.exists (fun detail ->
                     let details = detail.MatchDetails
-                    not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
+
+                    not (isNull details)
+                    && isApplicantMatch details.MatchTo details.BureauRefCategory)
 
             let roll =
                 items consumer.VotersRollPerson
                 |> Seq.collect (fun block -> items block.VRollPersonDetails)
                 |> Seq.exists (fun detail ->
                     let details = detail.MatchDetails
-                    not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
+
+                    not (isNull details)
+                    && isApplicantMatch details.MatchTo details.BureauRefCategory)
 
             let publicRecords =
                 items consumer.PublicInformation
                 |> Seq.collect (fun block -> items block.PublicInfoDetails)
                 |> Seq.exists (fun detail ->
                     let details = detail.MatchDetails
-                    not (isNull details) && isApplicantMatch details.MatchTo details.BureauRefCategory)
+
+                    not (isNull details)
+                    && isApplicantMatch details.MatchTo details.BureauRefCategory)
 
             accounts || roll || publicRecords
 
@@ -417,8 +476,10 @@ type FileFlag =
 
 /// The consumer's own statement on their credit file (Notice of Correction). Lenders are expected to read it before deciding.
 type CorrectionNotice =
-    { Reference: string voption
-      Lines: string list }
+    {
+        Reference: string voption
+        Lines: string list
+    }
 
 /// A CIFAS fraud-prevention marker matched to the applicant.
 type CifasMarker =
@@ -430,12 +491,14 @@ type CifasMarker =
 /// Credit-file signals that can point to financial difficulty or vulnerability. Delphi Select has no vulnerability flag:
 /// these corroborate an assessment, they do not replace one.
 type CreditFileSignals =
-    { Flags: Set<FileFlag>
-      /// The applicant's own accounts (including under an alias) that carry a special instruction.
-      Instructions: CreditAccount list
-      Notices: CorrectionNotice list
-      /// CIFAS markers matched to the applicant (including under an alias).
-      Cifas: CifasMarker list }
+    {
+        Flags: Set<FileFlag>
+        /// The applicant's own accounts (including under an alias) that carry a special instruction.
+        Instructions: CreditAccount list
+        Notices: CorrectionNotice list
+        /// CIFAS markers matched to the applicant (including under an alias).
+        Cifas: CifasMarker list
+    }
 
 module CreditFileSignals =
 
@@ -444,17 +507,20 @@ module CreditFileSignals =
             match value |> Option.map _.Trim() with
             | Some "Y" -> Some flag
             | _ -> None
-        [ set summary.Arrangement ArrangementFound
-          set summary.DebtManagement DebtManagementFound
-          set summary.ClaimedOnCreditIns CreditInsuranceClaimFound
-          set summary.AccountQuery AccountQueryFound
-          set summary.PartSettle PartialSettlementFound
-          set summary.DebtAssign DebtAssignedFound
-          set summary.VoluntaryTerm VoluntaryTerminationFound
-          set summary.Recourse RecourseFound
-          set summary.ReportedGoneAway GoneAwayFound
-          set summary.ReportedDeceased DeceasedFound
-          set summary.Cifas CifasFound ]
+
+        [
+            set summary.Arrangement ArrangementFound
+            set summary.DebtManagement DebtManagementFound
+            set summary.ClaimedOnCreditIns CreditInsuranceClaimFound
+            set summary.AccountQuery AccountQueryFound
+            set summary.PartSettle PartialSettlementFound
+            set summary.DebtAssign DebtAssignedFound
+            set summary.VoluntaryTerm VoluntaryTerminationFound
+            set summary.Recourse RecourseFound
+            set summary.ReportedGoneAway GoneAwayFound
+            set summary.ReportedDeceased DeceasedFound
+            set summary.Cifas CifasFound
+        ]
         |> List.choose id
         |> Set.ofList
 
@@ -464,7 +530,11 @@ module CreditFileSignals =
         | true, 0 -> ProtectiveRegistration
         | _ -> FraudCategory(category.Trim())
 
-    let private arrayOrEmpty (items: 'T[]) = items |> Option.ofObj |> Option.defaultValue [||] |> Seq.filter (fun item -> not (isNull (box item)))
+    let private arrayOrEmpty (items: 'T[]) =
+        items
+        |> Option.ofObj
+        |> Option.defaultValue [||]
+        |> Seq.filter (fun item -> not (isNull (box item)))
 
     /// The signals in a Delphi Select response; ValueNone when it carries no consumer data.
     let ofOutput (output: DelphiSelect.Output) =
@@ -473,6 +543,7 @@ module CreditFileSignals =
             |> Option.ofObj
             |> Option.bind (fun o -> Option.ofObj o.Response)
             |> Option.bind (fun r -> Option.ofObj r.FullConsumerData)
+
         match full |> Option.bind (fun f -> Option.ofObj f.ConsumerData), CreditAccounts.allOf output with
         | Some consumer, ValueSome accounts ->
             let summary =
@@ -480,30 +551,49 @@ module CreditFileSignals =
                 |> Option.bind (fun f -> Option.ofObj f.ConsumerDataSummary)
                 |> Option.bind (fun s -> Option.ofObj s.SummaryDetails)
                 |> Option.bind (fun d -> Option.ofObj d.SummaryFlags)
+
             ValueSome
-                { Flags = summary |> Option.map flags |> Option.defaultValue Set.empty
-                  Instructions =
-                    accounts
-                    |> List.filter (fun account -> CreditAccounts.isOwn account && account.SpecialInstruction.IsSome)
-                  Notices =
-                    arrayOrEmpty consumer.Noc
-                    |> Seq.collect (fun block -> arrayOrEmpty block.NoCDetails)
-                    |> Seq.map (fun notice ->
-                        { Reference = notice.Reference |> Option.filter (String.IsNullOrWhiteSpace >> not) |> ValueOption.ofOption
-                          Lines = arrayOrEmpty notice.TextLine |> Seq.filter (String.IsNullOrWhiteSpace >> not) |> List.ofSeq })
-                    |> Seq.filter (fun notice -> notice.Reference.IsSome || not notice.Lines.IsEmpty)
-                    |> List.ofSeq
-                  Cifas =
-                    arrayOrEmpty consumer.Cifas
-                    |> Seq.collect (fun block -> arrayOrEmpty block.CifasDetails)
-                    |> Seq.filter (fun detail ->
-                        let details = detail.MatchDetails
-                        not (isNull details) && CreditAccounts.isApplicantMatch details.MatchTo details.BureauRefCategory)
-                    |> Seq.choose (fun detail -> detail.FraudCategory |> Option.filter (String.IsNullOrWhiteSpace >> not) |> Option.map cifasMarker)
-                    |> List.ofSeq }
+                {
+                    Flags = summary |> Option.map flags |> Option.defaultValue Set.empty
+                    Instructions =
+                        accounts
+                        |> List.filter (fun account ->
+                            CreditAccounts.isOwn account && account.SpecialInstruction.IsSome)
+                    Notices =
+                        arrayOrEmpty consumer.Noc
+                        |> Seq.collect (fun block -> arrayOrEmpty block.NoCDetails)
+                        |> Seq.map (fun notice ->
+                            {
+                                Reference =
+                                    notice.Reference
+                                    |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                                    |> ValueOption.ofOption
+                                Lines =
+                                    arrayOrEmpty notice.TextLine
+                                    |> Seq.filter (String.IsNullOrWhiteSpace >> not)
+                                    |> List.ofSeq
+                            })
+                        |> Seq.filter (fun notice -> notice.Reference.IsSome || not notice.Lines.IsEmpty)
+                        |> List.ofSeq
+                    Cifas =
+                        arrayOrEmpty consumer.Cifas
+                        |> Seq.collect (fun block -> arrayOrEmpty block.CifasDetails)
+                        |> Seq.filter (fun detail ->
+                            let details = detail.MatchDetails
+
+                            not (isNull details)
+                            && CreditAccounts.isApplicantMatch details.MatchTo details.BureauRefCategory)
+                        |> Seq.choose (fun detail ->
+                            detail.FraudCategory
+                            |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                            |> Option.map cifasMarker)
+                        |> List.ofSeq
+                }
         | _ -> ValueNone
 
     /// The applicant's instructions in force today (see SpecialInstruction.isCurrent).
     let currentInstructions (today: DateOnly) (signals: CreditFileSignals) =
         signals.Instructions
-        |> List.filter (fun account -> account.SpecialInstruction |> ValueOption.exists (SpecialInstruction.isCurrent today))
+        |> List.filter (fun account ->
+            account.SpecialInstruction
+            |> ValueOption.exists (SpecialInstruction.isCurrent today))

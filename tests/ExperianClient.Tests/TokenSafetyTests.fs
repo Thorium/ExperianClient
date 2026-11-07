@@ -19,9 +19,16 @@ type private Recording(respond: HttpRequestMessage -> HttpStatusCode) =
 
     override _.SendAsync(request, _) =
         if request.RequestUri.AbsolutePath.EndsWith "/oauth2/v1/token" then
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK, Content = new StringContent(tokenJson "portal-token")))
+            Task.FromResult(
+                new HttpResponseMessage(HttpStatusCode.OK, Content = new StringContent(tokenJson "portal-token"))
+            )
         else
-            let authorization = if isNull request.Headers.Authorization then "" else string request.Headers.Authorization
+            let authorization =
+                if isNull request.Headers.Authorization then
+                    ""
+                else
+                    string request.Headers.Authorization
+
             seen.Add((request.RequestUri.Host, authorization))
             let status = respond request
             Task.FromResult(new HttpResponseMessage(status, Content = new StringContent "{}"))
@@ -44,6 +51,7 @@ let ``a 401 after a redirect doesn't send a new token to the other host`` () : T
                 request.RequestUri <- Uri "https://evil.example/x"
                 request.Headers.Authorization <- null
                 HttpStatusCode.Unauthorized)
+
         let client = ExperianClient.create credentials Endpoints.sandbox handler
         let! result = Api.Kyb.profileAsync client "99999999" FakeExperian.ct
         Assert.True(isToOtherHost result, $"Got {result}")
@@ -56,7 +64,16 @@ let ``a Client Gateway path value can't carry the token to another host`` () : T
     task {
         let handler = new Recording(fun _ -> HttpStatusCode.OK)
         let client = ExperianClient.create credentials Endpoints.production handler
-        let call = client.ClientGateway.GetHybridDeploymentDetails(useCase = @"\/evil.example/x", authorization = null, xCorrelationId = Guid.Empty, auditIds = [| "a" |], cancellationToken = FakeExperian.ct)
+
+        let call =
+            client.ClientGateway.GetHybridDeploymentDetails(
+                useCase = @"\/evil.example/x",
+                authorization = null,
+                xCorrelationId = Guid.Empty,
+                auditIds = [| "a" |],
+                cancellationToken = FakeExperian.ct
+            )
+
         let! result = Call.attempt FakeExperian.ct (fun () -> call)
         Assert.True(isToOtherHost result, $"Got {result}")
         Assert.Empty handler.Seen
@@ -66,6 +83,7 @@ let ``a Client Gateway path value can't carry the token to another host`` () : T
 let ``a token the caller passes is the one sent, with no sign-in`` () : Task =
     task {
         let signIns = ref 0
+
         let handler =
             new FakeExperianHandler(fun call ->
                 if isToken call then
@@ -73,10 +91,27 @@ let ``a token the caller passes is the one sent, with no sign-in`` () : Task =
                     401, "{}"
                 else
                     401, "{}")
+
         let client = ExperianClient.create credentials Endpoints.production handler
-        let call = client.ClientGateway.GetHybridDeploymentDetails(useCase = "pc", authorization = "Bearer caller-jwt", xCorrelationId = Guid.Empty, auditIds = [| "a" |], cancellationToken = FakeExperian.ct)
+
+        let call =
+            client.ClientGateway.GetHybridDeploymentDetails(
+                useCase = "pc",
+                authorization = "Bearer caller-jwt",
+                xCorrelationId = Guid.Empty,
+                auditIds = [| "a" |],
+                cancellationToken = FakeExperian.ct
+            )
+
         let! result = Call.attempt FakeExperian.ct (fun () -> call)
-        Assert.True((match result with Error(ApiError(401, _)) -> true | _ -> false), $"Got {result}")
+
+        Assert.True(
+            (match result with
+             | Error(ApiError(401, _)) -> true
+             | _ -> false),
+            $"Got {result}"
+        )
+
         Assert.Equal(0, signIns.Value)
         let sent = Assert.Single handler.ApiCalls
         Assert.Equal("Bearer caller-jwt", sent.Headers["Authorization"])
@@ -86,7 +121,12 @@ let ``a token the caller passes is the one sent, with no sign-in`` () : Task =
 let ``an endpoint set by hand is one the token may go to`` () : Task =
     task {
         let handler = new Recording(fun _ -> HttpStatusCode.OK)
-        let endpoints = { Endpoints.production with Kyb = Uri "https://kyb.example.com/" }
+
+        let endpoints =
+            { Endpoints.production with
+                Kyb = Uri "https://kyb.example.com/"
+            }
+
         let client = ExperianClient.create credentials endpoints handler
         let! result = Api.Kyb.profileAsync client "99999999" FakeExperian.ct
         expectOk result |> ignore
@@ -97,10 +137,21 @@ let ``an endpoint set by hand is one the token may go to`` () : Task =
 [<Fact>]
 let ``no region refuses its own hosts`` () : Task =
     task {
-        for endpoints in [ Endpoints.sandbox; Endpoints.production; Endpoints.sandboxUs; Endpoints.productionUs; Endpoints.sandboxEu; Endpoints.productionEu ] do
+        for endpoints in
+            [
+                Endpoints.sandbox
+                Endpoints.production
+                Endpoints.sandboxUs
+                Endpoints.productionUs
+                Endpoints.sandboxEu
+                Endpoints.productionEu
+            ] do
             let handler = new Recording(fun _ -> HttpStatusCode.OK)
             let client = ExperianClient.create credentials endpoints handler
-            let! verify = Api.VerifyCpd.plusStatusAsync client "r" (VerifyCpdPlus.CPDStatusRequestParams()) FakeExperian.ct
+
+            let! verify =
+                Api.VerifyCpd.plusStatusAsync client "r" (VerifyCpdPlus.CPDStatusRequestParams()) FakeExperian.ct
+
             expectOk verify |> ignore
             let! kyb = Api.Kyb.profileAsync client "1" FakeExperian.ct
             expectOk kyb |> ignore
