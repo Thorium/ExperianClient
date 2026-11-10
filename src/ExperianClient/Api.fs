@@ -47,9 +47,40 @@ module DelphiSelect =
     [<Literal>]
     let private reference = "experianReference"
 
+    /// An application's answer with something in its Response. One with nothing there, such as an error's body under a
+    /// success status, would read as an applicant without a credit file, so it is InvalidResponse.
+    let private answered (call: Async<DelphiSelect.Output>) =
+        async {
+            let! output = call
+
+            if not (isNull output) then
+                let response = output.Response
+
+                let sections: obj list =
+                    if isNull response then
+                        []
+                    else
+                        [
+                            response.Applicants
+                            response.Locations
+                            response.Residencies
+                            response.FullConsumerData
+                            response.ConsumerSummary
+                            response.AuthPlusResults
+                            response.Detect
+                            response.ClientData
+                            response.ThirdPartyData
+                        ]
+
+                if sections |> List.forall isNull then
+                    raise (NoDataException "The answer has nothing in Response")
+
+            return output
+        }
+
     /// A new application: bureau search plus the products requested in Options (AuthenticatePlusRequired for AuthPlus).
     let applicationAsync (client: ExperianClient) (input: DelphiSelect.Input) (ct: CancellationToken) =
-        attempt ct (fun () -> client.DelphiSelect.Application(Json, Json, input, ct))
+        attempt ct (fun () -> answered (client.DelphiSelect.Application(Json, Json, input, ct)))
 
     /// A previously submitted application by its Experian reference.
     let getApplicationAsync
@@ -60,18 +91,20 @@ module DelphiSelect =
         =
         withSegment reference experianReference (fun escaped ->
             attempt ct (fun () ->
-                client.DelphiSelect.GetApplication(
-                    Json,
-                    Json,
-                    escaped,
-                    ValueOption.toOption view.ClientAccountNumber,
-                    flag view.FullFblRequired,
-                    flag view.DisplayConsumer,
-                    flag view.DisplayAuthenticate,
-                    flag view.DisplayDetect,
-                    flag view.DisplayAddress,
-                    flag view.DisplayCaseHistory,
-                    ct
+                answered (
+                    client.DelphiSelect.GetApplication(
+                        Json,
+                        Json,
+                        escaped,
+                        ValueOption.toOption view.ClientAccountNumber,
+                        flag view.FullFblRequired,
+                        flag view.DisplayConsumer,
+                        flag view.DisplayAuthenticate,
+                        flag view.DisplayDetect,
+                        flag view.DisplayAddress,
+                        flag view.DisplayCaseHistory,
+                        ct
+                    )
                 )))
 
     /// Re-targets the bureau for an application; this always writes a new search footprint.
@@ -82,7 +115,7 @@ module DelphiSelect =
         (ct: CancellationToken)
         =
         withSegment reference experianReference (fun escaped ->
-            attempt ct (fun () -> client.DelphiSelect.ReProcessPut(Json, Json, escaped, input, ct)))
+            attempt ct (fun () -> answered (client.DelphiSelect.ReProcessPut(Json, Json, escaped, input, ct))))
 
     /// Converts a quotation (soft footprint) into a full application (hard footprint).
     let quoteToFullAsync

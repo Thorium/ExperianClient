@@ -57,6 +57,8 @@ Api.DelphiSelect.convertQuoteAsync experian experianReference CreditProduct.Debt
 roll or public record matched to the applicant or their alias as the same person or a potential alias. An answer can
 carry records that aren't theirs, so consumer data alone isn't a file. `ofOutput` returns `ValueNone` without a file and
 `ValueSome []` for a file with no accounts, so a missing credit file is never read as "no debts".
+`CreditAccounts.accountsWithheld output` is true when Experian's control details say the subscriber sees no accounts
+(`SeeCAIS` is `N`): the answer then holds none whatever the applicant owes, so check it before reading `ValueSome []`.
 
 `CreditAccounts.amountOwed` is what an account owes now: a defaulted account's current default balance when Experian
 reports one, otherwise its balance. `CreditAccounts.isOwn` tells the applicant's own accounts from everyone else's:
@@ -193,10 +195,14 @@ Every `Api` call returns `Task<Result<_, ExperianFailure>>`:
 - `InvalidRequest reason`: not sent. A path parameter was empty, `.` or `..`.
 - `ApiError(status, body)`: Experian answered with a non-success status.
 - `TokenRefused(status, body)`: the token endpoint refused the credentials.
+  - An error body's message can quote what was sent, a name or an address. `describe` quotes the body's error codes only
+    (`ExperianFailure.codesOf`).
 - `TransportError exn`: there was no complete answer, so whether Experian did the work is unknown.
 - `InvalidResponse answer`: Experian answered with success and the client could not read it. `answer` has `HttpStatus`,
   `Body` and `Reason`. Experian did the work, so sending a Delphi search again writes another footprint. `Body` can hold a
   whole credit file: `describe` and printing the failure leave it out.
+  - A Delphi Select application answer with nothing in `Response`, such as `{}` or an error's body under a success
+    status, is one of these: it would otherwise read as an applicant without a credit file.
 
 Cancelling your token throws `OperationCanceledException` as usual. For operations not in `Api`, the generated
 clients are on the client, already authorised: `experian.DelphiSelect`, `experian.Kyc`, `experian.PowerCurve`, and so on.

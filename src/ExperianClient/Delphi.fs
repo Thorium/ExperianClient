@@ -425,6 +425,16 @@ module CreditAccounts =
 
             accounts || roll || publicRecords
 
+    /// Whether Experian says the subscriber sees no credit accounts (ControlDetails.SeeCAIS is N). The answer then holds
+    /// none whatever the applicant owes, so ofOutput's ValueSome [] is not "no debts".
+    let accountsWithheld (output: DelphiSelect.Output) =
+        output
+        |> Option.ofObj
+        |> Option.bind (fun o -> Option.ofObj o.Response)
+        |> Option.bind (fun r -> Option.ofObj r.FullConsumerData)
+        |> Option.bind (fun f -> Option.ofObj f.ControlDetails)
+        |> Option.exists (fun control -> control.SeeCais = Some "N")
+
     /// Every credit account in the consumer data, whoever it was matched to.
     let internal allOf (output: DelphiSelect.Output) =
         consumerData output
@@ -436,7 +446,8 @@ module CreditAccounts =
         |> ValueOption.ofOption
 
     /// Every credit account in a Delphi Select response, whoever it was matched to. ValueNone without the applicant's
-    /// credit file (fileFound), so a missing file is never read as "no debts"; ValueSome [] when the file has no accounts.
+    /// credit file (fileFound), so a missing file is never read as "no debts"; ValueSome [] when the file has no accounts,
+    /// which says nothing when accountsWithheld.
     let ofOutput (output: DelphiSelect.Output) =
         if fileFound output then allOf output else ValueNone
 

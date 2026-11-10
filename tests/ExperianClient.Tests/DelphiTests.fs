@@ -150,6 +150,23 @@ let ``outstanding keeps the applicant's own unsettled balances, not other people
     Assert.Equal<string list>([ "EXAMPLE CARD CO"; "EXAMPLE LOANS" ], debts |> List.map (fun d -> d.Lender.Value))
     Assert.Equal(13396m, CreditAccounts.totalOwed debts)
 
+[<Theory>]
+[<InlineData("N", true)>]
+[<InlineData("Y", false)>]
+let ``an answer says when Experian withholds the accounts`` (seeCais: string, withheld: bool) =
+    use handler = new FakeExperianHandler(fun _ -> 200, "{}")
+
+    let json =
+        $"""{{"Response":{{"FullConsumerData":{{"ControlDetails":{{"SeeCAIS":"{seeCais}"}},"ConsumerData":{{"VotersRollPerson":[{{"VRollPersonDetails":[{{"MatchDetails":{{"MatchTo":"1","BureauRefCategory":"1"}}}}]}}]}}}}}}}}"""
+
+    let output =
+        (clientWith handler).DelphiSelect.Deserialize(json, typeof<DelphiSelect.Output>) :?> DelphiSelect.Output
+
+    Assert.Equal(withheld, CreditAccounts.accountsWithheld output)
+    Assert.Equal(ValueSome [], CreditAccounts.ofOutput output)
+    Assert.False(CreditAccounts.accountsWithheld (DelphiSelect.Output()))
+    Assert.False(CreditAccounts.accountsWithheld null)
+
 [<Fact>]
 let ``a response without consumer data is ValueNone, not an empty debt list`` () =
     Assert.Equal(ValueNone, CreditAccounts.ofOutput (DelphiSelect.Output()))

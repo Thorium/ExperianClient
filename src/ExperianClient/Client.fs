@@ -184,13 +184,56 @@ module ExperianFailure =
         | TokenRefused(status, _) -> refusesCredentials status
         | _ -> false
 
-    /// One line saying what went wrong, for logs and exception messages.
+    /// The error codes in an error body: the short, code-like values of its ErrorCode, error_code, code, error and errorType
+    /// fields in any letter case, five at most. A message can quote what was sent, a name or an address, so none is read.
+    let codesOf (body: string) =
+        let named = set [ "errorcode"; "error_code"; "code"; "error"; "errortype" ]
+
+        let isCode (text: string) =
+            text.Length > 0
+            && text.Length <= 60
+            && text
+               |> Seq.forall (fun c -> Char.IsAsciiLetterOrDigit c || c = '_' || c = '-' || c = '.')
+
+        let rec codes (depth: int) (element: JsonElement) : string seq =
+            seq {
+                if depth < 8 then
+                    match element.ValueKind with
+                    | JsonValueKind.Object ->
+                        for property in element.EnumerateObject() do
+                            match property.Value.ValueKind with
+                            | JsonValueKind.String when named.Contains(property.Name.ToLowerInvariant()) ->
+                                let text = property.Value.GetString()
+
+                                if isCode text then
+                                    yield text
+                            | JsonValueKind.Number when named.Contains(property.Name.ToLowerInvariant()) ->
+                                yield property.Value.GetRawText()
+                            | _ -> yield! codes (depth + 1) property.Value
+                    | JsonValueKind.Array ->
+                        for item in element.EnumerateArray() do
+                            yield! codes (depth + 1) item
+                    | _ -> ()
+            }
+
+        try
+            use document = JsonDocument.Parse body
+            codes 0 document.RootElement |> Seq.distinct |> Seq.truncate 5 |> List.ofSeq
+        with :? JsonException ->
+            []
+
+    let private withCodes (body: string) =
+        match codesOf body with
+        | [] -> ""
+        | found -> " (" + String.Join(", ", found) + ")"
+
+    /// One line saying what went wrong, for logs and exception messages. Of an error body it quotes the error codes only
+    /// (codesOf); the whole body is on the failure.
     let describe failure =
         match failure with
         | InvalidRequest reason -> $"Not sent: {reason}"
-        | ApiError(status, "") -> $"Experian answered HTTP {status}"
-        | ApiError(status, body) -> $"Experian answered HTTP {status}: {body}"
-        | TokenRefused(status, body) -> $"Experian refused the token request (HTTP {status}): {body}"
+        | ApiError(status, body) -> $"Experian answered HTTP {status}{withCodes body}"
+        | TokenRefused(status, body) -> $"Experian refused the token request (HTTP {status}){withCodes body}"
         | TransportError e -> $"Request failed: {e.Message}"
         | InvalidResponse answer ->
             $"Experian answered HTTP {answer.HttpStatus}, and the answer could not be read: {answer.Reason}"
@@ -466,14 +509,17 @@ module internal Token =
         try
             use document = JsonDocument.Parse text
             let root = document.RootElement
-            // Serasa Experian names them in camel case
+            // Serasa Experian names them in camel case. A body that is JSON and no object holds no token
             let named (snake: string) (camel: string) =
-                match root.TryGetProperty snake with
-                | true, value -> ValueSome value
-                | _ ->
-                    match root.TryGetProperty camel with
+                if root.ValueKind <> JsonValueKind.Object then
+                    ValueNone
+                else
+                    match root.TryGetProperty snake with
                     | true, value -> ValueSome value
-                    | _ -> ValueNone
+                    | _ ->
+                        match root.TryGetProperty camel with
+                        | true, value -> ValueSome value
+                        | _ -> ValueNone
 
             match named "access_token" "accessToken" with
             | ValueSome token when token.ValueKind = JsonValueKind.String && token.GetString() <> "" ->
@@ -838,11 +884,15 @@ module internal Call =
     /// A success answer of JSON null, to a call that expects a value.
     exception private NullAnswerException
 
+    /// A success answer that read, and holds none of what the call answers with. The reason quotes nothing from it.
+    exception NoDataException of reason: string
+
     /// Where an answer could not be read. Exception messages can quote the answer, so none is used. A bracketed path segment is a
     /// key that isn't a plain name, which could be any text, so the path stops there.
     let private reasonOf (e: exn) =
         match e with
         | NullAnswerException -> "The answer is null"
+        | NoDataException reason -> reason
         | :? JsonException as e ->
             let path =
                 match e.Path with

@@ -233,6 +233,9 @@ let ``expires_in is read as a number or a string, and defaults to 30 minutes`` (
     Assert.Equal(TimeSpan.FromMinutes 30., expiry """{"access_token":"a","expires_in":"soon"}""")
     Assert.True((Token.parse now """{"access_token":""}""").IsNone)
     Assert.True((Token.parse now "not json").IsNone)
+    Assert.True((Token.parse now "[]").IsNone)
+    Assert.True((Token.parse now "\"access_token\"").IsNone)
+    Assert.True((Token.parse now "5").IsNone)
 
 [<Fact>]
 let ``cancellation propagates instead of becoming an Error`` () : Task =

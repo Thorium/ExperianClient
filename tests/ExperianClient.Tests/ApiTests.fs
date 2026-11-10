@@ -132,7 +132,8 @@ let ``second phase AuthPlus puts to the application's secondphaseauthenticate`` 
 [<Fact>]
 let ``a retrieved application sends only the view flags that are set`` () : Task =
     task {
-        use handler = new FakeExperianHandler(respondWith (fun _ -> 200, "{}"))
+        use handler =
+            new FakeExperianHandler(respondWith (fun _ -> 200, """{"Response":{"ClientData":{}}}"""))
 
         let view =
             { Api.DelphiSelect.ApplicationView.Default with
@@ -864,3 +865,51 @@ let ``quoted numbers read, and a quoted non-number is a JsonException with a pat
     refused (fun () ->
         JsonSerializer.Deserialize<Collections.Generic.Dictionary<string, double>>(body, Reading.options)
         |> ignore)
+
+[<Theory>]
+[<InlineData("{}")>]
+[<InlineData("""{"Response":{}}""")>]
+[<InlineData("""{"Response":{"Error":{"ErrorCode":"E100","Message":"Jane Doe of 1 High Street"}}}""")>]
+[<InlineData("""{"errors":[{"errorType":"Validation","message":"Postcode is invalid"}]}""")>]
+let ``an application answer with nothing in Response is InvalidResponse, not an applicant without a file`` (body: string) : Task =
+    task {
+        use handler = new FakeExperianHandler(respondWith (fun _ -> 200, body))
+        let client = clientWith handler
+
+        let! created = Api.DelphiSelect.applicationAsync client (sandboxApplication ()) ct
+        let answer = expectUnreadable created
+        Assert.Equal(200, answer.HttpStatus)
+        Assert.Equal(body, answer.Body)
+        Assert.Equal("The answer has nothing in Response", answer.Reason)
+
+        let! read =
+            Api.DelphiSelect.getApplicationAsync client "0123456789" Api.DelphiSelect.ApplicationView.Default ct
+
+        Assert.Equal("The answer has nothing in Response", (expectUnreadable read).Reason)
+    }
+
+[<Fact>]
+let ``describe quotes an error body's codes, and never its messages`` () =
+    let delphi =
+        """{"Response":{"Error":{"ErrorCode":"E100","Message":"Jane Doe of 1 High Street"}}}"""
+
+    Assert.Equal("Experian answered HTTP 400 (E100)", ExperianFailure.describe (ApiError(400, delphi)))
+
+    let validation =
+        """{"errors":[{"errorType":"Validation","message":"Postcode AB1 2CD is invalid"}]}"""
+
+    Assert.Equal("Experian answered HTTP 400 (Validation)", ExperianFailure.describe (ApiError(400, validation)))
+
+    let token =
+        """{"error":"invalid_grant","error_description":"jane@example.com is locked"}"""
+
+    Assert.Equal(
+        "Experian refused the token request (HTTP 401) (invalid_grant)",
+        ExperianFailure.describe (TokenRefused(401, token))
+    )
+
+    // A code field holding a sentence is a message; a body that isn't JSON has no codes
+    Assert.Equal("Experian answered HTTP 400", ExperianFailure.describe (ApiError(400, """{"error":"Jane Doe is unknown"}""")))
+    Assert.Equal("Experian answered HTTP 502", ExperianFailure.describe (ApiError(502, "<html>Jane</html>")))
+    Assert.Equal("Experian answered HTTP 500", ExperianFailure.describe (ApiError(500, "")))
+    Assert.Equal<string list>([ "E100" ], ExperianFailure.codesOf delphi)
